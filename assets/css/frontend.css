@@ -1,0 +1,86 @@
+:root {
+	--khabar-accent: #ef394e;
+	--khabar-ink: #23254e;
+	--khabar-muted: #62666d;
+	--khabar-line: #e0e0e2;
+	--khabar-bg: #fff;
+	--khabar-soft: #f7f7f9;
+	--khabar-ok: #00a049;
+	--khabar-radius: 10px;
+}
+
+.khabar { margin: 14px 0; direction: rtl; }
+.khabar [hidden] { display: none !important; }
+.khabar-cta { margin: 8px 0; }
+.khabar-cta-stock .khabar-open { background: var(--khabar-accent); color: #fff; border: 0; border-radius: var(--khabar-radius); padding: 12px 20px; font-weight: 700; cursor: pointer; width: 100%; max-width: 360px; }
+.khabar-cta-stock .khabar-open:hover { filter: brightness(.94); }
+.khabar-link { background: none; border: 0; padding: 0; color: var(--khabar-ink); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; font: inherit; }
+.khabar-waiting { margin: 6px 0 0; font-size: .875em; color: var(--khabar-muted); }
+.khabar-waiting span { font-weight: 700; color: var(--khabar-accent); }
+.khabar-exclusive-note { background: #fff7e6; border: 1px solid #ffd591; border-radius: var(--khabar-radius); padding: 10px 12px; margin: 10px 0; font-size: .9em; }
+
+/* Modal */
+body.khabar-lock { overflow: hidden; }
+.khabar-modal { position: fixed; inset: 0; z-index: 99999; background: rgba(15, 17, 40, .55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.khabar-modal-box { position: relative; background: var(--khabar-bg); color: var(--khabar-ink); border-radius: 14px; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow: auto; padding: 22px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, .25); text-align: right; }
+.khabar-modal-box h3 { margin: 0 0 4px; font-size: 1.2em; }
+.khabar-close { position: absolute; top: 10px; left: 12px; background: none; border: 0; font-size: 26px; line-height: 1; cursor: pointer; color: var(--khabar-muted); }
+.khabar-product-name { margin: 0 0 14px; color: var(--khabar-muted); font-size: .92em; }
+.khabar-form fieldset, .khabar-otp label { border: 0; padding: 0; margin: 0 0 14px; }
+.khabar-form legend { font-weight: 700; margin-bottom: 8px; font-size: .95em; }
+.khabar-form label, .khabar-otp label { display: block; margin-bottom: 8px; }
+.khabar-form label > span, .khabar-otp label > span { display: block; font-size: .85em; color: var(--khabar-muted); margin-bottom: 4px; }
+.khabar-form input[type=text], .khabar-form input[type=tel], .khabar-form input[type=email], .khabar-form select, .khabar-otp input[type=text] { width: 100%; box-sizing: border-box; border: 1px solid var(--khabar-line); border-radius: 8px; padding: 9px 10px; font: inherit; background: #fff; }
+.khabar-attrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0 10px; background: var(--khabar-soft); border-radius: var(--khabar-radius) !important; padding: 10px 12px !important; }
+.khabar-attrs legend { float: right; width: 100%; padding-top: 2px; }
+.khabar-cond { display: flex !important; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid var(--khabar-line); border-radius: 8px; }
+.khabar-cond:has(input:checked) { border-color: var(--khabar-accent); background: #fff5f6; }
+.khabar-form .khabar-num { width: 130px !important; padding: 6px 8px !important; direction: ltr; text-align: left; }
+.khabar-form .khabar-num-sm { width: 70px !important; }
+.khabar-form .khabar-num:disabled { opacity: .5; }
+.khabar-mode { background: var(--khabar-soft); padding: 8px 10px; border-radius: 8px; font-size: .9em; }
+.khabar-mode label { display: inline-block; margin-left: 12px; }
+.khabar-channels label { display: inline-block; margin-left: 14px; }
+.khabar-hp { position: absolute !important; left: -9999px !important; height: 0; overflow: hidden; }
+.khabar-submit, .khabar-otp .button { width: 100%; }
+.khabar-submit.loading { opacity: .6; pointer-events: none; }
+.khabar-privacy { font-size: .78em; color: var(--khabar-muted); margin: 8px 0 0; }
+.khabar-msg { font-size: .9em; padding: 8px 10px; border-radius: 8px; }
+.khabar-msg.khabar-err { background: #fdecee; color: #a8071a; }
+.khabar-msg.khabar-ok { background: #e7f8ee; color: #05662f; }
+.khabar-done { text-align: center; padding: 10px 0; }
+.khabar-done-icon { font-size: 42px; }
+
+/* Panel */
+.khabar-panel { direction: rtl; }
+.khabar-panel [hidden] { display: none !important; }
+.khabar-sub-list, .khabar-notes { list-style: none; margin: 0 0 24px; padding: 0; }
+.khabar-sub { border: 1px solid var(--khabar-line); border-radius: var(--khabar-radius); padding: 12px; margin-bottom: 10px; }
+.khabar-sub-main { display: flex; gap: 12px; align-items: flex-start; }
+.khabar-sub-main img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.khabar-sub-main > div { flex: 1; min-width: 0; }
+.khabar-sub-title { font-weight: 700; }
+.khabar-sub-attrs, .khabar-sub-now { font-size: .85em; color: var(--khabar-muted); }
+.khabar-sub-cond { font-size: .9em; margin-top: 2px; }
+.khabar-badge { font-size: .75em; background: var(--khabar-soft); border-radius: 20px; padding: 3px 10px; white-space: nowrap; }
+.khabar-status-active .khabar-badge { background: #fff4e5; color: #ad6800; }
+.khabar-status-notified .khabar-badge { background: #e7f8ee; color: #05662f; }
+.khabar-status-purchased .khabar-badge { background: #e6f4ff; color: #0958d9; }
+.khabar-sub-actions { margin-top: 8px; display: flex; gap: 14px; font-size: .9em; }
+.khabar-edit-form { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 12px; }
+.khabar-edit-form label > span { display: block; font-size: .8em; color: var(--khabar-muted); }
+.khabar-edit-form input[type=text], .khabar-edit-form input[type=tel], .khabar-edit-form input[type=email] { width: 100%; box-sizing: border-box; }
+.khabar-edit-form .khabar-channels, .khabar-edit-form .khabar-msg, .khabar-edit-form .button { grid-column: 1 / -1; }
+.khabar-notes li { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--khabar-line); font-size: .9em; }
+.khabar-unread strong::before { content: "● "; color: var(--khabar-accent); }
+
+/* Bell */
+.khabar-bell { position: relative; display: inline-block; direction: rtl; }
+.khabar-bell [hidden] { display: none !important; }
+.khabar-bell-btn { position: relative; background: #fff; border: 1px solid var(--khabar-line); border-radius: 50%; width: 44px; height: 44px; font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, .12); }
+.khabar-bell-count { position: absolute; top: -4px; right: -4px; background: var(--khabar-accent); color: #fff; font-size: 11px; border-radius: 10px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; padding: 0 4px; }
+.khabar-bell-list { position: absolute; bottom: 52px; left: 0; width: 300px; max-width: calc(100vw - 32px); max-height: 360px; overflow: auto; background: #fff; border: 1px solid var(--khabar-line); border-radius: var(--khabar-radius); box-shadow: 0 12px 30px rgba(0, 0, 0, .18); padding: 6px; text-align: right; }
+.khabar-bell-item { display: block; padding: 8px; border-radius: 8px; color: var(--khabar-ink); text-decoration: none; font-size: .85em; }
+.khabar-bell-item:hover { background: var(--khabar-soft); }
+.khabar-bell-item span { display: block; color: var(--khabar-muted); white-space: pre-line; }
+.khabar-floating { position: fixed; left: 16px; bottom: 16px; z-index: 9998; }
