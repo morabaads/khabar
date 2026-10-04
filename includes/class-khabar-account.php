@@ -134,6 +134,7 @@ class Khabar_Account {
 		$wpdb->update( Khabar_Install::table( 'subscriptions' ), array( 'user_id' => $user->ID ), array( 'owner_key' => $key, 'user_id' => 0 ) ); // phpcs:ignore
 		$wpdb->update( Khabar_Install::table( 'notifications' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
 		$wpdb->update( Khabar_Install::table( 'push' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
+		Khabar_Messenger::move_owner( $key, 'u:' . $user->ID );
 	}
 
 	/**
@@ -161,6 +162,14 @@ class Khabar_Account {
 		$subs     = Khabar_Subscriptions::for_owner( $owner );
 		$notes    = Khabar_Channel_Onsite::latest( isset( $owner['owner_key'] ) ? $owner['owner_key'] : '', 10 );
 		$channels = array_intersect_key( Khabar_Settings::channels(), array_flip( (array) Khabar_Settings::get( 'channels_enabled' ) ) );
+		$messengers = array();
+		foreach ( array( 'telegram', 'bale' ) as $network ) {
+			if ( Khabar_Messenger::personal_ready( $network ) ) {
+				$messengers[] = $network;
+			} else {
+				unset( $channels[ $network ] );
+			}
+		}
 		include Khabar_Utils::template( 'my-alerts.php' );
 		return ob_get_clean();
 	}

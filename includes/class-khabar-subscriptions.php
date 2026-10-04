@@ -232,6 +232,7 @@ class Khabar_Subscriptions {
 			return new WP_Error( 'khabar_db', __( 'خطا در ذخیره درخواست.', 'khabar' ) );
 		}
 		$id = (int) $wpdb->insert_id;
+		wp_cache_delete( 'khabar_wc_' . (int) $data['product_id'] . '_0', 'khabar' );
 		do_action( 'khabar_subscription_created', $id, $row );
 		return $id;
 	}
@@ -353,11 +354,11 @@ class Khabar_Subscriptions {
 	 * @param int|null $variation_id Variation.
 	 * @return int
 	 */
-	public static function waiting_count( $product_id, $variation_id = null ) {
+	public static function waiting_count( $product_id, $variation_id = null, $fresh = false ) {
 		global $wpdb;
 		$table = Khabar_Install::table( 'subscriptions' );
 		$key   = 'khabar_wc_' . $product_id . '_' . (int) $variation_id;
-		$count = wp_cache_get( $key, 'khabar' );
+		$count = $fresh ? false : wp_cache_get( $key, 'khabar' );
 		if ( false !== $count ) {
 			return (int) $count;
 		}

@@ -22,6 +22,7 @@ class Khabar_Admin {
 		add_action( 'admin_post_khabar_retry', array( __CLASS__, 'retry' ) );
 		add_action( 'admin_post_khabar_run_product', array( __CLASS__, 'run_product' ) );
 		add_action( 'admin_post_khabar_test', array( __CLASS__, 'test_send' ) );
+		add_action( 'admin_post_khabar_set_webhooks', array( __CLASS__, 'set_webhooks' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
 	}
 
@@ -482,9 +483,22 @@ class Khabar_Admin {
 							<option value="sms"><?php esc_html_e( 'پیامک', 'khabar' ); ?></option>
 							<option value="email"><?php esc_html_e( 'ایمیل', 'khabar' ); ?></option>
 							<option value="whatsapp"><?php esc_html_e( 'واتساپ', 'khabar' ); ?></option>
+							<option value="telegram"><?php esc_html_e( 'تلگرام (chat id یا @channel)', 'khabar' ); ?></option>
+							<option value="bale"><?php esc_html_e( 'بله (chat id یا @channel)', 'khabar' ); ?></option>
+							<option value="eitaa"><?php esc_html_e( 'ایتا (شناسه کانال)', 'khabar' ); ?></option>
 						</select>
 						<input type="text" name="to" dir="ltr" placeholder="09xxxxxxxxx / email" required>
 						<?php submit_button( __( 'ارسال تست', 'khabar' ), 'secondary', '', false ); ?>
+					</form>
+					<h2><?php esc_html_e( 'ربات‌های پیام‌رسان', 'khabar' ); ?></h2>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="khabar_set_webhooks">
+						<?php wp_nonce_field( 'khabar_set_webhooks' ); ?>
+						<p class="description"><?php esc_html_e( 'پس از ذخیره توکن‌ها این دکمه را بزنید تا تلگرام/بله پیام‌های کاربران (Start) را به سایت شما بفرستند.', 'khabar' ); ?></p>
+						<?php foreach ( array( 'telegram', 'bale' ) as $khabar_net ) : ?>
+							<p><code dir="ltr" style="font-size:11px"><?php echo esc_html( preg_replace( '/secret=[^&]+/', 'secret=…', Khabar_Messenger::webhook_url( $khabar_net ) ) ); ?></code></p>
+						<?php endforeach; ?>
+						<?php submit_button( __( 'ثبت وب‌هوک ربات‌ها', 'khabar' ), 'secondary', '', false ); ?>
 					</form>
 					<?php $keys = Khabar_Push::keys(); ?>
 					<p class="description">
@@ -576,6 +590,26 @@ class Khabar_Admin {
 	}
 
 	/**
+	 * Register Telegram / Bale webhooks.
+	 */
+	public static function set_webhooks() {
+		self::guard( 'khabar_set_webhooks' );
+		$back    = admin_url( 'admin.php?page=khabar-settings&tab=channels' );
+		$results = Khabar_Messenger::register_webhooks();
+		if ( ! $results ) {
+			self::back( $back, __( 'هیچ توکن رباتی وارد نشده است.', 'khabar' ), 'error' );
+		}
+		$msgs  = array();
+		$error = false;
+		foreach ( $results as $network => $result ) {
+			$label  = Khabar_Settings::channels()[ $network ];
+			$error  = $error || is_wp_error( $result );
+			$msgs[] = $label . ': ' . ( is_wp_error( $result ) ? $result->get_error_message() : __( 'وب‌هوک ثبت شد', 'khabar' ) );
+		}
+		self::back( $back, implode( ' | ', $msgs ), $error ? 'error' : 'success' );
+	}
+
+	/**
 	 * Test send.
 	 */
 	public static function test_send() {
@@ -590,6 +624,11 @@ class Khabar_Admin {
 				break;
 			case 'whatsapp':
 				$result = Khabar_Channel_Whatsapp::send( $to, $text );
+				break;
+			case 'telegram':
+			case 'bale':
+			case 'eitaa':
+				$result = Khabar_Messenger::send( $channel, $to, $text );
 				break;
 			default:
 				$result = Khabar_Channel_Sms::send( $to, $text, 'text' );

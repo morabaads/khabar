@@ -78,6 +78,8 @@ class Khabar_Dispatcher {
 		$waves    = new Khabar_Waves();
 		$sent     = 0;
 		$more     = false;
+		$restocked      = array();
+		$waiting_before = Khabar_Subscriptions::waiting_count( $product_id, null, true );
 		$now      = time();
 
 		foreach ( $subs as $sub ) {
@@ -120,11 +122,17 @@ class Khabar_Dispatcher {
 				++$sent;
 				if ( $stock_type ) {
 					$waves->consume( $match );
+					$restocked[ $match->get_id() ] = array( $match, $snap );
 				}
 			}
 		}
 
 		$waves->save();
+
+		// Announce restocks of high-demand items in the store's messenger channels.
+		foreach ( $restocked as $tid => $info ) {
+			Khabar_Messenger::broadcast_restock( $info[0], $info[1], $waiting_before );
+		}
 		Khabar_Reservation::$bypass = false;
 
 		if ( $more ) {
@@ -188,7 +196,8 @@ class Khabar_Dispatcher {
 	 */
 	public static function notify( $sub, $event, $target, $snap, $stock_type = false ) {
 		$exclusive = $stock_type && Khabar_Reservation::open_window( $target );
-		$vars      = self::vars( $sub, $target, $snap, $exclusive );
+		$coupon    = Khabar_Coupons::applies( $sub, $event ) ? Khabar_Coupons::create( $sub, $target ) : '';
+		$vars      = array_merge( self::vars( $sub, $target, $snap, $exclusive ), Khabar_Coupons::vars( $coupon ) );
 		if ( $exclusive ) {
 			/* translators: %d minutes */
 			$vars['exclusive_note_text'] = sprintf( __( '%d دقیقه فرصت خرید اختصاصی دارید.', 'khabar' ), $vars['minutes'] );
@@ -197,6 +206,13 @@ class Khabar_Dispatcher {
 		$message = Khabar_Channels::build_message( $event, $vars );
 		if ( $exclusive ) {
 			$message['text'] .= "\n" . $vars['exclusive_note_text'];
+		}
+		// Templates written before coupons existed get the coupon appended automatically.
+		if ( $coupon && false === strpos( (string) Khabar_Settings::get( 'tpl_' . $event . '_sms' ), '{coupon' ) ) {
+			$message['text'] .= "\n" . $vars['coupon_note'];
+		}
+		if ( $coupon && false === strpos( (string) Khabar_Settings::get( 'tpl_' . $event . '_body' ), '{coupon' ) ) {
+			$message['html'] .= '<p style="background:#fff7e6;padding:12px;border-radius:8px"><strong>' . esc_html( $vars['coupon_note'] ) . '</strong></p>';
 		}
 
 		$sub->notified_target = $target->get_id(); // Logged with each send.

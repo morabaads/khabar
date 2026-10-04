@@ -48,6 +48,10 @@ class Khabar_Channels {
 			if ( in_array( $channel, array( 'onsite', 'push' ), true ) && ! self::owner_of( $sub ) ) {
 				continue;
 			}
+			// Messengers need a linked chat (the customer started our bot).
+			if ( in_array( $channel, array( 'telegram', 'bale' ), true ) && ! Khabar_Messenger::chat_id( self::owner_of( $sub ), $channel ) ) {
+				continue;
+			}
 			// Push only reaches owners that granted browser permission.
 			if ( 'push' === $channel && ! Khabar_Push::has_subscription( self::owner_of( $sub ) ) ) {
 				continue;
@@ -108,6 +112,11 @@ class Khabar_Channels {
 						$onsite = Khabar_Channel_Onsite::create( $recipient, $sub->id, $message['subject'], $message['text'], $message['url'] );
 					}
 					$result = 'push' === $channel ? Khabar_Push::notify_owner( $recipient ) : ( $onsite ? true : new WP_Error( 'onsite', 'db' ) );
+					break;
+				case 'telegram':
+				case 'bale':
+					$recipient = Khabar_Messenger::chat_id( self::owner_of( $sub ), $channel );
+					$result    = Khabar_Messenger::send_to_owner( $channel, self::owner_of( $sub ), $message );
 					break;
 				default:
 					$result = apply_filters( 'khabar_send_channel_' . $channel, new WP_Error( 'khabar_channel', 'Unknown channel' ), $sub, $event, $message );

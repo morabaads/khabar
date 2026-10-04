@@ -3,7 +3,7 @@
  * Product page widget.
  *
  * Available: $product, $s, $types, $variable, $in_stock, $any_oos, $waiting, $total,
- * $show_count, $prefill, $channels, $attributes, $price.
+ * $show_count, $prefill, $channels, $messengers, $attributes, $price.
  *
  * Override by copying to yourtheme/khabar/product-widget.php.
  *
@@ -12,7 +12,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$khabar_uid        = 'khabar-' . $product->get_id();
+$khabar_uid        = isset( $khabar_uid ) ? $khabar_uid : 'khabar-' . $product->get_id();
 $khabar_has_stock  = in_array( 'stock', $types, true );
 $khabar_has_price  = array_intersect( array( 'price_drop', 'price_rise', 'price_change' ), $types );
 $khabar_contact    = $s['contact_mode'];
@@ -115,7 +115,7 @@ $khabar_contact    = $s['contact_mode'];
 				<fieldset class="khabar-channels">
 					<legend><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'khabar' ); ?></legend>
 					<?php foreach ( $channels as $khabar_ch => $khabar_label ) : ?>
-						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite' ), true ) ); ?>> <?php echo esc_html( $khabar_label ); ?></label>
+						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>> <?php echo esc_html( $khabar_label ); ?></label>
 					<?php endforeach; ?>
 				</fieldset>
 				<?php endif; ?>
@@ -138,6 +138,9 @@ $khabar_contact    = $s['contact_mode'];
 			<div class="khabar-done" hidden>
 				<div class="khabar-done-icon">✅</div>
 				<p class="khabar-done-text"></p>
+				<?php if ( $messengers ) : ?>
+					<div class="khabar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
+				<?php endif; ?>
 				<?php if ( is_user_logged_in() ) : ?>
 					<a href="<?php echo esc_url( wc_get_account_endpoint_url( Khabar_Account::ENDPOINT ) ); ?>"><?php esc_html_e( 'مشاهده خبرم کن‌های من', 'khabar' ); ?></a>
 				<?php endif; ?>

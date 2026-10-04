@@ -51,10 +51,16 @@ final class Khabar_Plugin {
 		Khabar_Push::init();
 		Khabar_Privacy::init();
 		Khabar_Cron::init();
+		Khabar_Messenger::init();
+		Khabar_Coupons::init();
+		Khabar_Alternatives::init();
+		Khabar_Price_History::init();
+		Khabar_Elementor::init();
 
 		if ( is_admin() ) {
 			Khabar_Admin::init();
 			Khabar_Product_Metabox::init();
+			Khabar_Forecast_Page::init();
 		}
 
 		add_filter( 'plugin_action_links_' . plugin_basename( KHABAR_FILE ), array( $this, 'action_links' ) );

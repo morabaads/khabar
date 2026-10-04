@@ -3,7 +3,7 @@
  * Plugin Name:       خبرم کن (Khabar) – اعلان موجودی و قیمت ووکامرس
  * Plugin URI:        https://github.com/morabaads/khabar
  * Description:       اعلان هوشمند موجود شدن دقیق تنوع محصول، کاهش/افزایش قیمت و قوانین ترکیبی؛ با پیامک، ایمیل، اعلان داخل سایت، پوش نوتیفیکیشن و واتساپ.
- * Version:           1.0.0
+ * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Khabar
@@ -18,8 +18,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'KHABAR_VERSION', '1.0.0' );
-define( 'KHABAR_DB_VERSION', '1.0.0' );
+define( 'KHABAR_VERSION', '1.1.0' );
+define( 'KHABAR_DB_VERSION', '1.1.0' );
 define( 'KHABAR_FILE', __FILE__ );
 define( 'KHABAR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KHABAR_URL', plugin_dir_url( __FILE__ ) );

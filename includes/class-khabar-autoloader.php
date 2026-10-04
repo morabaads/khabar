@@ -26,7 +26,7 @@ class Khabar_Autoloader {
 			return;
 		}
 		$file = 'class-' . strtolower( str_replace( '_', '-', $class ) ) . '.php';
-		foreach ( array( 'includes/', 'includes/channels/', 'includes/admin/' ) as $dir ) {
+		foreach ( array( 'includes/', 'includes/channels/', 'includes/admin/', 'includes/elementor/' ) as $dir ) {
 			$path = KHABAR_DIR . $dir . $file;
 			if ( is_readable( $path ) ) {
 				require_once $path;

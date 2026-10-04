@@ -2,7 +2,7 @@
 /**
  * "خبرم کن‌های من" panel.
  *
- * Available: $subs, $notes, $channels, $token.
+ * Available: $subs, $notes, $channels, $messengers, $token.
  *
  * @package Khabar
  */
@@ -11,6 +11,9 @@ defined( 'ABSPATH' ) || exit;
 ?>
 <div class="khabar-panel" data-token="<?php echo esc_attr( $token ); ?>">
 	<h3><?php esc_html_e( 'محصولاتی که منتظرشان هستم', 'khabar' ); ?></h3>
+	<?php if ( ! empty( $messengers ) ) : ?>
+		<div class="khabar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
+	<?php endif; ?>
 	<?php if ( ! $subs ) : ?>
 		<p class="khabar-empty"><?php esc_html_e( 'هنوز درخواستی ثبت نکرده‌اید.', 'khabar' ); ?></p>
 	<?php else : ?>

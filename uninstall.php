@@ -13,7 +13,7 @@ if ( empty( $khabar_settings['delete_on_uninstall'] ) ) {
 }
 
 global $wpdb;
-foreach ( array( 'subscriptions', 'log', 'notifications', 'push' ) as $khabar_table ) {
+foreach ( array( 'subscriptions', 'log', 'notifications', 'push', 'price_history', 'messenger' ) as $khabar_table ) {
 	$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'khabar_' . $khabar_table ); // phpcs:ignore
 }
 $khabar_page = (int) get_option( 'khabar_manage_page_id' );
@@ -23,5 +23,5 @@ if ( $khabar_page ) {
 foreach ( array( 'khabar_settings', 'khabar_db_version', 'khabar_vapid', 'khabar_manage_page_id', 'khabar_flush_rewrite' ) as $khabar_option ) {
 	delete_option( $khabar_option );
 }
-$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('_khabar_wave','_khabar_exclusive_until')" ); // phpcs:ignore
+$wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('_khabar_wave','_khabar_exclusive_until','_khabar_last_price','_khabar_broadcast_at')" ); // phpcs:ignore
 wp_clear_scheduled_hook( 'khabar_daily' );

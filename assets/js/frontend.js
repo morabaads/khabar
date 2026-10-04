@@ -264,13 +264,237 @@
 		this.$form.prop('hidden', true);
 		this.$otp.prop('hidden', true);
 		this.$done.prop('hidden', false).find('.khabar-done-text').text(message);
+		initConnect(this.$done.find('.khabar-connect'), '');
 	};
+
+
+	/* ---------- Price history chart (single series step line) ---------- */
+
+	var SVGNS = 'http://www.w3.org/2000/svg';
+
+	function svg(tag, attrs, parent) {
+		var el = document.createElementNS(SVGNS, tag);
+		for (var k in attrs) { if (attrs.hasOwnProperty(k)) { el.setAttribute(k, attrs[k]); } }
+		if (parent) { parent.appendChild(el); }
+		return el;
+	}
+
+	function niceStep(range, count) {
+		var raw = range / Math.max(1, count);
+		var pow = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+		var n = raw / pow;
+		return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
+	}
+
+	function PriceHistory($root) {
+		this.$root = $root;
+		this.cfg = $root.data('config');
+		this.fmtDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'short' });
+		this.fmtDateLong = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { day: 'numeric', month: 'long', year: 'numeric' });
+		this.fmtNum = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: this.cfg.decimals });
+		this.fmtCompact = new Intl.NumberFormat('fa-IR', { notation: 'compact', maximumFractionDigits: 1 });
+		this.show(this.cfg['default']);
+		var self = this;
+		var $vform = $('form.variations_form[data-product_id="' + $root.data('product') + '"]');
+		$vform.on('found_variation', function (e, v) { if (self.cfg.series[v.variation_id]) { self.show(v.variation_id); } });
+		if (window.ResizeObserver) {
+			var last = 0;
+			new ResizeObserver(function (entries) {
+				var w = Math.round(entries[0].contentRect.width);
+				if (Math.abs(w - last) > 4) { last = w; self.draw(); }
+			}).observe($root.find('.khabar-ph-plot')[0]);
+		}
+	}
+
+	PriceHistory.prototype.money = function (v) { return this.fmtNum.format(v) + ' ' + this.cfg.currency; };
+
+	PriceHistory.prototype.show = function (id) {
+		var s = this.cfg.series[id];
+		if (!s) { return; }
+		this.points = s.points;
+		this.$root.find('.khabar-ph-variation').text(s.label ? '— ' + s.label : '');
+		this.stats();
+		this.table();
+		this.draw();
+	};
+
+	PriceHistory.prototype.stats = function () {
+		var p = this.points;
+		var prices = p.map(function (x) { return x[1]; });
+		var cur = prices[prices.length - 1];
+		var min = Math.min.apply(null, prices);
+		var max = Math.max.apply(null, prices);
+		// Time-weighted average of the step function.
+		var sum = 0, span = 0;
+		for (var i = 0; i < p.length - 1; i++) { var d = p[i + 1][0] - p[i][0]; sum += p[i][1] * d; span += d; }
+		var avg = span ? sum / span : cur;
+		this.min = min;
+		var tiles = [
+			['قیمت فعلی', this.money(cur)],
+			['کمترین', this.money(min)],
+			['بیشترین', this.money(max)]
+		];
+		var $stats = this.$root.find('.khabar-ph-stats').empty();
+		tiles.forEach(function (t) {
+			$stats.append($('<div class="khabar-ph-tile">').append($('<span>').text(t[0])).append($('<strong>').text(t[1])));
+		});
+		var $ins = this.$root.find('.khabar-ph-insight').removeClass('is-good is-info');
+		if (prices.length < 3 && min === max) {
+			$ins.prop('hidden', false).addClass('is-info').text('ℹ️ قیمت در این بازه تغییری نداشته است.');
+		} else if (cur <= min) {
+			$ins.prop('hidden', false).addClass('is-good').text('✅ قیمت فعلی کمترین قیمت ' + this.fmtNum.format(this.cfg.days) + ' روز اخیر است.');
+		} else if (avg && cur > avg * 1.02) {
+			$ins.prop('hidden', false).addClass('is-info').text('ℹ️ قیمت فعلی ' + this.fmtNum.format(Math.round((cur / avg - 1) * 100)) + '٪ بالاتر از میانگین این بازه است.');
+		} else if (avg && cur < avg * 0.98) {
+			$ins.prop('hidden', false).addClass('is-good').text('✅ قیمت فعلی ' + this.fmtNum.format(Math.round((1 - cur / avg) * 100)) + '٪ پایین‌تر از میانگین این بازه است.');
+		} else {
+			$ins.prop('hidden', true);
+		}
+	};
+
+	PriceHistory.prototype.table = function () {
+		var self = this;
+		var $tb = this.$root.find('.khabar-ph-table tbody').empty();
+		var changes = this.points.filter(function (pt, i, a) { return i === 0 || pt[1] !== a[i - 1][1]; });
+		changes.slice().reverse().forEach(function (pt) {
+			$tb.append($('<tr>').append($('<td>').text(self.fmtDateLong.format(new Date(pt[0])))).append($('<td>').text(self.money(pt[1]))));
+		});
+	};
+
+	PriceHistory.prototype.valueAt = function (t) {
+		var p = this.points, v = p[0][1];
+		for (var i = 0; i < p.length && p[i][0] <= t; i++) { v = p[i][1]; }
+		return v;
+	};
+
+	PriceHistory.prototype.draw = function () {
+		var self = this;
+		var $plot = this.$root.find('.khabar-ph-plot');
+		var W = Math.max(260, Math.round($plot.width() || 600));
+		var H = W < 480 ? 200 : 240;
+		var m = { l: 56, r: 16, t: 48, b: 28 }; // Top band holds the hover tooltip.
+		var p = this.points;
+		var now = Date.now();
+		var t0 = Math.min(p[0][0], now - this.cfg.days * 864e5);
+		var prices = p.map(function (x) { return x[1]; });
+		var lo = Math.min.apply(null, prices), hi = Math.max.apply(null, prices);
+		var pad = (hi - lo) * 0.15 || hi * 0.05 || 1;
+		var step = niceStep(hi - lo + 2 * pad, 4);
+		var y0 = Math.max(0, Math.floor((lo - pad) / step) * step), y1 = Math.ceil((hi + pad) / step) * step;
+		var X = function (t) { return m.l + (t - t0) / (now - t0 || 1) * (W - m.l - m.r); };
+		var Y = function (v) { return m.t + (1 - (v - y0) / (y1 - y0 || 1)) * (H - m.t - m.b); };
+
+		$plot.empty();
+		var root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: H, role: 'img', 'aria-label': 'نمودار تاریخچه قیمت' });
+
+		// Recessive grid + clean y ticks.
+		var g = svg('g', { 'class': 'khabar-ph-grid' }, root);
+		for (var v = y0; v <= y1 + step / 2; v += step) {
+			svg('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, g);
+			svg('text', { x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end', 'class': 'khabar-ph-tick' }, g).textContent = this.fmtCompact.format(v);
+		}
+		// X ticks: ~4 dates.
+		for (var i = 0; i <= 3; i++) {
+			var tt = t0 + (now - t0) * i / 3;
+			svg('text', { x: X(tt), y: H - 8, 'text-anchor': i === 0 ? 'start' : i === 3 ? 'end' : 'middle', 'class': 'khabar-ph-tick' }, g).textContent = this.fmtDate.format(new Date(tt));
+		}
+
+		// Step path: the price holds until the next change.
+		var d = 'M' + X(t0) + ',' + Y(p[0][1]);
+		for (var k = 1; k < p.length; k++) { d += 'H' + X(p[k][0]) + 'V' + Y(p[k][1]); }
+		d += 'H' + X(now);
+		svg('path', { d: d + 'V' + Y(y0) + 'H' + X(t0) + 'Z', 'class': 'khabar-ph-area' }, root);
+		svg('path', { d: d, 'class': 'khabar-ph-line' }, root);
+
+		// Lowest point marker (selective label), only when it isn't the current price.
+		var cur = prices[prices.length - 1];
+		if (this.min < cur) {
+			var idx = prices.indexOf(this.min);
+			var tx = X(p[idx][0]);
+			svg('circle', { cx: tx, cy: Y(this.min), r: 4, 'class': 'khabar-ph-dot' }, root);
+			svg('text', { x: Math.min(Math.max(tx, m.l + 30), W - m.r - 30), y: Y(this.min) + 18, 'text-anchor': 'middle', 'class': 'khabar-ph-label-muted' }, root).textContent = 'کمترین';
+		}
+		// End dot + current value label.
+		svg('circle', { cx: X(now), cy: Y(cur), r: 4, 'class': 'khabar-ph-dot' }, root);
+		// Put the label on the side away from the previous step so it never sits on the line.
+		var before = prices.length > 1 ? prices[prices.length - 2] : cur;
+		for (var b = prices.length - 2; b >= 0 && before === cur; b--) { before = prices[b]; }
+		var below = before > cur && Y(cur) + 22 < H - m.b;
+		if (W >= 480) { // On narrow screens the "current price" tile already carries this value.
+			svg('text', { x: X(now) - 8, y: below ? Y(cur) + 20 : Y(cur) - 10, 'text-anchor': 'end', 'class': 'khabar-ph-label' }, root).textContent = this.money(cur);
+		}
+
+		// Crosshair + tooltip (snaps to the hovered day).
+		var cross = svg('line', { y1: m.t, y2: H - m.b, 'class': 'khabar-ph-cross', visibility: 'hidden' }, root);
+		var hot = svg('circle', { r: 4, 'class': 'khabar-ph-dot', visibility: 'hidden' }, root);
+		var hit = svg('rect', { x: m.l, y: 0, width: W - m.l - m.r, height: H, fill: 'transparent', tabindex: 0, 'aria-label': 'برای مشاهده قیمت هر روز، اشاره‌گر را حرکت دهید یا از کلیدهای جهت استفاده کنید' }, root);
+		$plot.append(root);
+		var $tip = $('<div class="khabar-ph-tip" role="status" hidden>').appendTo($plot);
+		var focusT = now;
+
+		function at(t) {
+			t = Math.max(t0, Math.min(now, t));
+			t = Math.round(t / 864e5) * 864e5;
+			t = Math.max(t0, Math.min(now, t));
+			focusT = t;
+			var val = self.valueAt(t), x = X(t);
+			cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.setAttribute('visibility', 'visible');
+			hot.setAttribute('cx', x); hot.setAttribute('cy', Y(val)); hot.setAttribute('visibility', 'visible');
+			$tip.empty().append($('<span>').text(self.fmtDateLong.format(new Date(t)))).append($('<strong>').text(self.money(val))).prop('hidden', false);
+			var scale = ($plot.width() || W) / W;
+			var left = x * scale, tw = $tip.outerWidth();
+			$tip.css({ left: Math.max(0, Math.min(left - tw / 2, $plot.width() - tw)) + 'px', top: '0px' });
+		}
+		function hide() { cross.setAttribute('visibility', 'hidden'); hot.setAttribute('visibility', 'hidden'); $tip.prop('hidden', true); }
+		hit.addEventListener('pointermove', function (e) {
+			var r = root.getBoundingClientRect();
+			var x = (e.clientX - r.left) * W / r.width;
+			at(t0 + (x - m.l) / (W - m.l - m.r) * (now - t0));
+		});
+		hit.addEventListener('pointerleave', hide);
+		hit.addEventListener('blur', hide);
+		hit.addEventListener('focus', function () { at(focusT); });
+		hit.addEventListener('keydown', function (e) {
+			if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+				e.preventDefault();
+				at(focusT + (e.key === 'ArrowRight' ? 1 : -1) * 864e5);
+			}
+		});
+	};
+
+	/* ---------- Messenger connect (Telegram / Bale) ---------- */
+
+	function initConnect($box, token) {
+		var networks = $box.data('networks') || [];
+		if (!networks.length) { return; }
+		var q = token ? '?token=' + encodeURIComponent(token) : '';
+		$box.empty();
+		var pending = networks.length;
+		networks.forEach(function (net) {
+			api('messenger/link' + q, 'POST', { network: net }).then(function (res) {
+				var name = D.i18n.networks[net] || net;
+				var $a = $('<a class="khabar-connect-btn" target="_blank" rel="noopener">').attr('data-network', net);
+				if (res.connected) {
+					$a.addClass('is-connected').text(D.i18n.connected.replace('%s', name));
+				} else if (res.url) {
+					$a.attr('href', res.url).text(D.i18n.connect.replace('%s', name));
+				} else { return; }
+				$box.append($a);
+			}).catch(function () {}).then(function () {
+				if (--pending === 0 && $box.children().length) {
+					if ($box.find('a:not(.is-connected)').length) { $box.append($('<p class="khabar-connect-hint">').text(D.i18n.connectTip)); }
+					$box.prop('hidden', false);
+				}
+			});
+		});
+	}
 
 	/* ---------- Customer panel (Flow 4) ---------- */
 
 	function initPanel($panel) {
 		var token = $panel.data('token') || '';
 		var q = token ? '?token=' + encodeURIComponent(token) : '';
+		initConnect($panel.find('.khabar-connect'), token);
 
 		$panel.on('click', '.khabar-edit', function () {
 			$(this).closest('.khabar-sub').find('.khabar-edit-form').prop('hidden', function (_, v) { return !v; });
@@ -323,9 +547,23 @@
 		$(document).on('click', function (e) { if (!$(e.target).closest($bell).length) { $list.prop('hidden', true); } });
 	}
 
-	$(function () {
-		$('.khabar').each(function () { new Widget($(this)); });
-		$('.khabar-panel').each(function () { initPanel($(this)); });
-		$('[data-khabar-bell]').each(function () { initBell($(this)); });
-	});
+	// Initialise every Khabar component inside a scope once (also used by the Elementor editor).
+	function init($scope) {
+		$scope = $scope && $scope.length ? $scope : $(document);
+		var once = function (sel, fn) {
+			$scope.find(sel).addBack(sel).each(function () {
+				var $el = $(this);
+				if ($el.data('khabarReady')) { return; }
+				$el.data('khabarReady', true);
+				fn($el);
+			});
+		};
+		once('.khabar', function ($el) { new Widget($el); });
+		once('.khabar-panel', initPanel);
+		once('[data-khabar-bell]', initBell);
+		once('.khabar-ph', function ($el) { try { new PriceHistory($el); } catch (e) { $el.remove(); } });
+	}
+
+	window.Khabar = { init: init };
+	$(function () { init($(document)); });
 }(jQuery));

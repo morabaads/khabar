@@ -63,6 +63,13 @@ class Khabar_Frontend {
 					'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'khabar' ),
 					'any'        => __( 'هر کدام', 'khabar' ),
 					'noNotes'    => __( 'اعلانی ندارید.', 'khabar' ),
+					'connect'    => __( 'دریافت در %s', 'khabar' ),
+					'connected'  => __( '%s متصل است ✓', 'khabar' ),
+					'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'khabar' ),
+					'networks'   => array(
+						'telegram' => __( 'تلگرام', 'khabar' ),
+						'bale'     => __( 'بله', 'khabar' ),
+					),
 				),
 			)
 		);
@@ -191,11 +198,11 @@ class Khabar_Frontend {
 	 * @param WC_Product $product Product.
 	 * @return string
 	 */
-	public static function render( $product ) {
+	public static function render( $product, $args = array() ) {
 		if ( $product->is_type( 'variation' ) ) {
 			$product = wc_get_product( $product->get_parent_id() );
 		}
-		if ( ! $product || isset( self::$rendered[ $product->get_id() ] ) ) {
+		if ( ! $product || ( isset( self::$rendered[ $product->get_id() ] ) && empty( $args['force'] ) ) ) {
 			return '';
 		}
 		if ( ! $product->is_type( array( 'simple', 'variable' ) ) && ! apply_filters( 'khabar_supports_product', false, $product ) ) {
@@ -204,7 +211,7 @@ class Khabar_Frontend {
 		self::$rendered[ $product->get_id() ] = true;
 		self::enqueue();
 
-		$s        = Khabar_Settings::all();
+		$s        = array_merge( Khabar_Settings::all(), array_filter( (array) $args, function ( $v ) { return null !== $v && '' !== $v; } ) );
 		$types    = (array) $s['enabled_types'];
 		$variable = $product->is_type( 'variable' );
 		$in_stock = $variable ? true : $product->is_in_stock();
@@ -233,12 +240,26 @@ class Khabar_Frontend {
 		if ( isset( $channels['push'] ) && ! Khabar_Push::enabled() ) {
 			unset( $channels['push'] );
 		}
+		foreach ( array( 'telegram', 'bale' ) as $network ) {
+			if ( isset( $channels[ $network ] ) && ! Khabar_Messenger::personal_ready( $network ) ) {
+				unset( $channels[ $network ] );
+			}
+		}
+		$messengers = array_values( array_intersect( array( 'telegram', 'bale' ), array_keys( $channels ) ) );
 		$attributes = $variable ? self::attribute_options( $product ) : array();
 		$price      = '' === $product->get_price() ? '' : (float) $product->get_price();
 
+		$khabar_uid = ! empty( $args['uid'] ) ? sanitize_html_class( $args['uid'] ) : 'khabar-' . $product->get_id();
 		ob_start();
 		include Khabar_Utils::template( 'product-widget.php' );
-		return ob_get_clean();
+		$html = ob_get_clean();
+		if ( empty( $args['hide_extras'] ) ) {
+			$html .= Khabar_Alternatives::render_block( $product );
+			if ( Khabar_Settings::get( 'price_history_enabled', 1 ) && 'widget' === Khabar_Settings::get( 'price_history_display' ) ) {
+				$html .= Khabar_Price_History::render( $product );
+			}
+		}
+		return $html;
 	}
 
 	/**

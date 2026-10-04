@@ -34,6 +34,7 @@ class Khabar_Install {
 		if ( function_exists( 'as_unschedule_all_actions' ) ) {
 			as_unschedule_all_actions( 'khabar_check_product' );
 			as_unschedule_all_actions( 'khabar_sweep' );
+			as_unschedule_all_actions( 'khabar_send_alternatives' );
 		}
 		flush_rewrite_rules();
 	}
@@ -70,6 +71,8 @@ class Khabar_Install {
 		$log    = self::table( 'log' );
 		$notes  = self::table( 'notifications' );
 		$push   = self::table( 'push' );
+		$prices = self::table( 'price_history' );
+		$links  = self::table( 'messenger' );
 
 		dbDelta(
 			"CREATE TABLE {$subs} (
@@ -98,6 +101,8 @@ class Khabar_Install {
 			clicked_at datetime NULL,
 			order_id bigint(20) unsigned NOT NULL DEFAULT 0,
 			order_value decimal(19,4) NULL,
+			coupon_code varchar(40) NOT NULL DEFAULT '',
+			alt_sent_at datetime NULL,
 			token varchar(64) NOT NULL DEFAULT '',
 			ip varchar(45) NOT NULL DEFAULT '',
 			created_at datetime NOT NULL,
@@ -164,6 +169,43 @@ class Khabar_Install {
 			PRIMARY KEY  (id),
 			UNIQUE KEY endpoint_hash (endpoint_hash),
 			KEY owner_key (owner_key)
+			) {$charset};"
+		);
+
+		self::create_tables_v11( $prices, $links, $charset );
+	}
+
+	/**
+	 * Tables added in 1.1.
+	 *
+	 * @param string $prices  Price history table.
+	 * @param string $links   Messenger links table.
+	 * @param string $charset Charset.
+	 */
+	private static function create_tables_v11( $prices, $links, $charset ) {
+		dbDelta(
+			"CREATE TABLE {$prices} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			product_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			price decimal(19,4) NOT NULL DEFAULT 0,
+			regular_price decimal(19,4) NULL,
+			recorded_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			KEY product_time (product_id,recorded_at)
+			) {$charset};"
+		);
+
+		dbDelta(
+			"CREATE TABLE {$links} (
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			owner_key varchar(64) NOT NULL DEFAULT '',
+			network varchar(20) NOT NULL DEFAULT '',
+			chat_id varchar(64) NOT NULL DEFAULT '',
+			username varchar(100) NOT NULL DEFAULT '',
+			created_at datetime NOT NULL,
+			PRIMARY KEY  (id),
+			UNIQUE KEY owner_network (owner_key,network),
+			KEY chat (network,chat_id)
 			) {$charset};"
 		);
 	}

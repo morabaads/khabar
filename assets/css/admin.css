@@ -27,3 +27,6 @@
 .khabar-tab-desc { margin-top: 12px; }
 .column-khabar { width: 48px; text-align: center; }
 @media (max-width: 782px) { .khabar-grid { grid-template-columns: 1fr; } }
+.khabar-admin td.num, .khabar-admin th.num { text-align: left; font-variant-numeric: tabular-nums; }
+.khabar-method li { list-style: disc; margin-right: 18px; }
+.khabar-report-filter label { display: inline-flex; gap: 4px; align-items: center; }

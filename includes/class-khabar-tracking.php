@@ -26,14 +26,15 @@ class Khabar_Tracking {
 	 * @param int    $target_id Product/variation id.
 	 * @return string
 	 */
-	public static function link( $sub, $target_id ) {
-		return add_query_arg(
-			array(
-				'kgo' => $sub->token,
-				't'   => (int) $target_id,
-			),
-			home_url( '/' )
+	public static function link( $sub, $target_id, $kind = '' ) {
+		$args = array(
+			'kgo' => $sub->token,
+			't'   => (int) $target_id,
 		);
+		if ( $kind ) {
+			$args['k'] = $kind;
+		}
+		return add_query_arg( $args, home_url( '/' ) );
 	}
 
 	/**
@@ -58,6 +59,7 @@ class Khabar_Tracking {
 			Khabar_Subscriptions::update( $sub->id, array( 'clicked_at' => Khabar_Utils::now() ) );
 		}
 		Khabar_Reservation::grant( $sub->token );
+		Khabar_Coupons::remember( $sub );
 		do_action( 'khabar_clicked', $sub );
 
 		$url = home_url( '/' );
@@ -72,7 +74,7 @@ class Khabar_Tracking {
 			array(
 				'utm_source'   => 'khabar',
 				'utm_medium'   => 'notification',
-				'utm_campaign' => $sub->type,
+				'utm_campaign' => ( isset( $_GET['k'] ) && 'alt' === $_GET['k'] ) ? 'alternatives' : $sub->type, // phpcs:ignore
 			),
 			$url
 		);
@@ -99,6 +101,29 @@ class Khabar_Tracking {
 		$uid   = (int) $order->get_customer_id();
 		$since = Khabar_Utils::now( -1 * max( 1, (int) Khabar_Settings::get( 'conversion_days', 14 ) ) * DAY_IN_SECONDS );
 		$table = Khabar_Install::table( 'subscriptions' );
+
+		// Exact attribution through the personal coupon.
+		foreach ( Khabar_Coupons::subscriptions_in_order( $order ) as $sid ) {
+			$sub = Khabar_Subscriptions::get( $sid );
+			if ( ! $sub || 'purchased' === $sub->status ) {
+				continue;
+			}
+			$value = 0;
+			foreach ( $order->get_items() as $item ) {
+				if ( $item instanceof WC_Order_Item_Product && in_array( (int) $sub->notified_target, array( (int) $item->get_product_id(), (int) $item->get_variation_id() ), true ) ) {
+					$value += (float) $item->get_total();
+				}
+			}
+			Khabar_Subscriptions::update(
+				$sid,
+				array(
+					'status'      => 'purchased',
+					'order_id'    => $order->get_id(),
+					'order_value' => $value,
+				)
+			);
+			do_action( 'khabar_converted', $sid, $order );
+		}
 
 		foreach ( $order->get_items() as $item ) {
 			if ( ! $item instanceof WC_Order_Item_Product ) {

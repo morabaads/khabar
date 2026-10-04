@@ -84,3 +84,66 @@ body.khabar-lock { overflow: hidden; }
 .khabar-bell-item:hover { background: var(--khabar-soft); }
 .khabar-bell-item span { display: block; color: var(--khabar-muted); white-space: pre-line; }
 .khabar-floating { position: fixed; left: 16px; bottom: 16px; z-index: 9998; }
+
+/* Price history chart */
+.khabar-ph {
+	--khabar-ph-surface: #fcfcfb;
+	--khabar-ph-series: #2a78d6;
+	--khabar-ph-grid: #e6e5e0;
+	--khabar-ph-text: #0b0b0b;
+	--khabar-ph-text-2: #52514e;
+	--khabar-ph-good: #0b7a0b;
+	direction: rtl; background: var(--khabar-ph-surface); color: var(--khabar-ph-text);
+	border: 1px solid var(--khabar-ph-grid); border-radius: 12px; padding: 16px; margin: 16px 0; position: relative;
+}
+body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .khabar-ph.khabar-dark {
+	--khabar-ph-surface: #1a1a19;
+	--khabar-ph-series: #3987e5;
+	--khabar-ph-grid: #33322f;
+	--khabar-ph-text: #ffffff;
+	--khabar-ph-text-2: #c3c2b7;
+	--khabar-ph-good: #3fc33f;
+}
+.khabar-ph [hidden] { display: none !important; }
+.khabar-ph-title { font-size: 1em; margin: 0 0 4px; }
+.khabar-ph-variation { font-weight: 400; color: var(--khabar-ph-text-2); font-size: .9em; }
+.khabar-ph-insight { margin: 4px 0 0; font-size: .9em; color: var(--khabar-ph-text-2); }
+.khabar-ph-insight.is-good { color: var(--khabar-ph-text); }
+.khabar-ph-stats { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 12px 0 4px; }
+.khabar-ph-tile span { display: block; font-size: .8em; color: var(--khabar-ph-text-2); }
+.khabar-ph-tile strong { font-size: 1.05em; font-weight: 600; }
+.khabar-ph-plot { position: relative; width: 100%; }
+.khabar-ph-plot svg { display: block; overflow: visible; touch-action: pan-y; }
+.khabar-ph-plot rect:focus { outline: none; }
+.khabar-ph-plot rect:focus-visible { outline: 2px solid var(--khabar-ph-series); outline-offset: 2px; }
+.khabar-ph-grid line { stroke: var(--khabar-ph-grid); stroke-width: 1; shape-rendering: crispEdges; }
+.khabar-ph-tick { fill: var(--khabar-ph-text-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+.khabar-ph-line { fill: none; stroke: var(--khabar-ph-series); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.khabar-ph-area { fill: var(--khabar-ph-series); opacity: .1; stroke: none; }
+.khabar-ph-dot { fill: var(--khabar-ph-series); stroke: var(--khabar-ph-surface); stroke-width: 2; }
+.khabar-ph-cross { stroke: var(--khabar-ph-text-2); stroke-width: 1; }
+.khabar-ph-label { fill: var(--khabar-ph-text); font-size: 12px; font-weight: 600; paint-order: stroke; stroke: var(--khabar-ph-surface); stroke-width: 4px; stroke-linejoin: round; }
+.khabar-ph-label-muted { fill: var(--khabar-ph-text-2); font-size: 11px; paint-order: stroke; stroke: var(--khabar-ph-surface); stroke-width: 4px; stroke-linejoin: round; }
+.khabar-ph-tip { position: absolute; pointer-events: none; background: var(--khabar-ph-surface); color: var(--khabar-ph-text); border: 1px solid var(--khabar-ph-grid); border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .12); white-space: nowrap; direction: rtl; }
+.khabar-ph-tip span { display: block; color: var(--khabar-ph-text-2); }
+.khabar-ph-table-wrap { margin-top: 8px; font-size: .85em; }
+.khabar-ph-table-wrap summary { cursor: pointer; color: var(--khabar-ph-text-2); }
+.khabar-ph-table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+.khabar-ph-table th, .khabar-ph-table td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--khabar-ph-grid); font-variant-numeric: tabular-nums; }
+@media (forced-colors: active) { .khabar-ph-line { stroke: CanvasText; } .khabar-ph-area { display: none; } }
+
+/* Alternatives */
+.khabar-alts { margin: 14px 0; padding: 12px; border: 1px dashed var(--khabar-line); border-radius: var(--khabar-radius); direction: rtl; }
+.khabar-alts-title { margin: 0 0 8px; font-weight: 700; font-size: .92em; }
+.khabar-alts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.khabar-alts a { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; text-decoration: none; color: inherit; }
+.khabar-alts img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+.khabar-alts-price { font-size: .9em; white-space: nowrap; }
+
+/* Messenger connect */
+.khabar-connect { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 4px; }
+.khabar-connect-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 20px; padding: 7px 14px; font-size: .9em; text-decoration: none; color: #fff !important; }
+.khabar-connect-btn[data-network="telegram"] { background: #229ed9; }
+.khabar-connect-btn[data-network="bale"] { background: #10a38b; }
+.khabar-connect-btn.is-connected { background: #e7f8ee; color: #05662f !important; pointer-events: none; }
+.khabar-connect-hint { width: 100%; text-align: center; font-size: .8em; color: var(--khabar-muted); margin: 0; }

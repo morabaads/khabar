@@ -31,6 +31,8 @@ class Khabar_Settings {
 			'price_rise'    => __( 'افزایش قیمت', 'khabar' ),
 			'price_change'  => __( 'تغییر قیمت', 'khabar' ),
 			'combo'         => __( 'قانون ترکیبی', 'khabar' ),
+			'alternatives'  => __( 'پیشنهاد محصول جایگزین', 'khabar' ),
+			'broadcast'     => __( 'اعلام موجود شدن در کانال', 'khabar' ),
 			'otp'           => __( 'کد تایید', 'khabar' ),
 		);
 	}
@@ -47,6 +49,8 @@ class Khabar_Settings {
 			'onsite'   => __( 'اعلان داخل سایت', 'khabar' ),
 			'push'     => __( 'پوش نوتیفیکیشن', 'khabar' ),
 			'whatsapp' => __( 'واتساپ', 'khabar' ),
+			'telegram' => __( 'تلگرام', 'khabar' ),
+			'bale'     => __( 'بله', 'khabar' ),
 		);
 	}
 
@@ -86,6 +90,16 @@ class Khabar_Settings {
 				'sms'     => "شرایط مورد نظر شما برای {product_name} {variation} برقرار شد. قیمت: {price} | موجودی: {stock}\n{link}\n{site_name}",
 				'subject' => 'شرایط شما برای {product_name} برقرار شد',
 				'body'    => "<p>{customer_name} عزیز،</p><p>همه شرایطی که برای <strong>{product_name}</strong> {variation} تعیین کرده بودید برقرار شد.</p><ul><li>قیمت: {price}</li><li>موجودی: {stock}</li></ul><p><a href=\"{link}\">مشاهده و خرید</a></p>{exclusive_note}",
+			),
+			'alternatives'  => array(
+				'sms'     => "{customer_name} عزیز، {product_name} {variation} هنوز موجود نشده است. پیشنهاد مشابه موجود:\n{alt_name} — {alt_price}\n{alt_link}\nهمچنان منتظر موجود شدن هستیم و خبرتان می‌کنیم.\n{site_name}",
+				'subject' => 'تا موجود شدن {product_name}، این‌ها را ببینید',
+				'body'    => "<p>{customer_name} عزیز،</p><p><strong>{product_name}</strong> {variation} هنوز موجود نشده است. تا آن زمان این محصولات مشابه موجود هستند:</p>{alternatives_html}<p>درخواست شما همچنان فعال است و به محض موجود شدن خبرتان می‌کنیم.</p>",
+			),
+			'broadcast'     => array(
+				'sms'     => "🔔 {product_name} {variation} دوباره موجود شد!\nقیمت: {price}\n{waiting} نفر منتظرش بودند.\n{link}",
+				'subject' => '{product_name} موجود شد',
+				'body'    => '',
 			),
 			'otp'           => array(
 				'sms'     => "کد تایید خبرم کن: {code}\n{site_name}",
@@ -323,6 +337,68 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
 					),
+					'_msg_heading'       => array(
+						'type'  => 'heading',
+						'label' => __( 'پیام‌رسان‌ها (تلگرام، بله، ایتا)', 'khabar' ),
+						'desc'  => __( 'کاربر با یک کلیک ربات را استارت می‌کند و حسابش متصل می‌شود. پس از وارد کردن توکن، دکمه «ثبت وب‌هوک ربات‌ها» را بزنید (سایت باید HTTPS باشد).', 'khabar' ),
+					),
+					'telegram_token'     => array(
+						'type'  => 'password',
+						'label' => __( 'توکن ربات تلگرام', 'khabar' ),
+						'desc'  => __( 'از @BotFather', 'khabar' ),
+					),
+					'telegram_bot'       => array(
+						'type'  => 'text',
+						'label' => __( 'نام کاربری ربات تلگرام (بدون @)', 'khabar' ),
+					),
+					'telegram_api_base'  => array(
+						'type'    => 'text',
+						'label'   => __( 'آدرس API تلگرام', 'khabar' ),
+						'default' => 'https://api.telegram.org',
+						'desc'    => __( 'اگر سرور شما در ایران است و به تلگرام دسترسی ندارد، آدرس یک پراکسی معکوس Bot API را وارد کنید.', 'khabar' ),
+					),
+					'bale_token'         => array(
+						'type'  => 'password',
+						'label' => __( 'توکن ربات بله', 'khabar' ),
+						'desc'  => __( 'از @botfather در بله', 'khabar' ),
+					),
+					'bale_bot'           => array(
+						'type'  => 'text',
+						'label' => __( 'نام کاربری ربات بله (بدون @)', 'khabar' ),
+					),
+					'eitaa_token'        => array(
+						'type'  => 'password',
+						'label' => __( 'توکن ایتایار', 'khabar' ),
+						'desc'  => __( 'API ایتایار فقط امکان ارسال به کانال/گروه را دارد؛ ایتا برای اعلام عمومی در کانال استفاده می‌شود.', 'khabar' ),
+					),
+					'broadcast_networks' => array(
+						'type'    => 'multicheck',
+						'label'   => __( 'اعلام موجود شدن کالاهای پرتقاضا در کانال فروشگاه', 'khabar' ),
+						'options' => array(
+							'telegram' => __( 'کانال تلگرام', 'khabar' ),
+							'bale'     => __( 'کانال بله', 'khabar' ),
+							'eitaa'    => __( 'کانال ایتا', 'khabar' ),
+						),
+						'default' => array(),
+					),
+					'telegram_channel'   => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال تلگرام', 'khabar' ),
+						'desc'  => __( 'مثل ‎@myshop یا ‎-100123…؛ ربات باید ادمین کانال باشد.', 'khabar' ),
+					),
+					'bale_channel'       => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال بله', 'khabar' ),
+					),
+					'eitaa_channel'      => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال ایتا', 'khabar' ),
+					),
+					'broadcast_min_waiting' => array(
+						'type'    => 'number',
+						'label'   => __( 'حداقل تعداد منتظر برای اعلام در کانال', 'khabar' ),
+						'default' => 3,
+					),
 					'_push_heading'      => array(
 						'type'  => 'heading',
 						'label' => __( 'پوش نوتیفیکیشن', 'khabar' ),
@@ -336,8 +412,151 @@ class Khabar_Settings {
 			),
 			'templates' => array(
 				'label'  => __( 'قالب پیام‌ها', 'khabar' ),
-				'desc'   => __( 'متغیرها: {customer_name} {product_name} {variation} {price} {old_price} {regular_price} {target_price} {stock} {link} {site_name} {minutes} {exclusive_note} {manage_link} {code}', 'khabar' ),
+				'desc'   => __( 'متغیرها: {customer_name} {product_name} {variation} {price} {old_price} {regular_price} {target_price} {stock} {link} {site_name} {minutes} {exclusive_note} {manage_link} {code} {coupon} {coupon_amount} {coupon_expiry} {coupon_note} {alt_name} {alt_price} {alt_link} {alternatives_html} {waiting}', 'khabar' ),
 				'fields' => array(),
+			),
+			'growth'    => array(
+				'label'  => __( 'رشد فروش', 'khabar' ),
+				'fields' => array(
+					'_coupon_heading'        => array(
+						'type'  => 'heading',
+						'label' => __( 'کد تخفیف خودکار', 'khabar' ),
+						'desc'  => __( 'برای هر منتظر یک کد یکبار مصرف، محدود به همان محصول و با تاریخ انقضا ساخته و در پیام قرار داده می‌شود.', 'khabar' ),
+					),
+					'coupon_enabled'         => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'ساخت کد تخفیف اختصاصی در پیام', 'khabar' ),
+						'default' => 0,
+					),
+					'coupon_events'          => array(
+						'type'    => 'multicheck',
+						'label'   => __( 'برای کدام اعلان‌ها', 'khabar' ),
+						'options' => array(
+							'back_in_stock' => __( 'موجود شدن', 'khabar' ),
+							'low_stock'     => __( 'موجود شدن تعداد محدود', 'khabar' ),
+							'combo'         => __( 'قانون ترکیبی', 'khabar' ),
+							'price_drop'    => __( 'کاهش قیمت', 'khabar' ),
+						),
+						'default' => array( 'back_in_stock', 'combo' ),
+					),
+					'coupon_type'            => array(
+						'type'    => 'select',
+						'label'   => __( 'نوع تخفیف', 'khabar' ),
+						'options' => array(
+							'percent'       => __( 'درصدی', 'khabar' ),
+							'fixed_product' => __( 'مبلغ ثابت', 'khabar' ),
+						),
+						'default' => 'percent',
+					),
+					'coupon_amount'          => array(
+						'type'    => 'number',
+						'label'   => __( 'مقدار تخفیف (درصد یا مبلغ)', 'khabar' ),
+						'default' => 5,
+					),
+					'coupon_hours'           => array(
+						'type'    => 'number',
+						'label'   => __( 'اعتبار کد (ساعت)', 'khabar' ),
+						'default' => 48,
+					),
+					'coupon_restrict_email'  => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'کد فقط با ایمیل همان مشتری قابل استفاده باشد (در صورت داشتن ایمیل)', 'khabar' ),
+						'default' => 0,
+					),
+					'coupon_individual'      => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'با کدهای تخفیف دیگر ترکیب نشود', 'khabar' ),
+						'default' => 1,
+					),
+					'coupon_auto_apply'      => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'اعمال خودکار کد وقتی مشتری از لینک پیام وارد شود', 'khabar' ),
+						'default' => 1,
+					),
+					'_alt_heading'           => array(
+						'type'  => 'heading',
+						'label' => __( 'پیشنهاد محصول جایگزین', 'khabar' ),
+					),
+					'alt_enabled'            => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'ارسال پیشنهاد جایگزین برای منتظرانی که مدت زیادی منتظر مانده‌اند', 'khabar' ),
+						'default' => 0,
+					),
+					'alt_after_days'         => array(
+						'type'    => 'number',
+						'label'   => __( 'پس از چند روز انتظار', 'khabar' ),
+						'default' => 14,
+					),
+					'alt_count'              => array(
+						'type'    => 'number',
+						'label'   => __( 'تعداد پیشنهاد', 'khabar' ),
+						'default' => 3,
+					),
+					'alt_price_range'        => array(
+						'type'    => 'number',
+						'label'   => __( 'بازه قیمت مشابه (± درصد)', 'khabar' ),
+						'default' => 30,
+					),
+					'alt_show_on_page'       => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'نمایش «جایگزین‌های موجود» در صفحه محصول ناموجود', 'khabar' ),
+						'default' => 1,
+					),
+					'_ph_heading'            => array(
+						'type'  => 'heading',
+						'label' => __( 'تاریخچه قیمت', 'khabar' ),
+					),
+					'price_history_enabled'  => array(
+						'type'    => 'checkbox',
+						'label'   => __( 'ثبت تاریخچه قیمت و نمایش نمودار', 'khabar' ),
+						'default' => 1,
+					),
+					'price_history_display'  => array(
+						'type'    => 'select',
+						'label'   => __( 'محل نمایش نمودار', 'khabar' ),
+						'options' => array(
+							'tab'       => __( 'تب «تاریخچه قیمت» در صفحه محصول', 'khabar' ),
+							'widget'    => __( 'زیر دکمه خبرم کن', 'khabar' ),
+							'shortcode' => __( 'فقط شورت‌کد / المنتور', 'khabar' ),
+						),
+						'default' => 'tab',
+					),
+					'price_history_days'     => array(
+						'type'    => 'number',
+						'label'   => __( 'بازه نمودار (روز)', 'khabar' ),
+						'default' => 90,
+					),
+					'_fc_heading'            => array(
+						'type'  => 'heading',
+						'label' => __( 'پیش‌بینی تقاضا', 'khabar' ),
+					),
+					'forecast_lead_days'     => array(
+						'type'    => 'number',
+						'label'   => __( 'زمان تحویل تامین‌کننده (روز)', 'khabar' ),
+						'default' => 14,
+					),
+					'forecast_cover_days'    => array(
+						'type'    => 'number',
+						'label'   => __( 'موجودی برای چند روز فروش سفارش داده شود', 'khabar' ),
+						'default' => 30,
+					),
+					'forecast_default_conv'  => array(
+						'type'    => 'number',
+						'label'   => __( 'نرخ تبدیل پیش‌فرض منتظر به خریدار (درصد، وقتی داده کافی نیست)', 'khabar' ),
+						'default' => 30,
+					),
+					'forecast_service_level' => array(
+						'type'    => 'select',
+						'label'   => __( 'سطح اطمینان موجودی اطمینان', 'khabar' ),
+						'options' => array(
+							'80' => '80%',
+							'90' => '90%',
+							'95' => '95%',
+							'98' => '98%',
+						),
+						'default' => '90',
+					),
+				),
 			),
 			'advanced'  => array(
 				'label'  => __( 'پیشرفته', 'khabar' ),
