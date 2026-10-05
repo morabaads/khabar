@@ -47,6 +47,21 @@ class Khabar_Dispatcher {
 	 * @return int Number of subscriptions notified.
 	 */
 	public static function check_product( $product_id ) {
+		Khabar_Reservation::$bypass = true;
+		try {
+			return self::do_check_product( $product_id );
+		} finally {
+			Khabar_Reservation::$bypass = false;
+		}
+	}
+
+	/**
+	 * Implementation of check_product (runs with the reservation filter bypassed).
+	 *
+	 * @param int $product_id Parent product id.
+	 * @return int
+	 */
+	private static function do_check_product( $product_id ) {
 		$product = wc_get_product( $product_id );
 		$subs    = Khabar_Subscriptions::active_for_product( $product_id );
 		if ( ! $subs ) {
@@ -56,7 +71,6 @@ class Khabar_Dispatcher {
 			return 0;
 		}
 
-		Khabar_Reservation::$bypass = true;
 
 		$children = array();
 		if ( $product->is_type( 'variable' ) ) {
@@ -133,7 +147,6 @@ class Khabar_Dispatcher {
 		foreach ( $restocked as $tid => $info ) {
 			Khabar_Messenger::broadcast_restock( $info[0], $info[1], $waiting_before );
 		}
-		Khabar_Reservation::$bypass = false;
 
 		if ( $more ) {
 			Khabar_Utils::queue( 'khabar_check_product', array( (int) $product_id ), 30 );

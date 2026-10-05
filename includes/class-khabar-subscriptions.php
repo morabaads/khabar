@@ -233,6 +233,7 @@ class Khabar_Subscriptions {
 		}
 		$id = (int) $wpdb->insert_id;
 		wp_cache_delete( 'khabar_wc_' . (int) $data['product_id'] . '_0', 'khabar' );
+		wp_cache_delete( 'khabar_wc_' . (int) $data['product_id'] . '_' . (int) $data['variation_id'], 'khabar' );
 		do_action( 'khabar_subscription_created', $id, $row );
 		return $id;
 	}
@@ -296,6 +297,10 @@ class Khabar_Subscriptions {
 		$table = Khabar_Install::table( 'subscriptions' );
 		$where = array();
 		$args  = array();
+		if ( ! empty( $owner['sub_id'] ) ) {
+			$where[] = 'id = %d';
+			$args[]  = (int) $owner['sub_id'];
+		}
 		if ( ! empty( $owner['user_id'] ) ) {
 			$where[] = 'user_id = %d';
 			$args[]  = (int) $owner['user_id'];
@@ -331,6 +336,9 @@ class Khabar_Subscriptions {
 	public static function owned_by( $sub, $owner ) {
 		if ( ! $sub ) {
 			return false;
+		}
+		if ( ! empty( $owner['sub_id'] ) && (int) $owner['sub_id'] === $sub->id ) {
+			return true;
 		}
 		if ( ! empty( $owner['user_id'] ) && (int) $owner['user_id'] === $sub->user_id ) {
 			return true;

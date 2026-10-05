@@ -365,7 +365,7 @@ reset_capture();
 list( $code, $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $oid, 'price_change' => 1, 'phone' => '09123334444' ) );
 t( ! empty( $d['need_code'] ), 'guest must verify: ' . ( $d['message'] ?? '' ) );
 $otp = $GLOBALS['khabar_sms'][0]['vars']['code'] ?? '';
-t( 5 === strlen( $otp ), 'OTP sent by SMS' );
+t( 6 === strlen( $otp ), 'OTP sent by SMS' );
 global $wpdb;
 $pending_id = (int) $wpdb->get_var( "SELECT id FROM " . Khabar_Install::table( 'subscriptions' ) . " WHERE phone = '09123334444'" );
 t( 'pending' === sub_status( $pending_id ), 'subscription pending until verified' );

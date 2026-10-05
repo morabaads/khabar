@@ -228,6 +228,9 @@ class Khabar_Alternatives {
 				continue;
 			}
 			$awaited = $sub->variation_id ? wc_get_product( $sub->variation_id ) : $product;
+			if ( ! $awaited ) {
+				continue;
+			}
 			$wanted  = $sub->variation_id && $awaited ? $awaited->get_variation_attributes() : $sub->attributes;
 			$alts    = self::find( $product, $wanted, '' === $awaited->get_price() ? null : (float) $awaited->get_price(), $count );
 			if ( ! $alts ) {
@@ -236,8 +239,10 @@ class Khabar_Alternatives {
 			}
 			if ( self::send( $sub, $awaited, $alts ) ) {
 				++$sent;
+				Khabar_Subscriptions::update( $sub->id, array( 'alt_sent_at' => Khabar_Utils::now() ) );
+			} else {
+				Khabar_Subscriptions::update( $sub->id, array() ); // Retry on a later run.
 			}
-			Khabar_Subscriptions::update( $sub->id, array( 'alt_sent_at' => Khabar_Utils::now() ) );
 		}
 		return $sent;
 	}

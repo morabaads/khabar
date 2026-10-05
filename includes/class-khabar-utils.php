@@ -98,10 +98,10 @@ class Khabar_Utils {
 	 * @return string
 	 */
 	public static function ip() {
-		if ( class_exists( 'WC_Geolocation' ) ) {
-			return (string) WC_Geolocation::get_ip_address();
-		}
-		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		// Forwarded headers are client-controlled; only REMOTE_ADDR is trusted unless a filter says otherwise
+		// (e.g. behind a known reverse proxy / CDN: add_filter( 'khabar_client_ip', ... )).
+		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return (string) apply_filters( 'khabar_client_ip', $ip );
 	}
 
 	/**

@@ -75,6 +75,27 @@ class Khabar_Privacy {
 	}
 
 	/**
+	 * Owner keys (user / guest) of the subscriptions of an email.
+	 *
+	 * @param string $email Email.
+	 * @return string[]
+	 */
+	private static function owner_keys( $email ) {
+		$keys = array();
+		foreach ( Khabar_Subscriptions::for_owner( self::owner( $email ), true ) as $sub ) {
+			$key = Khabar_Channels::owner_of( $sub );
+			if ( $key ) {
+				$keys[ $key ] = $key;
+			}
+		}
+		$user = get_user_by( 'email', $email );
+		if ( $user ) {
+			$keys[ 'u:' . $user->ID ] = 'u:' . $user->ID;
+		}
+		return array_values( $keys );
+	}
+
+	/**
 	 * Export.
 	 *
 	 * @param string $email Email.
@@ -98,6 +119,24 @@ class Khabar_Privacy {
 				),
 			);
 		}
+		global $wpdb;
+		$keys = self::owner_keys( $email );
+		if ( $keys ) {
+			$in    = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+			$notes = Khabar_Install::table( 'notifications' );
+			$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, title, created_at FROM {$notes} WHERE owner_key IN ({$in})", $keys ) ); // phpcs:ignore
+			foreach ( (array) $rows as $row ) {
+				$items[] = array(
+					'group_id'    => 'khabar-notifications',
+					'group_label' => __( 'اعلان‌های خبرم کن', 'khabar' ),
+					'item_id'     => 'khabar-note-' . $row->id,
+					'data'        => array(
+						array( 'name' => __( 'عنوان', 'khabar' ), 'value' => $row->title ),
+						array( 'name' => __( 'تاریخ', 'khabar' ), 'value' => $row->created_at ),
+					),
+				);
+			}
+		}
 		return array(
 			'data' => $items,
 			'done' => true,
@@ -111,7 +150,19 @@ class Khabar_Privacy {
 	 * @return array
 	 */
 	public static function erase( $email ) {
+		global $wpdb;
 		$subs = Khabar_Subscriptions::for_owner( self::owner( $email ), true );
+		$keys = self::owner_keys( $email );
+		$ids  = array_map( 'intval', wp_list_pluck( $subs, 'id' ) );
+		if ( $ids ) {
+			$wpdb->query( 'DELETE FROM ' . Khabar_Install::table( 'log' ) . ' WHERE subscription_id IN (' . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		}
+		if ( $keys ) {
+			$in = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+			foreach ( array( 'notifications', 'push', 'messenger' ) as $name ) {
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . Khabar_Install::table( $name ) . " WHERE owner_key IN ({$in})", $keys ) ); // phpcs:ignore
+			}
+		}
 		Khabar_Subscriptions::delete( wp_list_pluck( $subs, 'id' ) );
 		return array(
 			'items_removed'  => count( $subs ),

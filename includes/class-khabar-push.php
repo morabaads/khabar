@@ -122,6 +122,30 @@ class Khabar_Push {
 	}
 
 	/**
+	 * Is the endpoint a known push service (prevents using the server as an SSRF proxy)?
+	 *
+	 * @param string $endpoint Endpoint URL.
+	 * @return bool
+	 */
+	public static function endpoint_allowed( $endpoint ) {
+		$parts = wp_parse_url( $endpoint );
+		if ( empty( $parts['host'] ) || 'https' !== ( isset( $parts['scheme'] ) ? $parts['scheme'] : '' ) || ! empty( $parts['user'] ) || ( ! empty( $parts['port'] ) && 443 !== (int) $parts['port'] ) ) {
+			return false;
+		}
+		$host    = strtolower( $parts['host'] );
+		$allowed = apply_filters(
+			'khabar_push_hosts',
+			array( 'fcm.googleapis.com', 'android.googleapis.com', 'push.services.mozilla.com', 'push.apple.com', 'notify.windows.com' )
+		);
+		foreach ( $allowed as $domain ) {
+			if ( $host === $domain || substr( $host, -strlen( '.' . $domain ) ) === '.' . $domain ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Store a browser subscription.
 	 *
 	 * @param string $owner_key Owner.
@@ -131,7 +155,7 @@ class Khabar_Push {
 	public static function save_subscription( $owner_key, $sub ) {
 		global $wpdb;
 		$endpoint = isset( $sub['endpoint'] ) ? esc_url_raw( $sub['endpoint'] ) : '';
-		if ( ! $owner_key || ! $endpoint || 0 !== strpos( $endpoint, 'https://' ) ) {
+		if ( ! $owner_key || ! $endpoint || ! self::endpoint_allowed( $endpoint ) ) {
 			return false;
 		}
 		$table = Khabar_Install::table( 'push' );
@@ -188,7 +212,7 @@ class Khabar_Push {
 			if ( ! $jwt ) {
 				continue;
 			}
-			$res  = wp_remote_post(
+			$res  = wp_safe_remote_post(
 				$row->endpoint,
 				array(
 					'timeout' => 10,

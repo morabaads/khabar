@@ -324,16 +324,26 @@ class Khabar_Rest {
 		if ( ! self::rate_ok( 'otp', 5 ) ) {
 			return new WP_Error( 'khabar', __( 'تعداد درخواست کد زیاد است.', 'khabar' ) );
 		}
+		// Per-contact limits (independent of the client IP): 60s between codes, 5 codes per hour.
+		$ckey = 'khabar_otpc_' . md5( strtolower( $contact ) );
+		$meta = get_transient( $ckey );
+		$meta = is_array( $meta ) ? $meta : array( 'n' => 0, 'last' => 0 );
+		if ( time() - (int) $meta['last'] < 60 || $meta['n'] >= 5 ) {
+			return new WP_Error( 'khabar', __( 'کد اخیراً ارسال شده است؛ کمی بعد دوباره تلاش کنید.', 'khabar' ) );
+		}
+		set_transient( $ckey, array( 'n' => $meta['n'] + 1, 'last' => time() ), HOUR_IN_SECONDS );
+
 		$key   = 'khabar_otp_' . md5( strtolower( $contact ) );
 		$state = get_transient( $key );
 		$ids   = array_unique( array_merge( is_array( $state ) ? $state['ids'] : array(), $ids ) );
-		$code  = (string) wp_rand( 10000, 99999 );
+		$code  = (string) wp_rand( 100000, 999999 );
 		set_transient(
 			$key,
 			array(
 				'hash'  => wp_hash_password( $code ),
 				'ids'   => $ids,
-				'tries' => 0,
+				// Re-sending a code must not reset the guess counter.
+				'tries' => is_array( $state ) ? (int) $state['tries'] : 0,
 			),
 			10 * MINUTE_IN_SECONDS
 		);
@@ -356,7 +366,6 @@ class Khabar_Rest {
 			return self::error( __( 'کد منقضی شده است؛ دوباره درخواست دهید.', 'khabar' ) );
 		}
 		if ( $state['tries'] >= 5 ) {
-			delete_transient( $key );
 			return self::error( __( 'تعداد تلاش‌ها بیش از حد مجاز است.', 'khabar' ) );
 		}
 		if ( ! wp_check_password( $code, $state['hash'] ) ) {

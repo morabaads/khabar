@@ -98,19 +98,16 @@ class Khabar_Account {
 		if ( $token ) {
 			$sub = Khabar_Subscriptions::get_by_token( $token );
 			if ( $sub ) {
-				$owner['email'] = $sub->email;
-				$owner['phone'] = $sub->phone;
-				if ( $sub->owner_key ) {
-					$owner['owner_key'] = $sub->owner_key;
-				}
+				// A management link grants access to that single request only.
+				$owner['sub_id'] = $sub->id;
 			}
 		}
 		$uid = get_current_user_id();
 		if ( $uid ) {
-			$owner['user_id']  = $uid;
-			$owner['email']    = isset( $owner['email'] ) && $owner['email'] ? $owner['email'] : wp_get_current_user()->user_email;
-			$owner['owner_key'] = isset( $owner['owner_key'] ) ? $owner['owner_key'] : 'u:' . $uid;
-		} elseif ( ! isset( $owner['owner_key'] ) ) {
+			$owner['user_id']   = $uid;
+			$owner['email']     = wp_get_current_user()->user_email;
+			$owner['owner_key'] = 'u:' . $uid;
+		} else {
 			$key = Khabar_Utils::owner_key();
 			if ( $key ) {
 				$owner['owner_key'] = $key;
