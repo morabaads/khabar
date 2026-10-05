@@ -17,6 +17,7 @@ class Khabar_Admin {
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
+		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'menu_assets' ) );
 		add_action( 'admin_post_khabar_save_settings', array( __CLASS__, 'save_settings' ) );
 		add_action( 'admin_post_khabar_export', array( __CLASS__, 'export_csv' ) );
 		add_action( 'admin_post_khabar_retry', array( __CLASS__, 'retry' ) );
@@ -65,7 +66,16 @@ class Khabar_Admin {
 		}
 		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( 'khabar-admin', KHABAR_URL . 'assets/css/admin.css', array(), KHABAR_VERSION );
+		$accent = sanitize_hex_color( (string) Khabar_Settings::get( 'color_accent', '' ) );
+		wp_add_inline_style( 'khabar-admin', '.khabar-admin{--ka:' . ( $accent ? $accent : '#f4511e' ) . ';}' );
 		wp_enqueue_script( 'khabar-admin', KHABAR_URL . 'assets/js/admin.js', array( 'jquery', 'wp-color-picker' ), KHABAR_VERSION, true );
+	}
+
+	/**
+	 * Font for the plugin's sidebar menu (loaded on every admin page).
+	 */
+	public static function menu_assets() {
+		wp_enqueue_style( 'khabar-admin-menu', KHABAR_URL . 'assets/css/admin-menu.css', array(), KHABAR_VERSION );
 	}
 
 	/**
@@ -91,6 +101,44 @@ class Khabar_Admin {
 			delete_transient( $key );
 			printf( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
 		}
+	}
+
+	/**
+	 * Shared page header (banner with title and channel status pills).
+	 *
+	 * @param string $title    Title.
+	 * @param string $subtitle Subtitle.
+	 */
+	public static function header( $title, $subtitle = '' ) {
+		global $wpdb;
+		$pills = array();
+		$on    = (array) Khabar_Settings::get( 'channels_enabled', array() );
+		foreach ( Khabar_Settings::channels() as $key => $label ) {
+			if ( in_array( $key, $on, true ) ) {
+				$pills[] = $label;
+			}
+		}
+		$active = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Khabar_Install::table( 'subscriptions' ) . " WHERE status = 'active'" ); // phpcs:ignore
+		?>
+		<header class="khabar-hero">
+			<div class="khabar-hero-brand">
+				<span class="khabar-hero-logo"><?php echo Khabar_Frontend::icon( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+				<div>
+					<h1><?php echo esc_html( __( 'خبرم کن', 'khabar' ) . ' · ' . $title ); ?></h1>
+					<?php if ( $subtitle ) : ?>
+						<p><?php echo esc_html( $subtitle ); ?></p>
+					<?php endif; ?>
+				</div>
+			</div>
+			<div class="khabar-hero-pills">
+				<span class="khabar-pill is-count"><?php /* translators: %s number */ printf( esc_html__( '%s درخواست فعال', 'khabar' ), esc_html( number_format_i18n( $active ) ) ); ?></span>
+				<?php foreach ( $pills as $label ) : ?>
+					<span class="khabar-pill"><i></i><?php echo esc_html( $label ); ?> · <?php esc_html_e( 'فعال', 'khabar' ); ?></span>
+				<?php endforeach; ?>
+			</div>
+		</header>
+		<hr class="wp-header-end">
+		<?php
 	}
 
 	/**
@@ -120,7 +168,7 @@ class Khabar_Admin {
 		$labels   = Khabar_Settings::channels();
 		?>
 		<div class="wrap khabar-admin">
-			<h1><?php esc_html_e( 'داشبورد خبرم کن', 'khabar' ); ?></h1>
+			<?php self::header( __( 'داشبورد', 'khabar' ), __( 'نمای کلی درخواست‌ها، اعلان‌ها و درآمد حاصل از آن‌ها', 'khabar' ) ); ?>
 
 			<div class="khabar-kpis">
 				<?php
@@ -237,7 +285,7 @@ class Khabar_Admin {
 		$table->prepare_items();
 		?>
 		<div class="wrap khabar-admin">
-			<h1 class="wp-heading-inline"><?php esc_html_e( 'درخواست‌ها', 'khabar' ); ?></h1>
+			<?php self::header( __( 'درخواست‌ها', 'khabar' ), __( 'مدیریت درخواست‌های اعلان مشتریان', 'khabar' ) ); ?>
 			<hr class="wp-header-end">
 			<?php $table->views(); ?>
 			<form method="get">
@@ -326,7 +374,7 @@ class Khabar_Admin {
 		$top     = Khabar_Reports::top_products( 30 );
 		?>
 		<div class="wrap khabar-admin">
-			<h1><?php esc_html_e( 'گزارش رفتار مشتریان', 'khabar' ); ?></h1>
+			<?php self::header( __( 'گزارش‌ها', 'khabar' ), __( 'محبوب‌ترین کالاها و تقاضا به تفکیک ویژگی', 'khabar' ) ); ?>
 
 			<form method="get" class="khabar-report-filter">
 				<input type="hidden" name="page" value="khabar-reports">
@@ -409,7 +457,7 @@ class Khabar_Admin {
 		$table->prepare_items();
 		?>
 		<div class="wrap khabar-admin">
-			<h1><?php esc_html_e( 'لاگ ارسال اعلان‌ها', 'khabar' ); ?></h1>
+			<?php self::header( __( 'لاگ ارسال', 'khabar' ), __( 'سابقه‌ی همه‌ی پیام‌های ارسال‌شده و خطاها', 'khabar' ) ); ?>
 			<?php $table->views(); ?>
 			<form method="get">
 				<input type="hidden" name="page" value="khabar-logs">
@@ -449,8 +497,8 @@ class Khabar_Admin {
 		$defaults = Khabar_Settings::defaults();
 		?>
 		<div class="wrap khabar-admin">
-			<h1><?php esc_html_e( 'تنظیمات خبرم کن', 'khabar' ); ?></h1>
-			<nav class="nav-tab-wrapper">
+			<?php self::header( __( 'تنظیمات', 'khabar' ), __( 'کانال‌ها، قالب پیام‌ها، ظاهر و رفتار افزونه', 'khabar' ) ); ?>
+			<nav class="nav-tab-wrapper khabar-tabs">
 				<?php foreach ( $schema as $key => $section ) : ?>
 					<a class="nav-tab <?php echo $tab === $key ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar-settings&tab=' . $key ) ); ?>"><?php echo esc_html( $section['label'] ); ?></a>
 				<?php endforeach; ?>
@@ -464,14 +512,30 @@ class Khabar_Admin {
 				<input type="hidden" name="action" value="khabar_save_settings">
 				<input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>">
 				<?php wp_nonce_field( 'khabar_save_settings' ); ?>
-				<table class="form-table" role="presentation">
-					<?php
-					foreach ( $schema[ $tab ]['fields'] as $key => $field ) {
-						self::field( $key, $field, $values[ $key ] ?? '', $defaults[ $key ] ?? '' );
+				<?php
+				$khabar_open = false;
+				foreach ( $schema[ $tab ]['fields'] as $key => $field ) {
+					if ( 'heading' === $field['type'] ) {
+						if ( $khabar_open ) {
+							echo '</table></section>';
+						}
+						echo '<section class="khabar-set-card"><header><h2>' . esc_html( $field['label'] ) . '</h2>' . ( ! empty( $field['desc'] ) ? '<p class="description">' . esc_html( $field['desc'] ) . '</p>' : '' ) . '</header><table class="form-table" role="presentation">';
+						$khabar_open = true;
+						continue;
 					}
-					?>
-				</table>
-				<?php submit_button(); ?>
+					if ( ! $khabar_open ) {
+						echo '<section class="khabar-set-card"><table class="form-table" role="presentation">';
+						$khabar_open = true;
+					}
+					self::field( $key, $field, $values[ $key ] ?? '', $defaults[ $key ] ?? '' );
+				}
+				if ( $khabar_open ) {
+					echo '</table></section>';
+				}
+				?>
+				<div class="khabar-savebar">
+				<?php submit_button( __( 'ذخیره تنظیمات', 'khabar' ) ); ?>
+				</div>
 			</form>
 
 			<?php if ( 'channels' === $tab ) : ?>
