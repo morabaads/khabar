@@ -46,9 +46,15 @@ $khabar_contact    = $s['contact_mode'];
 
 	<div class="khabar-modal" role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr( $khabar_uid ); ?>-title" hidden>
 		<div class="khabar-modal-box">
-			<button type="button" class="khabar-close" aria-label="<?php esc_attr_e( 'بستن', 'khabar' ); ?>">×</button>
-			<h3 id="<?php echo esc_attr( $khabar_uid ); ?>-title"><?php esc_html_e( 'خبرم کن', 'khabar' ); ?></h3>
-			<p class="khabar-product-name"><strong><?php echo esc_html( $product->get_name() ); ?></strong> <span class="khabar-variation-label"></span></p>
+			<span class="khabar-grab" aria-hidden="true"></span>
+			<header class="khabar-head">
+				<span class="khabar-thumb"><?php echo wp_kses_post( $product->get_image( 'woocommerce_gallery_thumbnail' ) ); ?></span>
+				<div class="khabar-head-text">
+					<h3 id="<?php echo esc_attr( $khabar_uid ); ?>-title"><?php esc_html_e( 'خبرم کن', 'khabar' ); ?></h3>
+					<p class="khabar-product-name"><strong><?php echo esc_html( $product->get_name() ); ?></strong> <span class="khabar-variation-label"></span></p>
+				</div>
+				<button type="button" class="khabar-close" aria-label="<?php esc_attr_e( 'بستن', 'khabar' ); ?>"><?php echo Khabar_Frontend::icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
+			</header>
 
 			<form class="khabar-form" novalidate>
 				<input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() ); ?>">
@@ -57,7 +63,7 @@ $khabar_contact    = $s['contact_mode'];
 
 				<?php if ( $attributes ) : ?>
 				<fieldset class="khabar-attrs">
-					<legend><?php esc_html_e( 'ویژگی‌های مورد انتظار شما', 'khabar' ); ?></legend>
+					<legend><span><?php esc_html_e( 'ویژگی‌های مورد انتظار شما', 'khabar' ); ?></span></legend>
 					<?php foreach ( $attributes as $khabar_key => $khabar_attr ) : ?>
 						<label>
 							<span><?php echo esc_html( $khabar_attr['label'] ); ?></span>
@@ -73,26 +79,29 @@ $khabar_contact    = $s['contact_mode'];
 				<?php endif; ?>
 
 				<fieldset class="khabar-conditions">
-					<legend><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'khabar' ); ?></legend>
+					<legend><?php echo Khabar_Frontend::icon( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'khabar' ); ?></span></legend>
 					<?php if ( $khabar_has_stock ) : ?>
-						<label class="khabar-cond"><input type="checkbox" name="in_stock" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'khabar' ); ?></span></label>
+						<label class="khabar-cond"><input type="checkbox" name="in_stock" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'khabar' ); ?></span><span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'box' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_drop', $types, true ) ) : ?>
 						<label class="khabar-cond"><input type="checkbox" data-toggle="price_below"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی قیمت رسید به کمتر از', 'khabar' ); ?></span>
 							<input type="text" inputmode="numeric" name="price_below" class="khabar-num" placeholder="<?php echo esc_attr( $price ? wc_format_localized_price( round( $price * 0.9, wc_get_price_decimals() ) ) : '' ); ?>" disabled><span class="khabar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+						<span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_rise', $types, true ) ) : ?>
 						<label class="khabar-cond"><input type="checkbox" data-toggle="price_above"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی قیمت بیشتر شد از', 'khabar' ); ?></span>
-							<input type="text" inputmode="numeric" name="price_above" class="khabar-num" disabled><span class="khabar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
+							<span class="khabar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span><input type="text" inputmode="numeric" name="price_above" class="khabar-num" disabled>
+						<span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'up' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_change', $types, true ) ) : ?>
-						<label class="khabar-cond"><input type="checkbox" name="price_change" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'هر بار قیمت تغییر کرد', 'khabar' ); ?></span></label>
+						<label class="khabar-cond"><input type="checkbox" name="price_change" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'هر بار قیمت تغییر کرد', 'khabar' ); ?></span><span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'chart' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'min_qty', $types, true ) ) : ?>
 						<label class="khabar-cond"><input type="checkbox" data-toggle="min_qty"><span class="khabar-cond-text"><?php esc_html_e( 'موجودی حداقل', 'khabar' ); ?></span>
-							<input type="text" inputmode="numeric" name="min_qty" class="khabar-num khabar-num-sm" disabled><span class="khabar-cur"><?php esc_html_e( 'عدد شد', 'khabar' ); ?></span>
+							<span class="khabar-cur"><?php esc_html_e( 'عدد شد', 'khabar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" class="khabar-num khabar-num-sm" disabled>
+						<span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'cube' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<div class="khabar-mode" hidden>
@@ -102,28 +111,28 @@ $khabar_contact    = $s['contact_mode'];
 				</fieldset>
 
 				<fieldset class="khabar-contact">
-					<label><span><?php esc_html_e( 'نام (اختیاری)', 'khabar' ); ?></span><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"></label>
+					<label><span class="khabar-lbl"><?php esc_html_e( 'نام (اختیاری)', 'khabar' ); ?></span><span class="khabar-field"><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"><?php echo Khabar_Frontend::icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php if ( 'email' !== $khabar_contact ) : ?>
-						<label><span><?php esc_html_e( 'شماره موبایل', 'khabar' ); ?></span><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $khabar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>></label>
+						<label><span class="khabar-lbl"><?php esc_html_e( 'شماره موبایل', 'khabar' ); ?></span><span class="khabar-field"><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $khabar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( 'phone' !== $khabar_contact ) : ?>
-						<label><span><?php esc_html_e( 'ایمیل', 'khabar' ); ?></span><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $khabar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>></label>
+						<label><span class="khabar-lbl"><?php esc_html_e( 'ایمیل', 'khabar' ); ?></span><span class="khabar-field"><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $khabar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'mail' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 				</fieldset>
 
 				<?php if ( $s['user_selects_channel'] && count( $channels ) > 1 ) : ?>
 				<fieldset class="khabar-channels">
-					<legend><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'khabar' ); ?></legend>
+					<legend><?php echo Khabar_Frontend::icon( 'send' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'khabar' ); ?></span></legend>
 					<?php foreach ( $channels as $khabar_ch => $khabar_label ) : ?>
-						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>><span><?php echo esc_html( $khabar_label ); ?></span></label>
+						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>><?php echo Khabar_Frontend::icon( Khabar_Frontend::channel_icon( $khabar_ch ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $khabar_label ); ?></span></label>
 					<?php endforeach; ?>
 				</fieldset>
 				<?php endif; ?>
 
 				<p class="khabar-msg" role="alert" hidden></p>
-				<button type="submit" class="button alt khabar-submit"><?php esc_html_e( 'ثبت درخواست', 'khabar' ); ?></button>
+				<button type="submit" class="button alt khabar-submit"><span><?php esc_html_e( 'ثبت درخواست', 'khabar' ); ?></span><?php echo Khabar_Frontend::icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
 				<?php if ( $s['privacy_text'] ) : ?>
-					<p class="khabar-privacy"><?php echo esc_html( $s['privacy_text'] ); ?></p>
+					<p class="khabar-privacy"><?php echo Khabar_Frontend::icon( 'lock' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $s['privacy_text'] ); ?></span></p>
 				<?php endif; ?>
 			</form>
 
