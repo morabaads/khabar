@@ -75,29 +75,29 @@ $khabar_contact    = $s['contact_mode'];
 				<fieldset class="khabar-conditions">
 					<legend><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'khabar' ); ?></legend>
 					<?php if ( $khabar_has_stock ) : ?>
-						<label class="khabar-cond"><input type="checkbox" name="in_stock" value="1"> <?php esc_html_e( 'وقتی موجود شد', 'khabar' ); ?></label>
+						<label class="khabar-cond"><input type="checkbox" name="in_stock" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'khabar' ); ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_drop', $types, true ) ) : ?>
-						<label class="khabar-cond"><input type="checkbox" data-toggle="price_below"> <?php esc_html_e( 'وقتی قیمت رسید به کمتر از', 'khabar' ); ?>
-							<input type="text" inputmode="numeric" name="price_below" class="khabar-num" placeholder="<?php echo esc_attr( $price ? wc_format_localized_price( round( $price * 0.9, wc_get_price_decimals() ) ) : '' ); ?>" disabled> <?php echo esc_html( get_woocommerce_currency_symbol() ); ?>
+						<label class="khabar-cond"><input type="checkbox" data-toggle="price_below"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی قیمت رسید به کمتر از', 'khabar' ); ?></span>
+							<input type="text" inputmode="numeric" name="price_below" class="khabar-num" placeholder="<?php echo esc_attr( $price ? wc_format_localized_price( round( $price * 0.9, wc_get_price_decimals() ) ) : '' ); ?>" disabled><span class="khabar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_rise', $types, true ) ) : ?>
-						<label class="khabar-cond"><input type="checkbox" data-toggle="price_above"> <?php esc_html_e( 'وقتی قیمت بیشتر شد از', 'khabar' ); ?>
-							<input type="text" inputmode="numeric" name="price_above" class="khabar-num" disabled> <?php echo esc_html( get_woocommerce_currency_symbol() ); ?>
+						<label class="khabar-cond"><input type="checkbox" data-toggle="price_above"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی قیمت بیشتر شد از', 'khabar' ); ?></span>
+							<input type="text" inputmode="numeric" name="price_above" class="khabar-num" disabled><span class="khabar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_change', $types, true ) ) : ?>
-						<label class="khabar-cond"><input type="checkbox" name="price_change" value="1"> <?php esc_html_e( 'هر بار قیمت تغییر کرد', 'khabar' ); ?></label>
+						<label class="khabar-cond"><input type="checkbox" name="price_change" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'هر بار قیمت تغییر کرد', 'khabar' ); ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'min_qty', $types, true ) ) : ?>
-						<label class="khabar-cond"><input type="checkbox" data-toggle="min_qty"> <?php esc_html_e( 'موجودی حداقل', 'khabar' ); ?>
-							<input type="text" inputmode="numeric" name="min_qty" class="khabar-num khabar-num-sm" disabled> <?php esc_html_e( 'عدد شد', 'khabar' ); ?>
+						<label class="khabar-cond"><input type="checkbox" data-toggle="min_qty"><span class="khabar-cond-text"><?php esc_html_e( 'موجودی حداقل', 'khabar' ); ?></span>
+							<input type="text" inputmode="numeric" name="min_qty" class="khabar-num khabar-num-sm" disabled><span class="khabar-cur"><?php esc_html_e( 'عدد شد', 'khabar' ); ?></span>
 						</label>
 					<?php endif; ?>
 					<div class="khabar-mode" hidden>
-						<label><input type="radio" name="mode" value="all" checked> <?php esc_html_e( 'وقتی همه شرایط با هم برقرار شد', 'khabar' ); ?></label>
-						<label><input type="radio" name="mode" value="separate"> <?php esc_html_e( 'برای هر شرط جداگانه', 'khabar' ); ?></label>
+						<label><input type="radio" name="mode" value="all" checked><span><?php esc_html_e( 'وقتی همه شرایط با هم برقرار شد', 'khabar' ); ?></span></label>
+						<label><input type="radio" name="mode" value="separate"><span><?php esc_html_e( 'برای هر شرط جداگانه', 'khabar' ); ?></span></label>
 					</div>
 				</fieldset>
 
@@ -115,7 +115,7 @@ $khabar_contact    = $s['contact_mode'];
 				<fieldset class="khabar-channels">
 					<legend><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'khabar' ); ?></legend>
 					<?php foreach ( $channels as $khabar_ch => $khabar_label ) : ?>
-						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>> <?php echo esc_html( $khabar_label ); ?></label>
+						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( in_array( $khabar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>><span><?php echo esc_html( $khabar_label ); ?></span></label>
 					<?php endforeach; ?>
 				</fieldset>
 				<?php endif; ?>
