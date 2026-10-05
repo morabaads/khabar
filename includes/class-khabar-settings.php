@@ -275,17 +275,10 @@ class Khabar_Settings {
 						),
 						'default' => 'text',
 					),
-					'sms_patterns'       => array(
-						'type'  => 'textarea',
-						'label' => __( 'کد پترن هر رویداد', 'khabar' ),
-						'desc'  => __( 'هر خط: رویداد=کد پترن. رویدادها: back_in_stock, low_stock, price_drop, price_rise, price_change, combo, otp', 'khabar' ),
-						'default' => "back_in_stock=\nlow_stock=\nprice_drop=\nprice_rise=\nprice_change=\ncombo=\notp=",
-					),
-					'sms_pattern_vars'   => array(
-						'type'    => 'textarea',
-						'label'   => __( 'متغیرهای پترن', 'khabar' ),
-						'desc'    => __( 'هر خط: نام‌متغیر=مقدار. مثال برای کاوه‌نگار: token=… token2=… / در پیامک کد تایید {code} را بفرستید.', 'khabar' ),
-						'default' => "product={product_name}\nvariation={variation}\nprice={price}\nlink={link}\ncode={code}",
+					'sms_pattern_items'  => array(
+						'type'    => 'sms_patterns',
+						'label'   => __( 'پترن‌های پیامک', 'khabar' ),
+						'default' => array(),
 					),
 					'sms_webhook_url'    => array(
 						'type'  => 'text',
@@ -781,6 +774,11 @@ class Khabar_Settings {
 				case 'number':
 					$current[ $key ] = max( 0, (int) $raw );
 					break;
+				case 'sms_patterns':
+					$current[ $key ]            = self::sanitize_pattern_items( $raw );
+					$current['sms_patterns']    = ''; // Legacy textarea values are superseded.
+					$current['sms_pattern_vars'] = '';
+					break;
 				case 'color':
 					$hex             = sanitize_hex_color( (string) $raw );
 					$current[ $key ] = $hex ? $hex : $field['default'];
@@ -826,6 +824,62 @@ class Khabar_Settings {
 			if ( '' !== $k ) {
 				$out[ $k ] = trim( substr( $line, $pos + 1 ) );
 			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Pattern items: [ event => [ 'event', 'code', 'vars' => [ [name, value], … ] ] ].
+	 * Falls back to the pre-1.1.9 textarea settings so nothing is lost on upgrade.
+	 *
+	 * @return array
+	 */
+	public static function pattern_items() {
+		$items = self::get( 'sms_pattern_items', array() );
+		if ( is_array( $items ) && $items ) {
+			return $items;
+		}
+		$codes = self::parse_lines( self::get( 'sms_patterns', '' ) );
+		$vars  = array();
+		foreach ( self::parse_lines( self::get( 'sms_pattern_vars', '' ) ) as $name => $value ) {
+			$vars[] = array( 'name' => $name, 'value' => $value );
+		}
+		$out = array();
+		foreach ( $codes as $event => $code ) {
+			if ( '' !== $code ) {
+				$out[ $event ] = array( 'event' => $event, 'code' => $code, 'vars' => $vars );
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Sanitize the posted pattern repeater (one pattern per event).
+	 *
+	 * @param mixed $raw Posted rows.
+	 * @return array
+	 */
+	public static function sanitize_pattern_items( $raw ) {
+		$events = self::events();
+		$out    = array();
+		foreach ( (array) $raw as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+			$event = isset( $row['event'] ) ? sanitize_key( $row['event'] ) : '';
+			$code  = isset( $row['code'] ) ? sanitize_text_field( $row['code'] ) : '';
+			if ( ! isset( $events[ $event ] ) || '' === $code ) {
+				continue;
+			}
+			$vars = array();
+			foreach ( isset( $row['vars'] ) ? (array) $row['vars'] : array() as $v ) {
+				$name  = isset( $v['name'] ) ? sanitize_text_field( $v['name'] ) : '';
+				$value = isset( $v['value'] ) ? sanitize_text_field( $v['value'] ) : '';
+				if ( '' !== $name && '' !== $value ) {
+					$vars[] = array( 'name' => $name, 'value' => $value );
+				}
+			}
+			$out[ $event ] = array( 'event' => $event, 'code' => $code, 'vars' => $vars );
 		}
 		return $out;
 	}

@@ -673,6 +673,104 @@ class Khabar_Admin {
 	}
 
 	/**
+	 * Repeater UI for per-event SMS patterns.
+	 *
+	 * @param string $name  Field name prefix.
+	 * @param array  $items Saved items.
+	 */
+	private static function pattern_field( $name, $items ) {
+		$events = Khabar_Settings::events();
+		$chips  = array(
+			'customer_name' => __( 'نام مشتری', 'khabar' ),
+			'product_name'  => __( 'نام محصول', 'khabar' ),
+			'variation'     => __( 'تنوع', 'khabar' ),
+			'price'         => __( 'قیمت', 'khabar' ),
+			'old_price'     => __( 'قیمت قبلی', 'khabar' ),
+			'target_price'  => __( 'قیمت هدف', 'khabar' ),
+			'stock'         => __( 'موجودی', 'khabar' ),
+			'link'          => __( 'لینک', 'khabar' ),
+			'site_name'     => __( 'نام سایت', 'khabar' ),
+			'code'          => __( 'کد تایید', 'khabar' ),
+			'coupon'        => __( 'کد تخفیف', 'khabar' ),
+		);
+		$hints = array(
+			'kavenegar'   => __( 'کاوه‌نگار: «کد پترن» همان نام قالب در پنل است. نام متغیرها را token، token2، token3 (و token10، token20) بگذارید؛ مقدار آن‌ها فاصله نمی‌پذیرد و خودکار اصلاح می‌شود.', 'khabar' ),
+			'melipayamak' => __( 'ملی پیامک: «کد پترن» همان bodyId است. مقدارها به ترتیب نوشتن و با ; ارسال می‌شوند؛ نام متغیر فقط برای شما است.', 'khabar' ),
+			'ippanel'     => __( 'فراز / IPPanel: «کد پترن» را وارد کنید و نام متغیرها را دقیقاً مثل نام‌های تعریف‌شده در پترن بنویسید.', 'khabar' ),
+			'smsir'       => __( 'SMS.ir: «کد پترن» شناسه‌ی عددی قالب است و نام پارامترها دقیقاً همان نام‌های قالب است (مثلاً Code).', 'khabar' ),
+			'webhook'     => __( 'وب‌سرویس سفارشی از پترن استفاده نمی‌کند؛ از «قالب پیام» متنی استفاده می‌شود.', 'khabar' ),
+		);
+		$row = function ( $i, $item ) use ( $name, $events, $chips ) {
+			$base = $name . '[' . $i . ']';
+			ob_start();
+			?>
+			<div class="khabar-pat-row">
+				<div class="khabar-pat-head">
+					<label class="khabar-pat-f">
+						<span><?php esc_html_e( 'نوع رویداد', 'khabar' ); ?></span>
+						<select name="<?php echo esc_attr( $base ); ?>[event]" class="khabar-pat-event">
+							<?php foreach ( $events as $key => $label ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $item['event'], $key ); ?>><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</label>
+					<label class="khabar-pat-f khabar-pat-code">
+						<span><?php esc_html_e( 'کد / نام پترن', 'khabar' ); ?></span>
+						<input type="text" dir="ltr" name="<?php echo esc_attr( $base ); ?>[code]" value="<?php echo esc_attr( $item['code'] ); ?>" placeholder="123456">
+					</label>
+					<button type="button" class="khabar-pat-del" title="<?php esc_attr_e( 'حذف این پترن', 'khabar' ); ?>" aria-label="<?php esc_attr_e( 'حذف این پترن', 'khabar' ); ?>">×</button>
+				</div>
+				<div class="khabar-pat-vars" data-base="<?php echo esc_attr( $base ); ?>">
+					<div class="khabar-pat-vhead"><strong><?php esc_html_e( 'متغیرهای این پترن', 'khabar' ); ?></strong><small><?php esc_html_e( 'نام متغیر در سامانه پیامک ← مقداری که ارسال می‌شود', 'khabar' ); ?></small></div>
+					<div class="khabar-pat-vlist">
+						<?php foreach ( array_values( (array) $item['vars'] ) as $j => $var ) : ?>
+							<div class="khabar-pat-var">
+								<input type="text" dir="ltr" class="khabar-pat-vname" name="<?php echo esc_attr( $base ); ?>[vars][<?php echo (int) $j; ?>][name]" value="<?php echo esc_attr( $var['name'] ); ?>" placeholder="token">
+								<span class="khabar-pat-arrow">←</span>
+								<input type="text" dir="auto" class="khabar-pat-vval" name="<?php echo esc_attr( $base ); ?>[vars][<?php echo (int) $j; ?>][value]" value="<?php echo esc_attr( $var['value'] ); ?>" placeholder="{product_name}">
+								<button type="button" class="khabar-pat-vdel" aria-label="<?php esc_attr_e( 'حذف متغیر', 'khabar' ); ?>">×</button>
+							</div>
+						<?php endforeach; ?>
+					</div>
+					<div class="khabar-pat-chips" aria-label="<?php esc_attr_e( 'درج متغیر', 'khabar' ); ?>">
+						<?php foreach ( $chips as $key => $label ) : ?>
+							<button type="button" class="khabar-chip" data-token="{<?php echo esc_attr( $key ); ?>}" title="{<?php echo esc_attr( $key ); ?>}"><?php echo esc_html( $label ); ?></button>
+						<?php endforeach; ?>
+					</div>
+					<button type="button" class="button khabar-pat-addvar">+ <?php esc_html_e( 'افزودن متغیر', 'khabar' ); ?></button>
+				</div>
+			</div>
+			<?php
+			return ob_get_clean();
+		};
+		?>
+		<div class="khabar-pat" data-next="<?php echo (int) count( $items ) + 100; ?>" data-hints="<?php echo esc_attr( wp_json_encode( $hints ) ); ?>">
+			<div class="khabar-pat-info">
+				<strong><?php esc_html_e( 'چطور کار می‌کند؟', 'khabar' ); ?></strong>
+				<ol>
+					<li><?php esc_html_e( 'برای هر رویداد یک پترن بسازید: «افزودن پترن» را بزنید و نوع رویداد (مثلاً موجود شدن، کاهش قیمت، کد تایید) را انتخاب کنید.', 'khabar' ); ?></li>
+					<li><?php esc_html_e( 'کد پترن تاییدشده‌ی همان رویداد را از سامانه‌ی پیامک وارد کنید.', 'khabar' ); ?></li>
+					<li><?php esc_html_e( 'متغیرهای پترن را مشخص کنید. روی دکمه‌های رنگی (نام محصول، قیمت، لینک…) بزنید تا در مقدار انتخاب‌شده درج شود.', 'khabar' ); ?></li>
+				</ol>
+				<p class="khabar-pat-gw" hidden></p>
+				<p class="khabar-pat-note"><?php esc_html_e( 'رویدادی که پترن ندارد با پیامک متنی (قالب پیام) ارسال می‌شود.', 'khabar' ); ?></p>
+			</div>
+			<div class="khabar-pat-list">
+				<?php
+				$i = 0;
+				foreach ( $items as $item ) {
+					echo $row( $i++, $item ); // phpcs:ignore WordPress.Security.EscapeOutput
+				}
+				?>
+			</div>
+			<p class="khabar-pat-empty" <?php echo $items ? 'hidden' : ''; ?>><?php esc_html_e( 'هنوز پترنی ثبت نشده است.', 'khabar' ); ?></p>
+			<button type="button" class="button button-primary khabar-pat-add">+ <?php esc_html_e( 'افزودن پترن', 'khabar' ); ?></button>
+			<template class="khabar-pat-tpl"><?php echo $row( '__i__', array( 'event' => 'back_in_stock', 'code' => '', 'vars' => array() ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></template>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Render one settings field.
 	 *
 	 * @param string $key     Key.
@@ -713,6 +811,9 @@ class Khabar_Admin {
 				if ( $default && $default !== $value ) {
 					printf( ' <button type="button" class="button-link khabar-reset" data-target="%s" data-default="%s">%s</button>', esc_attr( $id ), esc_attr( $default ), esc_html__( 'بازگردانی پیش‌فرض', 'khabar' ) );
 				}
+				break;
+			case 'sms_patterns':
+				self::pattern_field( $name, Khabar_Settings::pattern_items() );
 				break;
 			case 'color':
 				printf( '<input type="text" class="khabar-color" id="%s" name="%s" value="%s" data-default-color="%s" dir="ltr">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ), esc_attr( $default ) );

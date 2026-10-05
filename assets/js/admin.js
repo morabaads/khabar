@@ -13,7 +13,97 @@ jQuery(function ($) {
 		$('#' + $(this).data('target')).val($(this).data('default'));
 	});
 
+	/* ---- SMS pattern repeater ---- */
+	var starters = {
+		kavenegar: [['token', '{product_name}'], ['token2', '{price}'], ['token3', '{link}']],
+		melipayamak: [['p1', '{product_name}'], ['p2', '{price}'], ['p3', '{link}']],
+		ippanel: [['product', '{product_name}'], ['price', '{price}'], ['link', '{link}']],
+		smsir: [['Product', '{product_name}'], ['Price', '{price}'], ['Link', '{link}']]
+	};
+	var otpStarter = { kavenegar: [['token', '{code}']], melipayamak: [['p1', '{code}']], ippanel: [['code', '{code}']], smsir: [['Code', '{code}']] };
+	var uid = Date.now();
+
+	function varRow(base, name, value) {
+		var k = ++uid;
+		var $r = $('<div class="khabar-pat-var">');
+		$('<input type="text" dir="ltr" class="khabar-pat-vname" placeholder="token">').attr('name', base + '[vars][' + k + '][name]').val(name || '').appendTo($r);
+		$('<span class="khabar-pat-arrow">\u2190</span>').appendTo($r);
+		$('<input type="text" dir="auto" class="khabar-pat-vval" placeholder="{product_name}">').attr('name', base + '[vars][' + k + '][value]').val(value || '').appendTo($r);
+		$('<button type="button" class="khabar-pat-vdel" aria-label="\u062d\u0630\u0641">\u00d7</button>').appendTo($r);
+		return $r;
+	}
+
+	function syncPatterns($root) {
+		var gw = $('#khabar-sms_gateway').val();
+		var hints = $root.data('hints') || {};
+		$root.find('.khabar-pat-gw').text(hints[gw] || '').prop('hidden', !hints[gw]);
+		var used = {};
+		$root.find('.khabar-pat-event').each(function () { used[this.value] = (used[this.value] || 0) + 1; });
+		$root.find('.khabar-pat-event').each(function () {
+			var self = this;
+			$(this).find('option').each(function () {
+				$(this).prop('disabled', this.value !== self.value && !!used[this.value]);
+			});
+		});
+		$root.find('.khabar-pat-empty').prop('hidden', !!$root.find('.khabar-pat-row').length);
+		// Pattern UI only matters in pattern mode.
+		var pattern = $('#khabar-sms_mode').val() === 'pattern';
+		$root.closest('tr').toggle(pattern);
+	}
+
+	function initPatterns() {
+		$body.find('.khabar-pat').each(function () { syncPatterns($(this)); });
+	}
+	$(document).on('change', '#khabar-sms_gateway, #khabar-sms_mode, .khabar-pat-event', function () {
+		$('.khabar-pat').each(function () { syncPatterns($(this)); });
+	});
+	$(document).on('click', '.khabar-pat-add', function () {
+		var $root = $(this).closest('.khabar-pat');
+		var n = ++uid;
+		var html = $root.find('.khabar-pat-tpl').html().replace(/__i__/g, n);
+		var $row = $($.parseHTML(html.trim())).filter('.khabar-pat-row');
+		// First free event.
+		var used = {};
+		$root.find('.khabar-pat-event').each(function () { used[this.value] = 1; });
+		var $sel = $row.find('.khabar-pat-event');
+		var free = $sel.find('option').filter(function () { return !used[this.value]; }).first().val();
+		if (free) { $sel.val(free); }
+		var gw = $('#khabar-sms_gateway').val();
+		var list = (free === 'otp' ? otpStarter[gw] : starters[gw]) || [];
+		var base = $row.find('.khabar-pat-vars').data('base');
+		$.each(list, function (_, v) { $row.find('.khabar-pat-vlist').append(varRow(base, v[0], v[1])); });
+		$root.find('.khabar-pat-list').append($row);
+		syncPatterns($root);
+		$row.find('.khabar-pat-code input').trigger('focus');
+	});
+	$(document).on('click', '.khabar-pat-del', function () {
+		var $root = $(this).closest('.khabar-pat');
+		$(this).closest('.khabar-pat-row').remove();
+		syncPatterns($root);
+	});
+	$(document).on('click', '.khabar-pat-addvar', function () {
+		var $vars = $(this).closest('.khabar-pat-vars');
+		var $r = varRow($vars.data('base'), '', '');
+		$vars.find('.khabar-pat-vlist').append($r);
+		$r.find('.khabar-pat-vname').trigger('focus');
+	});
+	$(document).on('click', '.khabar-pat-vdel', function () { $(this).closest('.khabar-pat-var').remove(); });
+	$(document).on('focusin', '.khabar-pat-vval', function () { $(this).closest('.khabar-pat-vars').data('last', this); });
+	$(document).on('click', '.khabar-chip', function () {
+		var $vars = $(this).closest('.khabar-pat-vars');
+		var el = $vars.data('last');
+		if (!el || !document.body.contains(el)) { el = $vars.find('.khabar-pat-vval').filter(function () { return !this.value; }).first()[0] || $vars.find('.khabar-pat-vval').last()[0]; }
+		if (!el) { return; }
+		var t = $(this).data('token');
+		var s = el.selectionStart == null ? el.value.length : el.selectionStart;
+		var e = el.selectionEnd == null ? s : el.selectionEnd;
+		el.value = el.value.slice(0, s) + t + el.value.slice(e);
+		el.focus();
+		el.selectionStart = el.selectionEnd = s + t.length;
+	});
+
 	function enhance() {
+		initPatterns();
 		if ($.fn.wpColorPicker) { $body.find('.khabar-color').wpColorPicker(); }
 		$body.find('.khabar-notice').delay(6000).fadeOut(400);
 	}

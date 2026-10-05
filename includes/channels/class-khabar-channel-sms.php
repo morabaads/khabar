@@ -33,15 +33,15 @@ class Khabar_Channel_Sms {
 		$pattern = '';
 		$params  = array();
 		if ( 'pattern' === Khabar_Settings::get( 'sms_mode' ) && 'text' !== $event ) {
-			$patterns = Khabar_Settings::parse_lines( Khabar_Settings::get( 'sms_patterns' ) );
-			$pattern  = isset( $patterns[ $event ] ) ? $patterns[ $event ] : '';
-			if ( '' === $pattern && 'low_stock' === $event && ! empty( $patterns['back_in_stock'] ) ) {
-				$pattern = $patterns['back_in_stock'];
-			}
-			foreach ( Khabar_Settings::parse_lines( Khabar_Settings::get( 'sms_pattern_vars' ) ) as $name => $tpl ) {
-				$value = trim( wp_strip_all_tags( Khabar_Utils::render( $tpl, $vars ) ) );
-				if ( '' !== $value ) {
-					$params[ $name ] = $value;
+			$items = Khabar_Settings::pattern_items();
+			$item  = isset( $items[ $event ] ) ? $items[ $event ] : ( 'low_stock' === $event && isset( $items['back_in_stock'] ) ? $items['back_in_stock'] : null );
+			if ( $item ) {
+				$pattern = (string) $item['code'];
+				foreach ( (array) $item['vars'] as $var ) {
+					$value = trim( wp_strip_all_tags( Khabar_Utils::render( $var['value'], $vars ) ) );
+					if ( '' !== $value ) {
+						$params[ $var['name'] ] = $value;
+					}
 				}
 			}
 		}
