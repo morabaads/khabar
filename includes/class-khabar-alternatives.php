@@ -83,7 +83,180 @@ class Khabar_Alternatives {
 	}
 
 	/**
-	 * Find alternatives.
+	 * Words of a product title that carry meaning (model codes, types, brands).
+	 *
+	 * @param string $title Title.
+	 * @return string[]
+	 */
+	private static function title_tokens( $title ) {
+		$title = mb_strtolower( Khabar_Utils::latin_digits( wp_strip_all_tags( (string) $title ) ) );
+		$title = preg_replace( '/[^\p{L}\p{N}\s]+/u', ' ', $title );
+		$stop  = array( 'مدل', 'با', 'و', 'برای', 'از', 'در', 'به', 'تا', 'کیفیت', 'the', 'for', 'and', 'with', 'of', 'new', 'جدید', 'اصل', 'اورجینال', 'اصلی' );
+		$words = array();
+		foreach ( preg_split( '/\s+/u', trim( $title ) ) as $w ) {
+			if ( mb_strlen( $w ) >= 2 && ! in_array( $w, $stop, true ) ) {
+				$words[ $w ] = $w;
+			}
+		}
+		return array_values( $words );
+	}
+
+	/**
+	 * Context describing the awaited product (categories, tags, brand, title) used for relevance.
+	 *
+	 * @param WC_Product $product Awaited product.
+	 * @return array
+	 */
+	private static function context( $product ) {
+		$all  = wc_get_product_term_ids( $product->get_id(), 'product_cat' );
+		$leaf = array();
+		foreach ( $all as $id ) {
+			$children = get_term_children( $id, 'product_cat' );
+			if ( ! array_intersect( $children ? $children : array(), $all ) ) {
+				$term = get_term( $id, 'product_cat' );
+				if ( $term && ! is_wp_error( $term ) && 'uncategorized' !== $term->slug ) {
+					$leaf[] = (int) $id;
+				}
+			}
+		}
+		$ancestors = array();
+		foreach ( $all as $id ) {
+			foreach ( get_ancestors( $id, 'product_cat' ) as $a ) {
+				$ancestors[] = (int) $a;
+			}
+		}
+		$brands = array();
+		foreach ( array( 'product_brand', 'pa_brand', 'pa_برند' ) as $tax ) {
+			if ( taxonomy_exists( $tax ) ) {
+				$ids = wp_get_post_terms( $product->get_id(), $tax, array( 'fields' => 'ids' ) );
+				if ( ! is_wp_error( $ids ) ) {
+					$brands[ $tax ] = array_map( 'intval', $ids );
+				}
+			}
+		}
+		$tags = wc_get_product_term_ids( $product->get_id(), 'product_tag' );
+		return array(
+			'all'       => array_map( 'intval', $all ),
+			'leaf'      => $leaf,
+			'ancestors' => array_values( array_unique( $ancestors ) ),
+			'tags'      => array_map( 'intval', $tags ),
+			'brands'    => $brands,
+			'tokens'    => self::title_tokens( $product->get_name() ),
+		);
+	}
+
+	/**
+	 * How related is a candidate to the awaited product (0 = unrelated)?
+	 * Same most-specific category, shared brand/tags and similar title words weigh most;
+	 * price and popularity only rank already related products.
+	 *
+	 * @param array      $ctx       Awaited product context.
+	 * @param WC_Product $candidate Candidate.
+	 * @return float
+	 */
+	private static function relevance( $ctx, $candidate ) {
+		$score = 0.0;
+		$cats  = wc_get_product_term_ids( $candidate->get_id(), 'product_cat' );
+		if ( array_intersect( $ctx['leaf'], $cats ) ) {
+			$score += 4;
+		} elseif ( array_intersect( $ctx['all'], $cats ) ) {
+			$score += 2.5; // Shares a (non-leaf) category.
+		} elseif ( array_intersect( $ctx['ancestors'], $cats ) || array_intersect( $ctx['leaf'], self::ancestors_of( $cats ) ) ) {
+			$score += 1; // Parent / sibling area only.
+		}
+		foreach ( $ctx['brands'] as $tax => $ids ) {
+			if ( $ids && array_intersect( $ids, array_map( 'intval', (array) wp_get_post_terms( $candidate->get_id(), $tax, array( 'fields' => 'ids' ) ) ) ) ) {
+				$score += 1.5;
+			}
+		}
+		if ( $ctx['tags'] ) {
+			$shared = count( array_intersect( $ctx['tags'], array_map( 'intval', wc_get_product_term_ids( $candidate->get_id(), 'product_tag' ) ) ) );
+			$score += min( 2, $shared * 0.75 );
+		}
+		if ( $ctx['tokens'] ) {
+			$other = self::title_tokens( $candidate->get_name() );
+			$union = count( array_unique( array_merge( $ctx['tokens'], $other ) ) );
+			$inter = count( array_intersect( $ctx['tokens'], $other ) );
+			$score += $union ? 4 * ( $inter / $union ) : 0;
+		}
+		return $score;
+	}
+
+	/**
+	 * Ancestors of a list of term ids.
+	 *
+	 * @param int[] $ids Term ids.
+	 * @return int[]
+	 */
+	private static function ancestors_of( $ids ) {
+		$out = array();
+		foreach ( $ids as $id ) {
+			foreach ( get_ancestors( $id, 'product_cat' ) as $a ) {
+				$out[] = (int) $a;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Candidate product ids: curated up-/cross-sells, then the most specific category, tags and, only if
+	 * those are too few, the parent categories.
+	 *
+	 * @param WC_Product $product Awaited product.
+	 * @param array      $ctx     Context.
+	 * @return int[]
+	 */
+	private static function candidate_ids( $product, $ctx ) {
+		$ids  = array_merge( $product->get_upsell_ids(), $product->get_cross_sell_ids() );
+		$base = array(
+			'status'       => 'publish',
+			'stock_status' => 'instock',
+			'visibility'   => 'catalog',
+			'exclude'      => array( $product->get_id() ),
+			'limit'        => 60,
+			'orderby'      => 'popularity',
+			'return'       => 'ids',
+		);
+		$slugs = function ( $term_ids ) {
+			$out = array();
+			foreach ( $term_ids as $tid ) {
+				$term = get_term( $tid, 'product_cat' );
+				if ( $term && ! is_wp_error( $term ) && 'uncategorized' !== $term->slug ) {
+					$out[] = $term->slug;
+				}
+			}
+			return $out;
+		};
+		$leaf_slugs = $slugs( $ctx['leaf'] ? $ctx['leaf'] : $ctx['all'] );
+		if ( $leaf_slugs ) {
+			$ids = array_merge( $ids, wc_get_products( array_merge( $base, array( 'category' => $leaf_slugs ) ) ) );
+		}
+		if ( $ctx['tags'] ) {
+			$tag_slugs = array();
+			foreach ( $ctx['tags'] as $tid ) {
+				$term = get_term( $tid, 'product_tag' );
+				if ( $term && ! is_wp_error( $term ) ) {
+					$tag_slugs[] = $term->slug;
+				}
+			}
+			if ( $tag_slugs ) {
+				$ids = array_merge( $ids, wc_get_products( array_merge( $base, array( 'tag' => $tag_slugs, 'limit' => 30 ) ) ) );
+			}
+		}
+		if ( count( array_unique( $ids ) ) < 12 && $ctx['ancestors'] ) {
+			$parent_slugs = $slugs( $ctx['ancestors'] );
+			if ( $parent_slugs ) {
+				$ids = array_merge( $ids, wc_get_products( array_merge( $base, array( 'category' => $parent_slugs, 'limit' => 40 ) ) ) );
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Find alternatives that are really related to the awaited product.
+	 *
+	 * Relevance (category / brand / tags / title similarity) decides whether a product qualifies;
+	 * the wanted attribute values (size, color), price closeness and popularity then rank them.
 	 *
 	 * @param WC_Product $product    Awaited product (parent).
 	 * @param array      $attributes Wanted attributes (attribute_x => slug).
@@ -96,56 +269,36 @@ class Khabar_Alternatives {
 			$ref_price = '' === $product->get_price() ? null : (float) $product->get_price();
 		}
 		$range   = max( 1, (int) Khabar_Settings::get( 'alt_price_range', 30 ) ) / 100;
-		$curated = array_unique( array_merge( $product->get_upsell_ids(), $product->get_cross_sell_ids() ) );
-		$cats    = wc_get_product_term_ids( $product->get_id(), 'product_cat' );
+		$curated = array_map( 'intval', array_unique( array_merge( $product->get_upsell_ids(), $product->get_cross_sell_ids() ) ) );
+		$ctx     = self::context( $product );
 
-		$ids = $curated;
-		if ( $cats ) {
-			$slugs = array();
-			foreach ( $cats as $cat_id ) {
-				$term = get_term( $cat_id, 'product_cat' );
-				if ( $term && ! is_wp_error( $term ) && 'uncategorized' !== $term->slug ) {
-					$slugs[] = $term->slug;
-				}
-			}
-			if ( $slugs ) {
-				$ids = array_merge(
-					$ids,
-					wc_get_products(
-						array(
-							'status'       => 'publish',
-							'category'     => $slugs,
-							'stock_status' => 'instock',
-							'visibility'   => 'catalog',
-							'exclude'      => array( $product->get_id() ),
-							'limit'        => 60,
-							'return'       => 'ids',
-						)
-					)
-				);
-			}
-		}
-		$ids = array_diff( array_unique( array_map( 'intval', $ids ) ), array( $product->get_id() ) );
+		$ids = array_diff( array_unique( array_map( 'intval', self::candidate_ids( $product, $ctx ) ) ), array( $product->get_id() ) );
 		$ids = apply_filters( 'khabar_alternative_candidate_ids', $ids, $product );
 
-		$wanted = self::wanted_values( $attributes );
-		$scored = array();
+		// Minimum relevance (without price / popularity) for non-curated candidates.
+		$min_rel = (float) apply_filters( 'khabar_alternative_min_relevance', 4.0, $product );
+		$wanted  = self::wanted_values( $attributes );
+		$scored  = array();
 		foreach ( $ids as $id ) {
 			$candidate = wc_get_product( $id );
 			if ( ! $candidate || 'publish' !== $candidate->get_status() || ! $candidate->is_in_stock() || ! $candidate->is_visible() ) {
 				continue;
 			}
+			$is_curated = in_array( $id, $curated, true );
+			$relevance  = self::relevance( $ctx, $candidate );
+			if ( ! $is_curated && $relevance < $min_rel ) {
+				continue; // Not really related.
+			}
 			$target = $candidate;
-			$score  = 0.0;
+			$score  = $relevance + ( $is_curated ? 3 : 0 );
 			if ( $wanted && $candidate->is_type( 'variable' ) ) {
 				$variation = self::matching_variation( $candidate, $wanted );
 				if ( ! $variation ) {
 					continue; // Does not come in the customer's size/color.
 				}
 				$target = $variation;
-				// Bonus only when the candidate really shares the wanted attributes (e.g. has a size 42).
 				if ( array_intersect_key( $wanted, self::wanted_values( $variation->get_variation_attributes() ) ) ) {
-					$score += 3;
+					$score += 2;
 				}
 			} elseif ( ! $candidate->is_purchasable() && ! $candidate->is_type( 'variable' ) ) {
 				continue;
@@ -154,20 +307,18 @@ class Khabar_Alternatives {
 			$price = '' === $target->get_price() ? null : (float) $target->get_price();
 			if ( null !== $ref_price && $ref_price > 0 && null !== $price ) {
 				$diff = abs( $price - $ref_price ) / $ref_price;
-				if ( $diff > $range && ! in_array( $id, $curated, true ) ) {
+				if ( $diff > $range && ! $is_curated ) {
 					continue;
 				}
 				$score += 2 * max( 0, 1 - $diff / $range );
 			}
-			if ( in_array( $id, $curated, true ) ) {
-				$score += 2;
-			}
-			$score += min( 2, log10( 1 + (int) $candidate->get_total_sales() ) / 2 );
+			$score += min( 1, log10( 1 + (int) $candidate->get_total_sales() ) / 3 );
 
 			$scored[] = array(
-				'product' => $candidate,
-				'target'  => $target,
-				'score'   => round( $score, 3 ),
+				'product'   => $candidate,
+				'target'    => $target,
+				'score'     => round( $score, 3 ),
+				'relevance' => round( $relevance, 3 ),
 			);
 		}
 		usort(
@@ -298,15 +449,16 @@ class Khabar_Alternatives {
 		ob_start();
 		?>
 		<div class="khabar-alts">
-			<p class="khabar-alts-title"><?php esc_html_e( 'تا موجود شدن، این محصولات مشابه موجودند:', 'khabar' ); ?></p>
-			<ul>
+			<p class="khabar-alts-title"><?php esc_html_e( 'تا موجود شدن، این محصولات مشابه موجودند', 'khabar' ); ?></p>
+			<ul class="khabar-alts-list">
 				<?php foreach ( $alts as $alt ) : ?>
 					<?php $url = $alt['target']->is_type( 'variation' ) ? add_query_arg( $alt['target']->get_variation_attributes(), $alt['product']->get_permalink() ) : $alt['product']->get_permalink(); ?>
 					<li>
-						<a href="<?php echo esc_url( $url ); ?>">
-							<?php echo wp_kses_post( $alt['product']->get_image( array( 64, 64 ) ) ); ?>
+						<a class="khabar-alt" href="<?php echo esc_url( $url ); ?>">
+							<span class="khabar-alts-img"><?php echo wp_kses_post( $alt['product']->get_image( 'woocommerce_thumbnail' ) ); ?></span>
 							<span class="khabar-alts-name"><?php echo esc_html( $alt['target']->get_name() ); ?></span>
 							<span class="khabar-alts-price"><?php echo wp_kses_post( $alt['target']->get_price_html() ); ?></span>
+							<span class="khabar-alts-cta"><?php esc_html_e( 'مشاهده', 'khabar' ); ?> ←</span>
 						</a>
 					</li>
 				<?php endforeach; ?>

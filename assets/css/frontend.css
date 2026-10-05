@@ -148,12 +148,21 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 @media (forced-colors: active) { .khabar-ph-line { stroke: CanvasText; } .khabar-ph-area { display: none; } }
 
 /* Alternatives */
-.khabar-alts { margin: 14px 0; padding: 12px; border: 1px dashed var(--khabar-line); border-radius: var(--khabar-radius); direction: rtl; }
-.khabar-alts-title { margin: 0 0 8px; font-weight: 700; font-size: .92em; }
-.khabar-alts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.khabar-alts a { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; text-decoration: none; color: inherit; }
-.khabar-alts img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
-.khabar-alts-price { font-size: .9em; white-space: nowrap; }
+.khabar-alts { margin: 18px 0; padding: 16px; background: var(--khabar-soft); border: 1px solid var(--khabar-line); border-radius: 14px; direction: rtl; }
+.khabar-alts-title { margin: 0 0 12px; font-weight: 700; font-size: 1rem; color: var(--khabar-ink); display: flex; align-items: center; gap: 8px; }
+.khabar-alts-title::before { content: ""; width: 4px; height: 1.1em; border-radius: 4px; background: var(--khabar-accent); }
+.khabar-alts-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.khabar-alts-list li { margin: 0; padding: 0; }
+.khabar-alt { display: flex; flex-direction: column; gap: 8px; height: 100%; padding: 10px; background: var(--khabar-bg); border: 1px solid var(--khabar-line); border-radius: 12px; text-decoration: none; color: var(--khabar-ink); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+.khabar-alt:hover, .khabar-alt:focus-visible { transform: translateY(-2px); border-color: var(--khabar-accent); box-shadow: 0 8px 20px rgba(35, 37, 78, .12); }
+.khabar-alts-img { display: block; aspect-ratio: 1 / 1; border-radius: 8px; overflow: hidden; background: var(--khabar-soft); }
+.khabar-alts-img img { width: 100%; height: 100%; object-fit: cover; display: block; margin: 0; }
+.khabar-alts-name { font-size: .88rem; font-weight: 600; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 3.4em; }
+.khabar-alts-price { margin-top: auto; font-weight: 700; font-size: .95rem; color: var(--khabar-accent); }
+.khabar-alts-price del { color: var(--khabar-muted); font-weight: 400; font-size: .85em; margin-inline-end: 6px; }
+.khabar-alts-price ins { text-decoration: none; }
+.khabar-alts-cta { font-size: .8rem; color: var(--khabar-muted); }
+.khabar-alt:hover .khabar-alts-cta { color: var(--khabar-accent); }
 
 /* Messenger connect */
 .khabar-connect { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 12px 0 4px; }
