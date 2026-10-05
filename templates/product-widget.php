@@ -17,6 +17,7 @@ $khabar_vars       = isset( $khabar_vars ) ? $khabar_vars : '';
 $khabar_has_stock  = in_array( 'stock', $types, true );
 $khabar_has_price  = array_intersect( array( 'price_drop', 'price_rise', 'price_change' ), $types );
 $khabar_contact    = $s['contact_mode'];
+$khabar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 ?>
 <div class="khabar" id="<?php echo esc_attr( $khabar_uid ); ?>"<?php echo ! empty( $khabar_vars ) ? ' style="' . esc_attr( $khabar_vars ) . '"' : ''; ?>
 	data-product="<?php echo esc_attr( $product->get_id() ); ?>"
@@ -111,17 +112,7 @@ $khabar_contact    = $s['contact_mode'];
 					</div>
 				</fieldset>
 
-				<fieldset class="khabar-contact">
-					<label><span class="khabar-lbl"><?php esc_html_e( 'نام (اختیاری)', 'khabar' ); ?></span><span class="khabar-field"><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"><?php echo Khabar_Frontend::icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
-					<?php if ( 'email' !== $khabar_contact ) : ?>
-						<label><span class="khabar-lbl"><?php esc_html_e( 'شماره موبایل', 'khabar' ); ?></span><span class="khabar-field"><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $khabar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
-					<?php endif; ?>
-					<?php if ( 'phone' !== $khabar_contact ) : ?>
-						<label><span class="khabar-lbl"><?php esc_html_e( 'ایمیل', 'khabar' ); ?></span><span class="khabar-field"><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $khabar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'mail' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
-					<?php endif; ?>
-				</fieldset>
-
-				<?php if ( $s['user_selects_channel'] && count( $channels ) > 1 ) : ?>
+				<?php if ( $khabar_sel ) : ?>
 				<fieldset class="khabar-channels">
 					<legend><?php echo Khabar_Frontend::icon( 'send' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'khabar' ); ?></span></legend>
 					<?php foreach ( $channels as $khabar_ch => $khabar_label ) : ?>
@@ -129,6 +120,16 @@ $khabar_contact    = $s['contact_mode'];
 					<?php endforeach; ?>
 				</fieldset>
 				<?php endif; ?>
+				<fieldset class="khabar-contact">
+					<label><span class="khabar-lbl"><?php esc_html_e( 'نام (اختیاری)', 'khabar' ); ?></span><span class="khabar-field"><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"><?php echo Khabar_Frontend::icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+					<?php if ( $khabar_sel || 'email' !== $khabar_contact ) : ?>
+						<label class="khabar-f-phone" data-for="sms whatsapp"><span class="khabar-lbl"><?php esc_html_e( 'شماره موبایل', 'khabar' ); ?></span><span class="khabar-field"><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $khabar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+					<?php endif; ?>
+					<?php if ( $khabar_sel || 'phone' !== $khabar_contact ) : ?>
+						<label class="khabar-f-email" data-for="email"><span class="khabar-lbl"><?php esc_html_e( 'ایمیل', 'khabar' ); ?></span><span class="khabar-field"><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $khabar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>><?php echo Khabar_Frontend::icon( 'mail' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+					<?php endif; ?>
+				</fieldset>
+
 
 				<p class="khabar-msg" role="alert" hidden></p>
 				<button type="submit" class="button alt khabar-submit"><span><?php esc_html_e( 'ثبت درخواست', 'khabar' ); ?></span><?php echo Khabar_Frontend::icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>

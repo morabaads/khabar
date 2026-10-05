@@ -129,6 +129,7 @@
 			self.updateMode();
 		});
 		this.$form.on('change', 'input[type=checkbox]', function () { self.updateMode(); });
+		this.$form.on('change', '.khabar-channels input', function () { self.syncContact(); });
 		this.$form.on('change', '.khabar-attrs select', function () { self.$form.find('[name=variation_id]').val(0); self.updateLabel(); });
 		this.$form.on('input', '.khabar-num', function () {
 			var digits = faToEn(this.value).replace(/[^\d]/g, '');
@@ -160,6 +161,27 @@
 			$stock.prop('hidden', inStock);
 			$price.prop('hidden', !inStock);
 		}
+	};
+
+	// Show only the contact fields the ticked channels need (SMS/WhatsApp -> mobile, email -> email; name always).
+	Widget.prototype.syncContact = function () {
+		var $ch = this.$form.find('.khabar-channels input:checked');
+		if (!this.$form.find('.khabar-channels').length) { return; }
+		var on = {};
+		$ch.each(function () { on[this.value] = true; });
+		var needsAny = false;
+		this.$form.find('.khabar-contact label[data-for]').each(function () {
+			var $l = $(this), need = false;
+			$.each(String($l.data('for')).split(' '), function (_, c) { if (on[c]) { need = true; } });
+			$l.data('need', need);
+			needsAny = needsAny || need;
+		});
+		this.$form.find('.khabar-contact label[data-for]').each(function () {
+			var $l = $(this);
+			// With only on-site / messenger channels ticked neither contact is needed, so keep both visible but optional.
+			var show = $l.data('need') || !needsAny;
+			$l.prop('hidden', !show).find('input').prop('disabled', !show);
+		});
 	};
 
 	Widget.prototype.updateMode = function () {
@@ -201,6 +223,7 @@
 		this.$form.find('[name=variation_id]').val(this.variation ? this.variation.variation_id : 0);
 		this.updateLabel();
 		this.updateMode();
+		this.syncContact();
 
 		this.$modal.prop('hidden', false);
 		$('body').addClass('khabar-lock');

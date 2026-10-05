@@ -271,3 +271,8 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 .khabar-modal-box { overflow-x: hidden; overflow-y: auto; }
 .khabar-modal-box > * { max-width: 100%; }
 .khabar-channels label { flex: 1 1 auto; min-width: 0; }
+
+/* contact fields follow the ticked channels */
+.khabar-contact { display: block; }
+.khabar-contact label[hidden] { display: none !important; }
+.khabar-channels { margin-bottom: 18px; }

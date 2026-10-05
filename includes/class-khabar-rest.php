@@ -173,8 +173,20 @@ class Khabar_Rest {
 		if ( '' !== (string) $req->get_param( 'email' ) && ! is_email( $email ) ) {
 			return self::error( __( 'ایمیل معتبر نیست.', 'khabar' ) );
 		}
-		$mode = $s['contact_mode'];
-		if ( ( 'phone' === $mode && ! $phone ) || ( 'email' === $mode && ! $email ) || ( 'both' === $mode && ( ! $phone || ! $email ) ) || ( 'either' === $mode && ! $phone && ! $email ) ) {
+		$mode     = $s['contact_mode'];
+		$enabled  = (array) $s['channels_enabled'];
+		$channels = $s['user_selects_channel'] ? array_values( array_intersect( array_map( 'sanitize_key', (array) $req->get_param( 'channels' ) ), $enabled ) ) : array();
+		$need_ph  = (bool) array_intersect( $channels, array( 'sms', 'whatsapp' ) );
+		$need_em  = in_array( 'email', $channels, true );
+		if ( $channels && ( $need_ph || $need_em ) ) {
+			// The ticked channels decide which contact is required.
+			if ( $need_ph && ! $phone ) {
+				return self::error( __( 'شماره موبایل را وارد کنید.', 'khabar' ) );
+			}
+			if ( $need_em && ! $email ) {
+				return self::error( __( 'ایمیل را وارد کنید.', 'khabar' ) );
+			}
+		} elseif ( ( 'phone' === $mode && ! $phone ) || ( 'email' === $mode && ! $email ) || ( 'both' === $mode && ( ! $phone || ! $email ) ) || ( 'either' === $mode && ! $phone && ! $email ) ) {
 			$labels = array(
 				'phone'  => __( 'شماره موبایل را وارد کنید.', 'khabar' ),
 				'email'  => __( 'ایمیل را وارد کنید.', 'khabar' ),
@@ -187,8 +199,6 @@ class Khabar_Rest {
 			return self::error( __( 'تعداد درخواست‌های فعال شما به حداکثر رسیده است.', 'khabar' ) );
 		}
 
-		$enabled  = (array) $s['channels_enabled'];
-		$channels = $s['user_selects_channel'] ? array_values( array_intersect( array_map( 'sanitize_key', (array) $req->get_param( 'channels' ) ), $enabled ) ) : array();
 
 		$verify = $s['verify_contact'];
 		$needs  = ( 'all' === $verify ) || ( 'guest' === $verify && ! $uid );
