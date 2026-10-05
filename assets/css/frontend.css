@@ -246,3 +246,15 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 .khabar-connect-btn[data-network="bale"] { background: #10a38b; }
 .khabar-connect-btn.is-connected { background: #e7f8ee; color: #05662f !important; pointer-events: none; }
 .khabar-connect-hint { width: 100%; text-align: center; font-size: .8em; color: var(--khabar-muted); margin: 0; }
+
+/* popup refinements */
+.khabar-field:has(input[dir=ltr]) .khabar-ic { left: auto; right: 14px; }
+.khabar-field:has(input[dir=ltr]) input { padding-left: 14px !important; padding-right: 46px !important; }
+@media (max-width: 560px) {
+	.khabar-cond { gap: 8px; padding: 10px 12px; }
+	.khabar-form .khabar-num { flex: 0 0 96px; width: 96px !important; }
+	.khabar-cond-ic { flex-basis: 34px; width: 34px; height: 34px; }
+	.khabar-cond-text { font-size: .93rem; }
+}
+.khabar-channels label span { white-space: nowrap; }
+@media (max-width: 560px) { .khabar-channels label { flex: 1 1 auto; } }
