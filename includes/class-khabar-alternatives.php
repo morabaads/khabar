@@ -452,18 +452,21 @@ class Khabar_Alternatives {
 	 * @param WC_Product $product Product.
 	 * @return string
 	 */
-	public static function render_block( $product ) {
-		if ( ! Khabar_Settings::get( 'alt_show_on_page', 1 ) || $product->is_in_stock() ) {
+	public static function render_block( $product, $args = array() ) {
+		$always = ! empty( $args['always'] );
+		if ( ! $always && ( ! Khabar_Settings::get( 'alt_show_on_page', 1 ) || $product->is_in_stock() ) ) {
 			return '';
 		}
-		$alts = self::find( $product, array(), null, min( 12, max( 1, (int) Khabar_Settings::get( 'alt_page_count', 4 ) ) ) );
+		$count = ! empty( $args['count'] ) ? (int) $args['count'] : (int) Khabar_Settings::get( 'alt_page_count', 4 );
+		$title = ! empty( $args['title'] ) ? (string) $args['title'] : __( 'تا موجود شدن، این محصولات مشابه موجودند', 'khabar' );
+		$alts  = self::find( $product, array(), null, min( 12, max( 1, $count ) ) );
 		if ( ! $alts ) {
 			return '';
 		}
 		ob_start();
 		?>
-		<div class="khabar-alts">
-			<p class="khabar-alts-title"><?php esc_html_e( 'تا موجود شدن، این محصولات مشابه موجودند', 'khabar' ); ?></p>
+		<div class="khabar-alts"<?php echo ! empty( $args['vars'] ) ? ' style="' . esc_attr( $args['vars'] ) . '"' : ''; ?>>
+			<p class="khabar-alts-title"><?php echo esc_html( $title ); ?></p>
 			<ul class="khabar-alts-list">
 				<?php foreach ( $alts as $alt ) : ?>
 					<?php $url = $alt['target']->is_type( 'variation' ) ? add_query_arg( $alt['target']->get_variation_attributes(), $alt['product']->get_permalink() ) : $alt['product']->get_permalink(); ?>

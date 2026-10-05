@@ -91,6 +91,66 @@ abstract class Khabar_Elementor_Base extends \Elementor\Widget_Base {
 	}
 
 	/**
+	 * Popup / card colour controls writing CSS variables (applied through a style attribute so they
+	 * also reach the popup, which is moved to <body> and therefore outside the widget wrapper).
+	 *
+	 * @param string $prefix Control id prefix.
+	 */
+	protected function color_var_controls( $prefix = 'v_' ) {
+		$fields = array(
+			'accent'    => __( 'رنگ اصلی', 'khabar' ),
+			'on_accent' => __( 'رنگ متن روی دکمه', 'khabar' ),
+			'ink'       => __( 'رنگ متن اصلی', 'khabar' ),
+			'muted'     => __( 'رنگ متن کم‌رنگ', 'khabar' ),
+			'bg'        => __( 'پس‌زمینه', 'khabar' ),
+			'soft'      => __( 'پس‌زمینه ملایم', 'khabar' ),
+			'line'      => __( 'رنگ حاشیه‌ها', 'khabar' ),
+		);
+		foreach ( $fields as $key => $label ) {
+			$this->add_control( $prefix . $key, array( 'label' => $label, 'type' => Controls_Manager::COLOR ) );
+		}
+		$this->add_control(
+			$prefix . 'radius',
+			array(
+				'label'      => __( 'گردی گوشه‌ها', 'khabar' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => array( 'px' ),
+				'range'      => array( 'px' => array( 'min' => 0, 'max' => 30 ) ),
+			)
+		);
+	}
+
+	/**
+	 * Build the "--khabar-*:value;" string from colour_var_controls() settings.
+	 *
+	 * @param array  $settings Widget settings.
+	 * @param string $prefix   Prefix.
+	 * @return string
+	 */
+	protected function color_vars( $settings, $prefix = 'v_' ) {
+		$map = array(
+			'accent'    => '--khabar-accent',
+			'on_accent' => '--khabar-on-accent',
+			'ink'       => '--khabar-ink',
+			'muted'     => '--khabar-muted',
+			'bg'        => '--khabar-bg',
+			'soft'      => '--khabar-soft',
+			'line'      => '--khabar-line',
+		);
+		$out = '';
+		foreach ( $map as $key => $var ) {
+			$val = isset( $settings[ $prefix . $key ] ) ? trim( (string) $settings[ $prefix . $key ] ) : '';
+			if ( '' !== $val && preg_match( '/^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%\/]+\)|[a-z]+)$/i', $val ) ) {
+				$out .= $var . ':' . $val . ';';
+			}
+		}
+		if ( ! empty( $settings[ $prefix . 'radius' ]['size'] ) || ( isset( $settings[ $prefix . 'radius' ]['size'] ) && '0' === (string) $settings[ $prefix . 'radius' ]['size'] ) ) {
+			$out .= '--khabar-radius:' . absint( $settings[ $prefix . 'radius' ]['size'] ) . 'px;';
+		}
+		return $out;
+	}
+
+	/**
 	 * Editor-only hint when there is no product context.
 	 *
 	 * @param string $text Text.

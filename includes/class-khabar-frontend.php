@@ -42,6 +42,7 @@ class Khabar_Frontend {
 	 */
 	public static function register() {
 		wp_register_style( 'khabar', KHABAR_URL . 'assets/css/frontend.css', array(), KHABAR_VERSION );
+		wp_add_inline_style( 'khabar', ':root{' . Khabar_Settings::css_vars() . '}' );
 		wp_register_script( 'khabar', KHABAR_URL . 'assets/js/frontend.js', array( 'jquery' ), KHABAR_VERSION, true );
 		$keys = Khabar_Push::enabled() ? Khabar_Push::keys() : null;
 		wp_localize_script(
@@ -297,6 +298,7 @@ class Khabar_Frontend {
 		$attributes = $variable ? self::attribute_options( $product ) : array();
 		$price      = '' === $product->get_price() ? '' : (float) $product->get_price();
 
+		$khabar_vars = ! empty( $args['vars'] ) ? (string) $args['vars'] : '';
 		$khabar_uid = ! empty( $args['uid'] ) ? sanitize_html_class( $args['uid'] ) : 'khabar-' . $product->get_id();
 		ob_start();
 		include Khabar_Utils::template( 'product-widget.php' );

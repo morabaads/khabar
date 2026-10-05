@@ -63,8 +63,9 @@ class Khabar_Admin {
 		if ( false === strpos( $hook, 'khabar' ) && ! in_array( $hook, array( 'post.php', 'post-new.php', 'edit.php' ), true ) ) {
 			return;
 		}
+		wp_enqueue_style( 'wp-color-picker' );
 		wp_enqueue_style( 'khabar-admin', KHABAR_URL . 'assets/css/admin.css', array(), KHABAR_VERSION );
-		wp_enqueue_script( 'khabar-admin', KHABAR_URL . 'assets/js/admin.js', array( 'jquery' ), KHABAR_VERSION, true );
+		wp_enqueue_script( 'khabar-admin', KHABAR_URL . 'assets/js/admin.js', array( 'jquery', 'wp-color-picker' ), KHABAR_VERSION, true );
 	}
 
 	/**
@@ -563,6 +564,9 @@ class Khabar_Admin {
 				if ( $default && $default !== $value ) {
 					printf( ' <button type="button" class="button-link khabar-reset" data-target="%s" data-default="%s">%s</button>', esc_attr( $id ), esc_attr( $default ), esc_html__( 'بازگردانی پیش‌فرض', 'khabar' ) );
 				}
+				break;
+			case 'color':
+				printf( '<input type="text" class="khabar-color" id="%s" name="%s" value="%s" data-default-color="%s" dir="ltr">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ), esc_attr( $default ) );
 				break;
 			case 'password':
 				printf( '<input type="password" autocomplete="new-password" class="regular-text" dir="ltr" id="%s" name="%s" value="%s">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );

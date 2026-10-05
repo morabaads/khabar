@@ -161,6 +161,18 @@ class Khabar_Elementor_Notify_Widget extends Khabar_Elementor_Base {
 		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی فرم', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar' => '--khabar-accent: {{VALUE}};' ) ) );
 		$this->add_control( 'count_color', array( 'label' => __( 'رنگ «نفر منتظر»', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar-waiting' => 'color: {{VALUE}};' ) ) );
 		$this->end_controls_section();
+
+		// Popup + card colours (CSS variables).
+		$this->start_controls_section(
+			'style_popup',
+			array(
+				'label' => __( 'رنگ‌بندی پاپ‌آپ', 'khabar' ),
+				'tab'   => Controls_Manager::TAB_STYLE,
+			)
+		);
+		$this->add_control( 'popup_note', array( 'type' => Controls_Manager::RAW_HTML, 'raw' => esc_html__( 'خالی بگذارید تا رنگ‌های تنظیمات افزونه (ظاهر و رنگ‌ها) استفاده شود.', 'khabar' ), 'content_classes' => 'elementor-descriptor' ) );
+		$this->color_var_controls( 'v_' );
+		$this->end_controls_section();
 	}
 
 	/**
@@ -182,6 +194,7 @@ class Khabar_Elementor_Notify_Widget extends Khabar_Elementor_Base {
 				'button_text_price' => isset( $s['button_text_price'] ) ? $s['button_text_price'] : '',
 				'show_price_alert'  => ! empty( $s['show_price_alert'] ) ? 1 : 0,
 				'hide_extras'       => empty( $s['show_extras'] ),
+				'vars'              => $this->color_vars( $s, 'v_' ),
 			)
 		);
 	}

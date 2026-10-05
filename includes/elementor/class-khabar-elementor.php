@@ -45,6 +45,7 @@ class Khabar_Elementor {
 	public static function widgets() {
 		return array(
 			'Khabar_Elementor_Notify_Widget',
+			'Khabar_Elementor_Alternatives_Widget',
 			'Khabar_Elementor_Price_History_Widget',
 			'Khabar_Elementor_My_Alerts_Widget',
 			'Khabar_Elementor_Bell_Widget',

@@ -13,11 +13,12 @@
 defined( 'ABSPATH' ) || exit;
 
 $khabar_uid        = isset( $khabar_uid ) ? $khabar_uid : 'khabar-' . $product->get_id();
+$khabar_vars       = isset( $khabar_vars ) ? $khabar_vars : '';
 $khabar_has_stock  = in_array( 'stock', $types, true );
 $khabar_has_price  = array_intersect( array( 'price_drop', 'price_rise', 'price_change' ), $types );
 $khabar_contact    = $s['contact_mode'];
 ?>
-<div class="khabar" id="<?php echo esc_attr( $khabar_uid ); ?>"
+<div class="khabar" id="<?php echo esc_attr( $khabar_uid ); ?>"<?php echo ! empty( $khabar_vars ) ? ' style="' . esc_attr( $khabar_vars ) . '"' : ''; ?>
 	data-product="<?php echo esc_attr( $product->get_id() ); ?>"
 	data-variable="<?php echo $variable ? '1' : '0'; ?>"
 	data-instock="<?php echo $in_stock ? '1' : '0'; ?>"
@@ -44,7 +45,7 @@ $khabar_contact    = $s['contact_mode'];
 	</div>
 	<?php endif; ?>
 
-	<div class="khabar-modal" role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr( $khabar_uid ); ?>-title" hidden>
+	<div class="khabar-modal"<?php echo ! empty( $khabar_vars ) ? ' style="' . esc_attr( $khabar_vars ) . '"' : ''; ?> role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr( $khabar_uid ); ?>-title" hidden>
 		<div class="khabar-modal-box">
 			<span class="khabar-grab" aria-hidden="true"></span>
 			<header class="khabar-head">

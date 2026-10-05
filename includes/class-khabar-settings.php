@@ -410,6 +410,24 @@ class Khabar_Settings {
 					),
 				),
 			),
+			'appearance' => array(
+				'label'  => __( 'ظاهر و رنگ‌ها', 'khabar' ),
+				'fields' => array(
+					'_look_heading'      => array(
+						'type'  => 'heading',
+						'label' => __( 'رنگ‌بندی پاپ‌آپ، دکمه‌ها و کارت‌ها', 'khabar' ),
+						'desc'  => __( 'این رنگ‌ها روی همه‌ی بخش‌های سمت مشتری اعمال می‌شود. در ویجت‌های المنتور هم می‌توان برای هر ویجت جداگانه تغییرشان داد.', 'khabar' ),
+					),
+					'color_accent'       => array( 'type' => 'color', 'label' => __( 'رنگ اصلی (دکمه‌ها، تیک‌ها، تأکید)', 'khabar' ), 'default' => '#f4511e' ),
+					'color_button_text'  => array( 'type' => 'color', 'label' => __( 'رنگ متن دکمه‌ها', 'khabar' ), 'default' => '#ffffff' ),
+					'color_ink'          => array( 'type' => 'color', 'label' => __( 'رنگ متن اصلی', 'khabar' ), 'default' => '#1f2140' ),
+					'color_muted'        => array( 'type' => 'color', 'label' => __( 'رنگ متن کم‌رنگ', 'khabar' ), 'default' => '#6b6f7b' ),
+					'color_surface'      => array( 'type' => 'color', 'label' => __( 'پس‌زمینه‌ی پاپ‌آپ و کارت‌ها', 'khabar' ), 'default' => '#ffffff' ),
+					'color_soft'         => array( 'type' => 'color', 'label' => __( 'پس‌زمینه‌ی ملایم', 'khabar' ), 'default' => '#f7f7f9' ),
+					'color_line'         => array( 'type' => 'color', 'label' => __( 'رنگ حاشیه‌ها', 'khabar' ), 'default' => '#e6e7eb' ),
+					'radius'             => array( 'type' => 'number', 'label' => __( 'گردی گوشه‌ها (پیکسل)', 'khabar' ), 'default' => 14 ),
+				),
+			),
 			'templates' => array(
 				'label'  => __( 'قالب پیام‌ها', 'khabar' ),
 				'desc'   => __( 'متغیرها: {customer_name} {product_name} {variation} {price} {old_price} {regular_price} {target_price} {stock} {link} {site_name} {minutes} {exclusive_note} {manage_link} {code} {coupon} {coupon_amount} {coupon_expiry} {coupon_note} {alt_name} {alt_price} {alt_link} {alternatives_html} {waiting}', 'khabar' ),
@@ -763,6 +781,10 @@ class Khabar_Settings {
 				case 'number':
 					$current[ $key ] = max( 0, (int) $raw );
 					break;
+				case 'color':
+					$hex             = sanitize_hex_color( (string) $raw );
+					$current[ $key ] = $hex ? $hex : $field['default'];
+					break;
 				case 'select':
 					$current[ $key ] = isset( $field['options'][ $raw ] ) ? $raw : $field['default'];
 					break;
@@ -804,6 +826,35 @@ class Khabar_Settings {
 			if ( '' !== $k ) {
 				$out[ $k ] = trim( substr( $line, $pos + 1 ) );
 			}
+		}
+		return $out;
+	}
+
+	/**
+	 * CSS custom properties for the appearance settings.
+	 *
+	 * @return string e.g. "--khabar-accent:#f4511e;…"
+	 */
+	public static function css_vars() {
+		$map = array(
+			'color_accent'      => '--khabar-accent',
+			'color_button_text' => '--khabar-on-accent',
+			'color_ink'         => '--khabar-ink',
+			'color_muted'       => '--khabar-muted',
+			'color_surface'     => '--khabar-bg',
+			'color_soft'        => '--khabar-soft',
+			'color_line'        => '--khabar-line',
+		);
+		$out = '';
+		foreach ( $map as $key => $var ) {
+			$hex = sanitize_hex_color( (string) self::get( $key, '' ) );
+			if ( $hex ) {
+				$out .= $var . ':' . $hex . ';';
+			}
+		}
+		$r = (int) self::get( 'radius', 14 );
+		if ( $r >= 0 && $r <= 40 ) {
+			$out .= '--khabar-radius:' . $r . 'px;';
 		}
 		return $out;
 	}
