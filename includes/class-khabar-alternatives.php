@@ -175,9 +175,8 @@ class Khabar_Alternatives {
 		}
 		if ( $ctx['tokens'] ) {
 			$other = self::title_tokens( $candidate->get_name() );
-			$union = count( array_unique( array_merge( $ctx['tokens'], $other ) ) );
-			$inter = count( array_intersect( $ctx['tokens'], $other ) );
-			$score += $union ? 4 * ( $inter / $union ) : 0;
+						$inter = count( array_intersect( $ctx['tokens'], $other ) );
+			$score += ( $other && $ctx['tokens'] ) ? 4 * ( $inter / sqrt( count( $ctx['tokens'] ) * count( $other ) ) ) : 0;
 		}
 		return $score;
 	}
@@ -276,7 +275,8 @@ class Khabar_Alternatives {
 		$ids = apply_filters( 'khabar_alternative_candidate_ids', $ids, $product );
 
 		// Minimum relevance (without price / popularity) for non-curated candidates.
-		$min_rel = (float) apply_filters( 'khabar_alternative_min_relevance', 4.0, $product );
+		$min_rel = (float) apply_filters( 'khabar_alternative_min_relevance', 2.5, $product );
+		$floor   = (float) apply_filters( 'khabar_alternative_floor_relevance', 1.0, $product );
 		$wanted  = self::wanted_values( $attributes );
 		$scored  = array();
 		foreach ( $ids as $id ) {
@@ -286,8 +286,8 @@ class Khabar_Alternatives {
 			}
 			$is_curated = in_array( $id, $curated, true );
 			$relevance  = self::relevance( $ctx, $candidate );
-			if ( ! $is_curated && $relevance < $min_rel ) {
-				continue; // Not really related.
+			if ( ! $is_curated && $relevance < $floor ) {
+				continue; // Not related at all.
 			}
 			$target = $candidate;
 			$score  = $relevance + ( $is_curated ? 3 : 0 );
@@ -327,7 +327,21 @@ class Khabar_Alternatives {
 				return $b['score'] <=> $a['score'];
 			}
 		);
-		return array_slice( $scored, 0, max( 1, $limit ) );
+		// Strongly related products first; weaker (same area only) ones just fill the remaining slots.
+		$limit  = max( 1, $limit );
+		$strong = array_values(
+			array_filter(
+				$scored,
+				function ( $row ) use ( $min_rel, $curated ) {
+					return $row['relevance'] >= $min_rel || in_array( $row['product']->get_id(), $curated, true );
+				}
+			)
+		);
+		if ( count( $strong ) >= $limit ) {
+			return array_slice( $strong, 0, $limit );
+		}
+		$weak = array_values( array_udiff( $scored, $strong, function ( $a, $b ) { return $a['product']->get_id() <=> $b['product']->get_id(); } ) );
+		return array_slice( array_merge( $strong, $weak ), 0, $limit );
 	}
 
 	/**
