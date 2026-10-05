@@ -258,3 +258,9 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 }
 .khabar-channels label span { white-space: nowrap; }
 @media (max-width: 560px) { .khabar-channels label { flex: 1 1 auto; } }
+
+/* popup lives under <body> */
+.khabar-modal [hidden] { display: none !important; }
+.khabar-modal { line-height: 1.8; }
+.khabar-modal-box { width: min(480px, 100%); max-height: min(92vh, 860px); }
+@media (min-width: 561px) { .khabar-modal-box { padding: 24px 24px 20px; } }

@@ -104,6 +104,8 @@
 		this.$form = $root.find('.khabar-form');
 		this.$otp = $root.find('.khabar-otp');
 		this.$done = $root.find('.khabar-done');
+		// Re-parent the popup to <body>: ancestors with transform/overflow in themes would otherwise clip a fixed-position modal.
+		this.$modal.appendTo(document.body);
 		this.variable = $root.data('variable') === 1 || $root.data('variable') === '1';
 		this.waiting = $root.data('waiting') || {};
 		this.variation = null;
@@ -116,7 +118,7 @@
 		this.$vform = $vform;
 
 		this.$root.on('click', '.khabar-open', function () { self.open($(this).data('mode')); });
-		this.$root.on('click', '.khabar-close', function () { self.close(); });
+		this.$modal.on('click', '.khabar-close', function () { self.close(); });
 		this.$modal.on('click', function (e) { if (e.target === self.$modal[0]) { self.close(); } });
 		$(document).on('keydown', function (e) { if (e.key === 'Escape') { self.close(); } });
 
@@ -170,7 +172,7 @@
 		this.$form.find('.khabar-attrs select').each(function () {
 			if ($(this).val()) { parts.push($(this).closest('label').find('span').text() + ': ' + $(this).find('option:selected').text()); }
 		});
-		this.$root.find('.khabar-variation-label').text(parts.length ? '(' + parts.join('، ') + ')' : '');
+		this.$modal.find('.khabar-variation-label').text(parts.length ? '(' + parts.join('، ') + ')' : '');
 	};
 
 	Widget.prototype.open = function (mode) {
