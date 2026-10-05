@@ -1,3 +1,11 @@
+@font-face {
+	font-family: "Dana";
+	src: url("../fonts/DanaVF.woff2") format("woff2");
+	font-weight: 100 900;
+	font-style: normal;
+	font-display: swap;
+}
+
 :root {
 	--khabar-accent: #ef394e;
 	--khabar-ink: #23254e;
@@ -7,7 +15,14 @@
 	--khabar-soft: #f7f7f9;
 	--khabar-ok: #00a049;
 	--khabar-radius: 10px;
+	--khabar-font: "Dana", Tahoma, "Segoe UI", sans-serif;
 }
+
+.khabar, .khabar-modal, .khabar-panel, .khabar-bell, .khabar-floating, .khabar-ph, .khabar-alts, .khabar-exclusive-note { font-family: var(--khabar-font); }
+.khabar button, .khabar input, .khabar select, .khabar textarea,
+.khabar-modal button, .khabar-modal input, .khabar-modal select, .khabar-modal textarea,
+.khabar-panel button, .khabar-panel input, .khabar-panel select, .khabar-panel textarea,
+.khabar-bell button { font-family: inherit; }
 
 .khabar { margin: 14px 0; direction: rtl; }
 .khabar [hidden] { display: none !important; }
