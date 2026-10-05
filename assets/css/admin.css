@@ -6,7 +6,7 @@
 	font-display: swap;
 }
 
-.khabar-admin, .khabar-admin input, .khabar-admin select, .khabar-admin textarea, .khabar-admin button, .khabar-admin .wp-list-table { font-family: "Dana", Tahoma, "Segoe UI", sans-serif; }
+.khabar-admin, .khabar-admin *:not(.dashicons):not([class*="dashicons-"]) { font-family: "Dana", Tahoma, "Segoe UI", sans-serif !important; }
 .khabar-admin { direction: rtl; text-align: right; }
 .khabar-admin .form-table th { text-align: right; }
 .khabar-admin .khabar-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 16px 0; }
