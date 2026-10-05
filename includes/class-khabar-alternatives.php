@@ -456,7 +456,7 @@ class Khabar_Alternatives {
 		if ( ! Khabar_Settings::get( 'alt_show_on_page', 1 ) || $product->is_in_stock() ) {
 			return '';
 		}
-		$alts = self::find( $product, array(), null, max( 1, (int) Khabar_Settings::get( 'alt_count', 3 ) ) );
+		$alts = self::find( $product, array(), null, min( 12, max( 1, (int) Khabar_Settings::get( 'alt_page_count', 4 ) ) ) );
 		if ( ! $alts ) {
 			return '';
 		}
@@ -469,7 +469,7 @@ class Khabar_Alternatives {
 					<?php $url = $alt['target']->is_type( 'variation' ) ? add_query_arg( $alt['target']->get_variation_attributes(), $alt['product']->get_permalink() ) : $alt['product']->get_permalink(); ?>
 					<li>
 						<a class="khabar-alt" href="<?php echo esc_url( $url ); ?>">
-							<span class="khabar-alts-img"><?php echo wp_kses_post( $alt['product']->get_image( 'woocommerce_thumbnail' ) ); ?></span>
+							<span class="khabar-alts-img"><?php echo wp_kses_post( $alt['product']->get_image( 'woocommerce_gallery_thumbnail' ) ); ?></span>
 							<span class="khabar-alts-name"><?php echo esc_html( $alt['target']->get_name() ); ?></span>
 							<span class="khabar-alts-price"><?php echo wp_kses_post( $alt['target']->get_price_html() ); ?></span>
 							<span class="khabar-alts-cta"><?php esc_html_e( 'مشاهده', 'khabar' ); ?> ←</span>

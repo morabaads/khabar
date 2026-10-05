@@ -489,8 +489,13 @@ class Khabar_Settings {
 					),
 					'alt_count'              => array(
 						'type'    => 'number',
-						'label'   => __( 'تعداد پیشنهاد', 'khabar' ),
+						'label'   => __( 'تعداد پیشنهاد در پیام ارسالی', 'khabar' ),
 						'default' => 3,
+					),
+					'alt_page_count'         => array(
+						'type'    => 'number',
+						'label'   => __( 'تعداد محصولات مشابه در صفحه محصول (۱ تا ۱۲)', 'khabar' ),
+						'default' => 4,
 					),
 					'alt_price_range'        => array(
 						'type'    => 'number',
