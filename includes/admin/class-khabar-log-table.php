@@ -50,7 +50,7 @@ class Khabar_Log_Table extends WP_List_Table {
 	 */
 	protected function get_views() {
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
-		$base    = admin_url( 'admin.php?page=khabar-logs' );
+		$base    = admin_url( 'admin.php?page=khabar&view=logs' );
 		return array(
 			'all'    => '<a href="' . esc_url( $base ) . '" class="' . ( $current ? '' : 'current' ) . '">' . esc_html__( 'همه', 'khabar' ) . '</a>',
 			'sent'   => '<a href="' . esc_url( add_query_arg( 'status', 'sent', $base ) ) . '" class="' . ( 'sent' === $current ? 'current' : '' ) . '">' . esc_html__( 'موفق', 'khabar' ) . '</a>',

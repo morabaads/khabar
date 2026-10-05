@@ -108,3 +108,12 @@
 .khabar-admin .tablenav .button, .khabar-admin .search-box input[type=submit] { min-height: 34px; line-height: 31px; }
 .khabar-heading { border-top: 0; }
 @media (max-width: 782px) { .khabar-set-card .form-table th { width: auto; padding-bottom: 0; } .khabar-hero { padding: 14px 16px; } }
+
+/* single-page navigation */
+#khabar-body { transition: opacity .15s ease; min-height: 240px; }
+#khabar-app.is-loading #khabar-body { opacity: .45; pointer-events: none; }
+.khabar-nav { position: relative; }
+#khabar-app.is-loading .khabar-nav::after { content: ""; position: absolute; right: 0; bottom: -1px; height: 3px; width: 35%; background: var(--ka); border-radius: 3px; animation: khabar-bar 0.9s ease-in-out infinite; }
+@keyframes khabar-bar { 0% { right: 0; width: 8%; } 50% { width: 45%; } 100% { right: 92%; width: 8%; } }
+.khabar-notice { border-radius: 12px; border: 1px solid var(--ka-line); border-right-width: 4px; margin: 0 0 14px !important; padding: 4px 14px; }
+.khabar-view { margin: 0; }

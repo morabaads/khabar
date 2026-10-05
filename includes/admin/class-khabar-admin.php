@@ -16,6 +16,7 @@ class Khabar_Admin {
 	 */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_action( 'admin_init', array( __CLASS__, 'legacy_redirect' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'menu_assets' ) );
 		add_action( 'admin_post_khabar_save_settings', array( __CLASS__, 'save_settings' ) );
@@ -38,7 +39,33 @@ class Khabar_Admin {
 	}
 
 	/**
-	 * Menu.
+	 * Views of the single-page admin app: slug => [label, callback].
+	 *
+	 * @return array
+	 */
+	public static function views() {
+		return array(
+			'dashboard' => array( __( 'داشبورد', 'khabar' ), array( __CLASS__, 'page_dashboard' ) ),
+			'requests'  => array( __( 'درخواست‌ها', 'khabar' ), array( __CLASS__, 'page_requests' ) ),
+			'reports'   => array( __( 'گزارش‌ها', 'khabar' ), array( __CLASS__, 'page_reports' ) ),
+			'logs'      => array( __( 'لاگ ارسال', 'khabar' ), array( __CLASS__, 'page_logs' ) ),
+			'forecast'  => array( __( 'پیش‌بینی تقاضا', 'khabar' ), array( 'Khabar_Forecast_Page', 'page' ) ),
+			'settings'  => array( __( 'تنظیمات', 'khabar' ), array( __CLASS__, 'page_settings' ) ),
+		);
+	}
+
+	/**
+	 * Current view slug.
+	 *
+	 * @return string
+	 */
+	public static function current_view() {
+		$view = isset( $_GET['view'] ) ? sanitize_key( $_GET['view'] ) : 'dashboard'; // phpcs:ignore WordPress.Security.NonceVerification
+		return isset( self::views()[ $view ] ) ? $view : 'dashboard';
+	}
+
+	/**
+	 * Menu: one entry, the sections live inside the page (loaded with AJAX).
 	 */
 	public static function menu() {
 		global $wpdb;
@@ -46,13 +73,73 @@ class Khabar_Admin {
 		$active = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'active'" ); // phpcs:ignore
 		$bubble = $active ? ' <span class="awaiting-mod">' . number_format_i18n( $active ) . '</span>' : '';
 
-		add_menu_page( __( 'خبرم کن', 'khabar' ), __( 'خبرم کن', 'khabar' ) . $bubble, self::CAP, 'khabar', array( __CLASS__, 'page_dashboard' ), 'dashicons-bell', 56 );
-		add_submenu_page( 'khabar', __( 'داشبورد', 'khabar' ), __( 'داشبورد', 'khabar' ), self::CAP, 'khabar', array( __CLASS__, 'page_dashboard' ) );
-		$hook = add_submenu_page( 'khabar', __( 'درخواست‌ها', 'khabar' ), __( 'درخواست‌ها', 'khabar' ), self::CAP, 'khabar-requests', array( __CLASS__, 'page_requests' ) );
-		add_action( 'load-' . $hook, array( __CLASS__, 'handle_bulk' ) );
-		add_submenu_page( 'khabar', __( 'گزارش‌ها', 'khabar' ), __( 'گزارش‌ها', 'khabar' ), self::CAP, 'khabar-reports', array( __CLASS__, 'page_reports' ) );
-		add_submenu_page( 'khabar', __( 'لاگ ارسال', 'khabar' ), __( 'لاگ ارسال', 'khabar' ), self::CAP, 'khabar-logs', array( __CLASS__, 'page_logs' ) );
-		add_submenu_page( 'khabar', __( 'تنظیمات', 'khabar' ), __( 'تنظیمات', 'khabar' ), self::CAP, 'khabar-settings', array( __CLASS__, 'page_settings' ) );
+		$hook = add_menu_page( __( 'خبرم کن', 'khabar' ), __( 'خبرم کن', 'khabar' ) . $bubble, self::CAP, 'khabar', array( __CLASS__, 'page_app' ), 'dashicons-bell', 56 );
+		add_action( 'load-' . $hook, array( __CLASS__, 'load_app' ) );
+	}
+
+	/**
+	 * Old per-section URLs (page=khabar-settings …) redirect to the single page.
+	 */
+	public static function legacy_redirect() {
+		$page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		if ( 0 !== strpos( $page, 'khabar-' ) ) {
+			return;
+		}
+		$args         = array_map( 'sanitize_text_field', wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$args['view'] = substr( $page, 7 );
+		$args['page'] = 'khabar';
+		wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php' ) ) );
+		exit;
+	}
+
+	/**
+	 * Runs before any output on the app page: bulk actions and, for AJAX navigation, the bare fragment.
+	 */
+	public static function load_app() {
+		if ( 'requests' === self::current_view() ) {
+			self::handle_bulk();
+		}
+		if ( isset( $_SERVER['HTTP_X_KHABAR_AJAX'] ) ) {
+			nocache_headers();
+			header( 'Content-Type: text/html; charset=utf-8' );
+			header( 'X-Khabar-Fragment: 1' );
+			header( 'X-Khabar-View: ' . self::current_view() );
+			self::notices( true );
+			self::render_view();
+			exit;
+		}
+	}
+
+	/**
+	 * Render the active view.
+	 */
+	private static function render_view() {
+		$views = self::views();
+		call_user_func( $views[ self::current_view() ][1] );
+	}
+
+	/**
+	 * Single-page app shell: hero, section tabs and the (AJAX-swapped) body.
+	 */
+	public static function page_app() {
+		$view  = self::current_view();
+		$views = self::views();
+		?>
+		<div class="wrap khabar-admin" id="khabar-app">
+			<?php self::header( __( 'مدیریت اعلان موجودی و قیمت', 'khabar' ), __( 'درخواست‌ها، گزارش‌ها، لاگ ارسال و تنظیمات در یک صفحه', 'khabar' ) ); ?>
+			<nav class="nav-tab-wrapper khabar-tabs khabar-nav" aria-label="<?php esc_attr_e( 'بخش‌های خبرم کن', 'khabar' ); ?>">
+				<?php foreach ( $views as $slug => $v ) : ?>
+					<a class="nav-tab <?php echo $slug === $view ? 'nav-tab-active' : ''; ?>" data-view="<?php echo esc_attr( $slug ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=' . $slug ) ); ?>"><?php echo esc_html( $v[0] ); ?></a>
+				<?php endforeach; ?>
+			</nav>
+			<div id="khabar-body" aria-live="polite">
+				<?php
+				self::notices( true );
+				self::render_view();
+				?>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -94,12 +181,15 @@ class Khabar_Admin {
 	/**
 	 * Flash notices.
 	 */
-	public static function notices() {
+	public static function notices( $in_app = false ) {
+		if ( ! $in_app && isset( $_GET['page'] ) && 'khabar' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return;
+		}
 		$key    = 'khabar_notice_' . get_current_user_id();
 		$notice = get_transient( $key );
 		if ( $notice ) {
 			delete_transient( $key );
-			printf( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+			printf( '<div class="notice notice-%s khabar-notice"><p>%s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
 		}
 	}
 
@@ -167,8 +257,7 @@ class Khabar_Admin {
 		$channels = Khabar_Reports::channel_stats( 30 );
 		$labels   = Khabar_Settings::channels();
 		?>
-		<div class="wrap khabar-admin">
-			<?php self::header( __( 'داشبورد', 'khabar' ), __( 'نمای کلی درخواست‌ها، اعلان‌ها و درآمد حاصل از آن‌ها', 'khabar' ) ); ?>
+		<div class="khabar-view">
 
 			<div class="khabar-kpis">
 				<?php
@@ -204,7 +293,7 @@ class Khabar_Admin {
 							$run = wp_nonce_url( admin_url( 'admin-post.php?action=khabar_run_product&product_id=' . $row->product_id ), 'khabar_run_product' );
 							?>
 							<tr>
-								<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=khabar-reports&product_id=' . $row->product_id ) ); ?>"><?php echo esc_html( $p->get_name() ); ?></a>
+								<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=reports&product_id=' . $row->product_id ) ); ?>"><?php echo esc_html( $p->get_name() ); ?></a>
 									<br><small><?php printf( /* translators: 1: stock requests 2: price requests */ esc_html__( '%1$s موجودی / %2$s قیمت', 'khabar' ), esc_html( number_format_i18n( $row->stock_requests ) ), esc_html( number_format_i18n( $row->price_requests ) ) ); ?></small></td>
 								<td><strong><?php echo esc_html( number_format_i18n( $row->people ) ); ?></strong></td>
 								<td><?php echo $p->is_in_stock() ? '<span class="khabar-status khabar-status-notified">' . esc_html__( 'موجود', 'khabar' ) . '</span>' : '<span class="khabar-status khabar-status-cancelled">' . esc_html__( 'ناموجود', 'khabar' ) . '</span>'; ?></td>
@@ -284,12 +373,11 @@ class Khabar_Admin {
 		$table = new Khabar_Requests_Table();
 		$table->prepare_items();
 		?>
-		<div class="wrap khabar-admin">
-			<?php self::header( __( 'درخواست‌ها', 'khabar' ), __( 'مدیریت درخواست‌های اعلان مشتریان', 'khabar' ) ); ?>
+		<div class="khabar-view">
 			<hr class="wp-header-end">
 			<?php $table->views(); ?>
 			<form method="get">
-				<input type="hidden" name="page" value="khabar-requests">
+				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="requests">
 				<?php if ( ! empty( $_GET['status'] ) ) : // phpcs:ignore ?>
 					<input type="hidden" name="status" value="<?php echo esc_attr( sanitize_key( $_GET['status'] ) ); // phpcs:ignore ?>">
 				<?php endif; ?>
@@ -373,11 +461,10 @@ class Khabar_Admin {
 		$types   = Khabar_Subscriptions::types();
 		$top     = Khabar_Reports::top_products( 30 );
 		?>
-		<div class="wrap khabar-admin">
-			<?php self::header( __( 'گزارش‌ها', 'khabar' ), __( 'محبوب‌ترین کالاها و تقاضا به تفکیک ویژگی', 'khabar' ) ); ?>
+		<div class="khabar-view">
 
 			<form method="get" class="khabar-report-filter">
-				<input type="hidden" name="page" value="khabar-reports">
+				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="reports">
 				<select name="product_id">
 					<option value=""><?php esc_html_e( 'کل فروشگاه', 'khabar' ); ?></option>
 					<?php foreach ( $top as $row ) : $p = wc_get_product( $row->product_id ); if ( ! $p ) { continue; } ?>
@@ -456,11 +543,10 @@ class Khabar_Admin {
 		$table = new Khabar_Log_Table();
 		$table->prepare_items();
 		?>
-		<div class="wrap khabar-admin">
-			<?php self::header( __( 'لاگ ارسال', 'khabar' ), __( 'سابقه‌ی همه‌ی پیام‌های ارسال‌شده و خطاها', 'khabar' ) ); ?>
+		<div class="khabar-view">
 			<?php $table->views(); ?>
 			<form method="get">
-				<input type="hidden" name="page" value="khabar-logs">
+				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="logs">
 				<?php
 				$table->search_box( __( 'جستجو', 'khabar' ), 'khabar-log' );
 				$table->display();
@@ -476,7 +562,7 @@ class Khabar_Admin {
 	public static function retry() {
 		self::guard( 'khabar_retry' );
 		$result = Khabar_Channels::retry( isset( $_GET['log'] ) ? absint( $_GET['log'] ) : 0 );
-		$back   = wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=khabar-logs' );
+		$back   = wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=khabar&view=logs' );
 		if ( is_wp_error( $result ) ) {
 			self::back( $back, $result->get_error_message(), 'error' );
 		}
@@ -496,11 +582,10 @@ class Khabar_Admin {
 		$values   = Khabar_Settings::all();
 		$defaults = Khabar_Settings::defaults();
 		?>
-		<div class="wrap khabar-admin">
-			<?php self::header( __( 'تنظیمات', 'khabar' ), __( 'کانال‌ها، قالب پیام‌ها، ظاهر و رفتار افزونه', 'khabar' ) ); ?>
+		<div class="khabar-view">
 			<nav class="nav-tab-wrapper khabar-tabs">
 				<?php foreach ( $schema as $key => $section ) : ?>
-					<a class="nav-tab <?php echo $tab === $key ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar-settings&tab=' . $key ) ); ?>"><?php echo esc_html( $section['label'] ); ?></a>
+					<a class="nav-tab <?php echo $tab === $key ? 'nav-tab-active' : ''; ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=settings&tab=' . $key ) ); ?>"><?php echo esc_html( $section['label'] ); ?></a>
 				<?php endforeach; ?>
 			</nav>
 
@@ -654,7 +739,7 @@ class Khabar_Admin {
 		if ( Khabar_Settings::has( 'channels_enabled', 'push' ) ) {
 			Khabar_Push::keys();
 		}
-		self::back( admin_url( 'admin.php?page=khabar-settings&tab=' . $tab ), __( 'تنظیمات ذخیره شد.', 'khabar' ) );
+		self::back( admin_url( 'admin.php?page=khabar&view=settings&tab=' . $tab ), __( 'تنظیمات ذخیره شد.', 'khabar' ) );
 	}
 
 	/**
@@ -662,7 +747,7 @@ class Khabar_Admin {
 	 */
 	public static function set_webhooks() {
 		self::guard( 'khabar_set_webhooks' );
-		$back    = admin_url( 'admin.php?page=khabar-settings&tab=channels' );
+		$back    = admin_url( 'admin.php?page=khabar&view=settings&tab=channels' );
 		$results = Khabar_Messenger::register_webhooks();
 		if ( ! $results ) {
 			self::back( $back, __( 'هیچ توکن رباتی وارد نشده است.', 'khabar' ), 'error' );
@@ -701,7 +786,7 @@ class Khabar_Admin {
 			default:
 				$result = Khabar_Channel_Sms::send( $to, $text, 'text' );
 		}
-		$back = admin_url( 'admin.php?page=khabar-settings&tab=channels' );
+		$back = admin_url( 'admin.php?page=khabar&view=settings&tab=channels' );
 		if ( is_wp_error( $result ) ) {
 			self::back( $back, $result->get_error_message(), 'error' );
 		}

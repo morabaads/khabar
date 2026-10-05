@@ -132,9 +132,6 @@ $khabar_contact    = $s['contact_mode'];
 
 				<p class="khabar-msg" role="alert" hidden></p>
 				<button type="submit" class="button alt khabar-submit"><span><?php esc_html_e( 'ثبت درخواست', 'khabar' ); ?></span><?php echo Khabar_Frontend::icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
-				<?php if ( $s['privacy_text'] ) : ?>
-					<p class="khabar-privacy"><?php echo Khabar_Frontend::icon( 'lock' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $s['privacy_text'] ); ?></span></p>
-				<?php endif; ?>
 			</form>
 
 			<form class="khabar-otp" hidden novalidate>

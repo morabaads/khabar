@@ -44,7 +44,7 @@ class Khabar_Product_Metabox {
 			echo '</ul>';
 			$run = wp_nonce_url( admin_url( 'admin-post.php?action=khabar_run_product&product_id=' . $post->ID ), 'khabar_run_product' );
 			echo '<p><a class="button" href="' . esc_url( $run ) . '">' . esc_html__( 'بررسی و ارسال اعلان اکنون', 'khabar' ) . '</a></p>';
-			echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=khabar-reports&product_id=' . $post->ID ) ) . '">' . esc_html__( 'گزارش کامل', 'khabar' ) . '</a> | <a href="' . esc_url( admin_url( 'admin.php?page=khabar-requests&product_id=' . $post->ID ) ) . '">' . esc_html__( 'درخواست‌ها', 'khabar' ) . '</a></p>';
+			echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=khabar&view=reports&product_id=' . $post->ID ) ) . '">' . esc_html__( 'گزارش کامل', 'khabar' ) . '</a> | <a href="' . esc_url( admin_url( 'admin.php?page=khabar&view=requests&product_id=' . $post->ID ) ) . '">' . esc_html__( 'درخواست‌ها', 'khabar' ) . '</a></p>';
 		}
 		echo '<p class="description">' . esc_html__( 'با افزایش موجودی یا تغییر قیمت، اعلان‌ها به‌صورت خودکار ارسال می‌شوند.', 'khabar' ) . '</p>';
 	}
@@ -71,6 +71,6 @@ class Khabar_Product_Metabox {
 			return;
 		}
 		$count = Khabar_Subscriptions::waiting_count( $post_id );
-		echo $count ? '<a href="' . esc_url( admin_url( 'admin.php?page=khabar-requests&product_id=' . $post_id ) ) . '" title="' . esc_attr__( 'منتظران', 'khabar' ) . '">' . esc_html( number_format_i18n( $count ) ) . '</a>' : '<span class="khabar-muted">–</span>';
+		echo $count ? '<a href="' . esc_url( admin_url( 'admin.php?page=khabar&view=requests&product_id=' . $post_id ) ) . '" title="' . esc_attr__( 'منتظران', 'khabar' ) . '">' . esc_html( number_format_i18n( $count ) ) . '</a>' : '<span class="khabar-muted">–</span>';
 	}
 }

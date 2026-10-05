@@ -108,7 +108,7 @@ class Khabar_Requests_Table extends WP_List_Table {
 		$table   = Khabar_Install::table( 'subscriptions' );
 		$counts  = $wpdb->get_results( "SELECT status, COUNT(*) AS c FROM {$table} GROUP BY status", OBJECT_K ); // phpcs:ignore
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
-		$base    = admin_url( 'admin.php?page=khabar-requests' );
+		$base    = admin_url( 'admin.php?page=khabar&view=requests' );
 		$total   = array_sum( wp_list_pluck( $counts, 'c' ) );
 		$views   = array( 'all' => sprintf( '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_url( $base ), $current ? '' : 'current', esc_html__( 'همه', 'khabar' ), number_format_i18n( $total ) ) );
 		foreach ( Khabar_Subscriptions::statuses() as $key => $label ) {
@@ -192,7 +192,7 @@ class Khabar_Requests_Table extends WP_List_Table {
 			$out .= '<br><small class="khabar-muted">' . esc_html( Khabar_Utils::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'khabar' ) : esc_html__( 'ناموجود', 'khabar' ) ) . '</small>';
 		}
 		$actions = array(
-			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=khabar-requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'khabar' ) . '</a>',
+			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=khabar&view=requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'khabar' ) . '</a>',
 		);
 		return $out . $this->row_actions( $actions );
 	}

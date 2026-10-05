@@ -80,7 +80,7 @@ final class Khabar_Plugin {
 	 * @return array
 	 */
 	public function action_links( $links ) {
-		array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=khabar-settings' ) ) . '">' . esc_html__( 'تنظیمات', 'khabar' ) . '</a>' );
+		array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=khabar&view=settings' ) ) . '">' . esc_html__( 'تنظیمات', 'khabar' ) . '</a>' );
 		return $links;
 	}
 }

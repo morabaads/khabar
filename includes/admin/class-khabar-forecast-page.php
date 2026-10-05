@@ -13,15 +13,7 @@ class Khabar_Forecast_Page {
 	 * Hooks.
 	 */
 	public static function init() {
-		add_action( 'admin_menu', array( __CLASS__, 'menu' ), 20 );
 		add_action( 'admin_post_khabar_forecast_csv', array( __CLASS__, 'csv' ) );
-	}
-
-	/**
-	 * Menu.
-	 */
-	public static function menu() {
-		add_submenu_page( 'khabar', __( 'پیش‌بینی تقاضا', 'khabar' ), __( 'پیش‌بینی تقاضا', 'khabar' ), Khabar_Admin::CAP, 'khabar-forecast', array( __CLASS__, 'page' ) );
 	}
 
 	/**
@@ -76,11 +68,10 @@ class Khabar_Forecast_Page {
 		);
 		$csv    = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'khabar_forecast_csv' ), self::params() ), admin_url( 'admin-post.php' ) ), 'khabar_forecast_csv' );
 		?>
-		<div class="wrap khabar-admin">
-			<?php Khabar_Admin::header( __( 'پیش‌بینی تقاضا', 'khabar' ), __( 'پیشنهاد سفارش خرید بر اساس تقاضای منتظران', 'khabar' ) ); ?>
+		<div class="khabar-view">
 
 			<form method="get" class="khabar-report-filter">
-				<input type="hidden" name="page" value="khabar-forecast">
+				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="forecast">
 				<label><?php esc_html_e( 'زمان تحویل (روز)', 'khabar' ); ?> <input type="number" min="0" class="small-text" name="lead" value="<?php echo esc_attr( $p['lead'] ); ?>"></label>
 				<label><?php esc_html_e( 'پوشش موجودی (روز)', 'khabar' ); ?> <input type="number" min="0" class="small-text" name="cover" value="<?php echo esc_attr( $p['cover'] ); ?>"></label>
 				<label><?php esc_html_e( 'سطح اطمینان', 'khabar' ); ?>
