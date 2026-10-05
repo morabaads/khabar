@@ -57,7 +57,7 @@ $khabar_contact    = $s['contact_mode'];
 				<button type="button" class="khabar-close" aria-label="<?php esc_attr_e( 'بستن', 'khabar' ); ?>"><?php echo Khabar_Frontend::icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
 			</header>
 
-			<form class="khabar-form" novalidate>
+			<form class="khabar-form" novalidate autocomplete="off">
 				<input type="hidden" name="product_id" value="<?php echo esc_attr( $product->get_id() ); ?>">
 				<input type="hidden" name="variation_id" value="0">
 				<div class="khabar-hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>

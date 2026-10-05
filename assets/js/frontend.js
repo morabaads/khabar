@@ -178,7 +178,10 @@
 	Widget.prototype.open = function (mode) {
 		var self = this;
 		this.$form.prop('hidden', false)[0].reset();
-		this.$form.find('.khabar-num').prop('disabled', true);
+		// Start clean (browser form-restore / autofill must not leave conditions ticked): only the first condition is on.
+		this.$form.find('.khabar-conditions input[type=checkbox]').prop('checked', false);
+		this.$form.find('.khabar-conditions input[name=mode][value=all]').prop('checked', true);
+		this.$form.find('.khabar-num').val('').prop('disabled', true);
 		this.$otp.prop('hidden', true);
 		this.$done.prop('hidden', true);
 		showMsg(this.$form.find('.khabar-msg'), '');
