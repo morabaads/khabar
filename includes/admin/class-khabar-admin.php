@@ -24,6 +24,8 @@ class Khabar_Admin {
 		add_action( 'admin_post_khabar_retry', array( __CLASS__, 'retry' ) );
 		add_action( 'admin_post_khabar_run_product', array( __CLASS__, 'run_product' ) );
 		add_action( 'admin_post_khabar_test', array( __CLASS__, 'test_send' ) );
+		add_action( 'admin_post_khabar_sms_account', array( __CLASS__, 'sms_account' ) );
+		add_action( 'admin_post_khabar_sms_status', array( __CLASS__, 'sms_status' ) );
 		add_action( 'admin_post_khabar_set_webhooks', array( __CLASS__, 'set_webhooks' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
 	}
@@ -637,9 +639,14 @@ class Khabar_Admin {
 							<option value="bale"><?php esc_html_e( 'بله (chat id یا @channel)', 'khabar' ); ?></option>
 							<option value="eitaa"><?php esc_html_e( 'ایتا (شناسه کانال)', 'khabar' ); ?></option>
 						</select>
+						<select name="sms_kind" title="<?php esc_attr_e( 'نوع پیامک آزمایشی', 'khabar' ); ?>">
+							<option value="text"><?php esc_html_e( 'پیامک متنی', 'khabar' ); ?></option>
+							<option value="otp"><?php esc_html_e( 'پترن کد تایید (خط خدماتی)', 'khabar' ); ?></option>
+						</select>
 						<input type="text" name="to" dir="ltr" placeholder="09xxxxxxxxx / email" required>
 						<?php submit_button( __( 'ارسال تست', 'khabar' ), 'secondary', '', false ); ?>
 					</form>
+					<?php self::sms_test_box(); ?>
 					<h2><?php esc_html_e( 'ربات‌های پیام‌رسان', 'khabar' ); ?></h2>
 					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 						<input type="hidden" name="action" value="khabar_set_webhooks">
@@ -899,12 +906,104 @@ class Khabar_Admin {
 				$result = Khabar_Messenger::send( $channel, $to, $text );
 				break;
 			default:
-				$result = Khabar_Channel_Sms::send( $to, $text, 'text' );
+				$kind = isset( $_POST['sms_kind'] ) && 'otp' === $_POST['sms_kind'] ? 'otp' : 'text';
+				if ( 'otp' === $kind ) {
+					$items = Khabar_Settings::pattern_items();
+					if ( empty( $items['otp'] ) ) {
+						self::back( admin_url( 'admin.php?page=khabar&view=settings&tab=channels' ), __( 'برای تست پترن، ابتدا در بخش «پترن‌های پیامک» یک پترن برای رویداد «کد تایید» ثبت و ذخیره کنید.', 'khabar' ), 'error' );
+					}
+					$result = Khabar_Channel_Sms::send( $to, '', 'otp', array( 'code' => '12345', 'site_name' => get_bloginfo( 'name' ) ), true );
+				} else {
+					$result = Khabar_Channel_Sms::send( $to, $text, 'text' );
+				}
+				set_transient(
+					'khabar_sms_test_' . get_current_user_id(),
+					array(
+						'to'       => $to,
+						'kind'     => $kind,
+						'time'     => time(),
+						'ok'       => true === $result,
+						'error'    => is_wp_error( $result ) ? $result->get_error_message() : '',
+						'id'       => true === $result ? Khabar_Channel_Sms::last_message_id() : '',
+						'response' => Khabar_Channel_Sms::$last_response,
+					),
+					DAY_IN_SECONDS
+				);
 		}
 		$back = admin_url( 'admin.php?page=khabar&view=settings&tab=channels' );
 		if ( is_wp_error( $result ) ) {
 			self::back( $back, $result->get_error_message(), 'error' );
 		}
-		self::back( $back, __( 'پیام آزمایشی ارسال شد.', 'khabar' ) );
+		self::back( $back, 'sms' === $channel ? __( 'سامانه پیامک درخواست را پذیرفت. وضعیت تحویل را در کادر «آخرین ارسال آزمایشی» بررسی کنید.', 'khabar' ) : __( 'پیام آزمایشی ارسال شد.', 'khabar' ) );
+	}
+
+	/**
+	 * Diagnostics box: last test SMS, delivery check and account check.
+	 */
+	private static function sms_test_box() {
+		$test = get_transient( 'khabar_sms_test_' . get_current_user_id() );
+		?>
+		<div class="khabar-diag">
+			<div class="khabar-diag-actions">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="khabar_sms_account">
+					<?php wp_nonce_field( 'khabar_sms_account' ); ?>
+					<button type="submit" class="button"><?php esc_html_e( 'بررسی اتصال، اعتبار و خطوط', 'khabar' ); ?></button>
+				</form>
+				<?php if ( ! empty( $test['id'] ) ) : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="khabar_sms_status">
+						<?php wp_nonce_field( 'khabar_sms_status' ); ?>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'بررسی وضعیت تحویل آخرین پیامک', 'khabar' ); ?></button>
+					</form>
+				<?php endif; ?>
+			</div>
+			<?php if ( $test ) : ?>
+				<div class="khabar-diag-last <?php echo $test['ok'] ? 'is-ok' : 'is-err'; ?>">
+					<strong><?php esc_html_e( 'آخرین ارسال آزمایشی', 'khabar' ); ?></strong>
+					<span><?php echo esc_html( $test['to'] . ' · ' . ( 'otp' === $test['kind'] ? __( 'پترن', 'khabar' ) : __( 'متنی', 'khabar' ) ) . ' · ' . wp_date( 'H:i:s', $test['time'] ) ); ?></span>
+					<span><?php echo esc_html( $test['ok'] ? __( 'پذیرفته شد', 'khabar' ) . ( $test['id'] ? ' — ' . __( 'شناسه:', 'khabar' ) . ' ' . $test['id'] : '' ) : $test['error'] ); ?></span>
+					<?php if ( ! empty( $test['response'] ) ) : ?>
+						<details><summary><?php esc_html_e( 'پاسخ کامل سامانه پیامک', 'khabar' ); ?></summary><code dir="ltr"><?php echo esc_html( wp_json_encode( $test['response'], JSON_UNESCAPED_UNICODE ) ); ?></code></details>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+			<p class="description"><?php esc_html_e( 'اگر سامانه پیامک درخواست را پذیرفت ولی پیامک نرسید، معمولاً شماره در لیست سیاه مخابرات است (پیامک متنی از خط تبلیغاتی نمی‌گیرد)، خط به حساب تعلق ندارد یا کلید API از نوع «آزمایشی/sandbox» است. «پترن کد تایید» از خط خدماتی و بدون محدودیت لیست سیاه ارسال می‌شود.', 'khabar' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Admin action: SMS account check (credit / lines).
+	 */
+	public static function sms_account() {
+		self::guard( 'khabar_sms_account' );
+		$back = admin_url( 'admin.php?page=khabar&view=settings&tab=channels' );
+		$info = Khabar_Channel_Sms::account_info();
+		if ( is_wp_error( $info ) ) {
+			self::back( $back, $info->get_error_message(), 'error' );
+		}
+		$parts = array();
+		foreach ( $info as $label => $value ) {
+			$parts[] = $label . ': ' . $value;
+		}
+		self::back( $back, __( 'اتصال برقرار است.', 'khabar' ) . ' ' . implode( ' — ', $parts ) );
+	}
+
+	/**
+	 * Admin action: delivery status of the last test SMS.
+	 */
+	public static function sms_status() {
+		self::guard( 'khabar_sms_status' );
+		$back = admin_url( 'admin.php?page=khabar&view=settings&tab=channels' );
+		$test = get_transient( 'khabar_sms_test_' . get_current_user_id() );
+		if ( empty( $test['id'] ) ) {
+			self::back( $back, __( 'شناسه پیامکی برای بررسی وجود ندارد.', 'khabar' ), 'error' );
+		}
+		$status = Khabar_Channel_Sms::delivery_status( $test['id'] );
+		if ( is_wp_error( $status ) ) {
+			self::back( $back, $status->get_error_message(), 'error' );
+		}
+		self::back( $back, __( 'وضعیت تحویل:', 'khabar' ) . ' ' . $status );
 	}
 }

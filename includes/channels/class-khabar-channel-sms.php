@@ -10,15 +10,24 @@ defined( 'ABSPATH' ) || exit;
 class Khabar_Channel_Sms {
 
 	/**
+	 * Decoded response of the last API call (diagnostics).
+	 *
+	 * @var array|null
+	 */
+	public static $last_response = null;
+
+	/**
 	 * Send an SMS.
 	 *
 	 * @param string $to    Mobile.
 	 * @param string $text  Text (text mode).
 	 * @param string $event Event (pattern lookup). Use 'text' to force text mode.
 	 * @param array  $vars  Message vars (pattern mode).
+	 * @param bool   $force_pattern Use the event's pattern even when the send mode is "text" (admin test).
 	 * @return true|WP_Error
 	 */
-	public static function send( $to, $text, $event = 'text', $vars = array() ) {
+	public static function send( $to, $text, $event = 'text', $vars = array(), $force_pattern = false ) {
+		self::$last_response = null;
 		$to = Khabar_Utils::normalize_phone( $to );
 		if ( ! $to ) {
 			return new WP_Error( 'khabar_sms', __( 'شماره موبایل نامعتبر', 'khabar' ) );
@@ -33,7 +42,7 @@ class Khabar_Channel_Sms {
 		$pattern = '';
 		$params  = array();
 		// Drivers without a pattern API always send the text message.
-		if ( 'pattern' === Khabar_Settings::get( 'sms_mode' ) && 'text' !== $event && in_array( $driver, Khabar_Sms_Providers::PATTERN_DRIVERS, true ) ) {
+		if ( ( $force_pattern || 'pattern' === Khabar_Settings::get( 'sms_mode' ) ) && 'text' !== $event && in_array( $driver, Khabar_Sms_Providers::PATTERN_DRIVERS, true ) ) {
 			$items = Khabar_Settings::pattern_items();
 			$item  = isset( $items[ $event ] ) ? $items[ $event ] : ( 'low_stock' === $event && isset( $items['back_in_stock'] ) ? $items['back_in_stock'] : null );
 			if ( $item ) {
@@ -96,12 +105,107 @@ class Khabar_Channel_Sms {
 		$code = wp_remote_retrieve_response_code( $response );
 		$body = wp_remote_retrieve_body( $response );
 		$json = json_decode( $body, true );
+		self::$last_response = is_array( $json ) ? $json : array( 'raw' => mb_substr( (string) $body, 0, 500 ) );
 		if ( $code >= 400 ) {
 			// Prefer the provider's own error text over the raw JSON.
 			$msg = is_array( $json ) ? ( $json['message'] ?? $json['Message'] ?? $json['return']['message'] ?? $json['StrRetStatus'] ?? null ) : null;
 			return new WP_Error( 'khabar_sms_http', 'HTTP ' . $code . ': ' . ( is_string( $msg ) && '' !== $msg ? $msg : mb_substr( $body, 0, 300 ) ) );
 		}
 		return is_array( $json ) ? $json : array( 'raw' => $body );
+	}
+
+	/**
+	 * Message id of the last successful send (SMS.ir / Kavenegar), for delivery checks.
+	 *
+	 * @return string
+	 */
+	public static function last_message_id() {
+		$r = self::$last_response;
+		if ( isset( $r['data']['messageIds'][0] ) ) {
+			return (string) $r['data']['messageIds'][0];
+		}
+		if ( isset( $r['data']['messageId'] ) ) {
+			return (string) $r['data']['messageId'];
+		}
+		if ( isset( $r['entries'][0]['messageid'] ) ) {
+			return (string) $r['entries'][0]['messageid'];
+		}
+		return '';
+	}
+
+	/**
+	 * Account check: credit and sender lines (where the provider exposes them).
+	 *
+	 * @return array|WP_Error label => value
+	 */
+	public static function account_info() {
+		$driver = Khabar_Sms_Providers::driver( (string) Khabar_Settings::get( 'sms_gateway', 'kavenegar' ) );
+		$key    = (string) Khabar_Settings::get( 'sms_api_key' );
+		if ( 'smsir' === $driver ) {
+			$args   = array(
+				'method'  => 'GET',
+				'headers' => array( 'X-API-KEY' => $key, 'Accept' => 'application/json' ),
+			);
+			$credit = self::request( 'https://api.sms.ir/v1/credit', $args );
+			if ( is_wp_error( $credit ) ) {
+				return $credit;
+			}
+			$lines = self::request( 'https://api.sms.ir/v1/line', $args );
+			return array(
+				__( 'اعتبار', 'khabar' )         => isset( $credit['data'] ) ? (string) $credit['data'] : '—',
+				__( 'خطوط فعال حساب', 'khabar' ) => ( ! is_wp_error( $lines ) && ! empty( $lines['data'] ) ) ? implode( '، ', array_map( 'strval', (array) $lines['data'] ) ) : '—',
+			);
+		}
+		if ( 'kavenegar' === $driver ) {
+			$res = self::request( 'https://api.kavenegar.com/v1/' . rawurlencode( $key ) . '/account/info.json', array( 'method' => 'GET' ) );
+			if ( is_wp_error( $res ) ) {
+				return $res;
+			}
+			return array( __( 'اعتبار (ریال)', 'khabar' ) => isset( $res['entries']['remaincredit'] ) ? (string) $res['entries']['remaincredit'] : '—' );
+		}
+		return new WP_Error( 'khabar_sms', __( 'بررسی حساب فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'khabar' ) );
+	}
+
+	/**
+	 * Delivery status of a message.
+	 *
+	 * @param string $id Message id.
+	 * @return string|WP_Error Human readable status.
+	 */
+	public static function delivery_status( $id ) {
+		$driver = Khabar_Sms_Providers::driver( (string) Khabar_Settings::get( 'sms_gateway', 'kavenegar' ) );
+		$key    = (string) Khabar_Settings::get( 'sms_api_key' );
+		if ( 'smsir' === $driver ) {
+			$res = self::request(
+				'https://api.sms.ir/v1/send/' . rawurlencode( $id ),
+				array(
+					'method'  => 'GET',
+					'headers' => array( 'X-API-KEY' => $key, 'Accept' => 'application/json' ),
+				)
+			);
+			if ( is_wp_error( $res ) ) {
+				return $res;
+			}
+			$state  = isset( $res['data']['deliveryState'] ) ? (int) $res['data']['deliveryState'] : 0;
+			$labels = array(
+				1 => __( 'به گوشی رسیده است', 'khabar' ),
+				2 => __( 'به گوشی نرسیده است', 'khabar' ),
+				3 => __( 'در حال پردازش در مخابرات', 'khabar' ),
+				4 => __( 'به مخابرات نرسیده است', 'khabar' ),
+				5 => __( 'به اپراتور رسیده است', 'khabar' ),
+				6 => __( 'ناموفق', 'khabar' ),
+				7 => __( 'شماره در لیست سیاه مخابرات است (پیامک تبلیغاتی دریافت نمی‌کند) — از ارسال پترن استفاده کنید', 'khabar' ),
+			);
+			return ( isset( $labels[ $state ] ) ? $labels[ $state ] : __( 'نامشخص', 'khabar' ) ) . ' (deliveryState=' . $state . ')';
+		}
+		if ( 'kavenegar' === $driver ) {
+			$res = self::request( 'https://api.kavenegar.com/v1/' . rawurlencode( $key ) . '/sms/status.json?messageid=' . rawurlencode( $id ), array( 'method' => 'GET' ) );
+			if ( is_wp_error( $res ) ) {
+				return $res;
+			}
+			return isset( $res['entries'][0]['statustext'] ) ? $res['entries'][0]['statustext'] . ' (status=' . (int) $res['entries'][0]['status'] . ')' : __( 'نامشخص', 'khabar' );
+		}
+		return new WP_Error( 'khabar_sms', __( 'بررسی وضعیت تحویل فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'khabar' ) );
 	}
 
 	/**

@@ -166,3 +166,11 @@
 .khabar-set-card .form-table tr.khabar-row-wide td { padding: 14px 0 6px; }
 .khabar-pat { max-width: 920px; }
 .khabar-set-card .form-table td .khabar-pat input[type=text], .khabar-set-card .form-table td .khabar-pat select { max-width: none; }
+
+/* SMS diagnostics */
+.khabar-diag { margin: 14px 0 6px; padding: 14px 16px; border: 1px solid var(--ka-line); border-radius: 14px; background: var(--ka-soft); }
+.khabar-diag-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.khabar-diag-actions form { margin: 0; }
+.khabar-diag-last { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 10px; background: #fff; border-right: 4px solid #4ade80; margin-bottom: 8px; }
+.khabar-diag-last.is-err { border-right-color: #f87171; }
+.khabar-diag-last code { display: block; white-space: pre-wrap; word-break: break-all; margin-top: 6px; font-size: 11.5px; }
