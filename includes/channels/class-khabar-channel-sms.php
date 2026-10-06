@@ -29,10 +29,11 @@ class Khabar_Channel_Sms {
 			return $pre;
 		}
 
-		$gateway = Khabar_Settings::get( 'sms_gateway', 'kavenegar' );
+		$driver  = Khabar_Sms_Providers::driver( (string) Khabar_Settings::get( 'sms_gateway', 'kavenegar' ) );
 		$pattern = '';
 		$params  = array();
-		if ( 'pattern' === Khabar_Settings::get( 'sms_mode' ) && 'text' !== $event ) {
+		// Drivers without a pattern API always send the text message.
+		if ( 'pattern' === Khabar_Settings::get( 'sms_mode' ) && 'text' !== $event && in_array( $driver, Khabar_Sms_Providers::PATTERN_DRIVERS, true ) ) {
 			$items = Khabar_Settings::pattern_items();
 			$item  = isset( $items[ $event ] ) ? $items[ $event ] : ( 'low_stock' === $event && isset( $items['back_in_stock'] ) ? $items['back_in_stock'] : null );
 			if ( $item ) {
@@ -46,15 +47,27 @@ class Khabar_Channel_Sms {
 			}
 		}
 
-		switch ( $gateway ) {
+		switch ( $driver ) {
 			case 'kavenegar':
 				return self::kavenegar( $to, $text, $pattern, $params );
-			case 'melipayamak':
+			case 'payamak_panel':
 				return self::melipayamak( $to, $text, $pattern, $params );
 			case 'ippanel':
 				return self::ippanel( $to, $text, $pattern, $params );
 			case 'smsir':
 				return self::smsir( $to, $text, $pattern, $params );
+			case 'ghasedak':
+				return self::ghasedak( $to, $text, $pattern, $params );
+			case 'iranpayamak':
+				return self::iranpayamak( $to, $text, $pattern, $params );
+			case 'asanak':
+				return self::asanak( $to, $text );
+			case 'raygansms':
+				return self::raygansms( $to, $text );
+			case 'sabanovin':
+				return self::sabanovin( $to, $text );
+			case 'payamresan':
+				return self::payamresan( $to, $text );
 			case 'webhook':
 				return self::webhook( $to, $text );
 		}
@@ -132,7 +145,7 @@ class Khabar_Channel_Sms {
 		);
 		if ( $pattern ) {
 			$res = self::request(
-				'https://rest.payamak-panel.com/api/SendSMS/BaseServiceNumber',
+				self::base( 'https://rest.payamak-panel.com' ) . '/api/SendSMS/BaseServiceNumber',
 				array(
 					'body' => $auth + array(
 						'text'   => implode( ';', array_values( $params ) ),
@@ -143,7 +156,7 @@ class Khabar_Channel_Sms {
 			);
 		} else {
 			$res = self::request(
-				'https://rest.payamak-panel.com/api/SendSMS/SendSMS',
+				self::base( 'https://rest.payamak-panel.com' ) . '/api/SendSMS/SendSMS',
 				array(
 					'body' => $auth + array(
 						'to'      => $to,
@@ -170,7 +183,7 @@ class Khabar_Channel_Sms {
 		);
 		if ( $pattern ) {
 			$res = self::request(
-				'https://api2.ippanel.com/api/v1/sms/pattern/normal/send',
+				self::base( 'https://api2.ippanel.com' ) . '/api/v1/sms/pattern/normal/send',
 				array(
 					'headers' => $headers,
 					'body'    => wp_json_encode(
@@ -185,7 +198,7 @@ class Khabar_Channel_Sms {
 			);
 		} else {
 			$res = self::request(
-				'https://api2.ippanel.com/api/v1/sms/send/webservice/single',
+				self::base( 'https://api2.ippanel.com' ) . '/api/v1/sms/send/webservice/single',
 				array(
 					'headers' => $headers,
 					'body'    => wp_json_encode(
@@ -253,6 +266,187 @@ class Khabar_Channel_Sms {
 			return $res;
 		}
 		return ( isset( $res['status'] ) && 1 === (int) $res['status'] ) ? true : new WP_Error( 'khabar_sms', isset( $res['message'] ) ? $res['message'] : 'SMS.ir error' );
+	}
+
+	/**
+	 * API host: the admin's own panel address (white-label resellers) or the platform default.
+	 *
+	 * @param string $default Default host.
+	 * @return string
+	 */
+	private static function base( $default ) {
+		$url = trim( (string) Khabar_Settings::get( 'sms_base_url', '' ) );
+		if ( $url && wp_http_validate_url( $url ) ) {
+			// Accept a full endpoint pasted from the panel docs: keep only scheme://host[:port][/prefix-before-/api].
+			$url = preg_replace( '#/api(/.*)?$#i', '', untrailingslashit( $url ) );
+			return untrailingslashit( $url );
+		}
+		return $default;
+	}
+
+	/**
+	 * Ghasedak (ghasedak.me, REST v1).
+	 */
+	private static function ghasedak( $to, $text, $pattern, $params ) {
+		$headers = array(
+			'ApiKey'       => Khabar_Settings::get( 'sms_api_key' ),
+			'Content-Type' => 'application/json',
+			'Accept'       => 'application/json',
+		);
+		if ( $pattern ) {
+			$inputs = array();
+			foreach ( $params as $name => $value ) {
+				$inputs[] = array( 'param' => (string) $name, 'value' => (string) $value );
+			}
+			$body = array(
+				'receptors'    => array( array( 'mobile' => $to, 'clientReferenceId' => (string) time() ) ),
+				'templateName' => $pattern,
+				'inputs'       => $inputs,
+			);
+			$url  = 'https://gateway.ghasedak.me/rest/api/v1/WebService/SendOtpSMS';
+		} else {
+			$body = array(
+				'lineNumber' => Khabar_Settings::get( 'sms_sender' ),
+				'message'    => $text,
+				'receptor'   => $to,
+			);
+			$url  = 'https://gateway.ghasedak.me/rest/api/v1/WebService/SendSingleSMS';
+		}
+		$res = self::request( $url, array( 'headers' => $headers, 'body' => wp_json_encode( $body ) ) );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		return ! empty( $res['isSuccess'] ) ? true : new WP_Error( 'khabar_sms', isset( $res['message'] ) ? $res['message'] : 'Ghasedak error' );
+	}
+
+	/**
+	 * Iran Payamak (api.iranpayamak.com).
+	 */
+	private static function iranpayamak( $to, $text, $pattern, $params ) {
+		$headers = array(
+			'Api-Key'      => Khabar_Settings::get( 'sms_api_key' ),
+			'Content-Type' => 'application/json',
+			'Accept'       => 'application/json',
+		);
+		if ( $pattern ) {
+			$body = array(
+				'code'          => $pattern,
+				'attributes'    => (object) $params,
+				'recipient'     => $to,
+				'line_number'   => Khabar_Settings::get( 'sms_sender' ),
+				'number_format' => 'english',
+			);
+			$url  = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
+		} else {
+			$body = array(
+				'text'          => $text,
+				'line_number'   => Khabar_Settings::get( 'sms_sender' ),
+				'recipients'    => array( $to ),
+				'number_format' => 'english',
+			);
+			$url  = 'https://api.iranpayamak.com/ws/v1/sms/simple';
+		}
+		$res = self::request( $url, array( 'headers' => $headers, 'body' => wp_json_encode( $body ) ) );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		return ( isset( $res['status'] ) && 'success' === $res['status'] ) ? true : new WP_Error( 'khabar_sms', isset( $res['message'] ) ? wp_json_encode( $res['message'], JSON_UNESCAPED_UNICODE ) : 'Iran Payamak error' );
+	}
+
+	/**
+	 * Asanak (v1rest).
+	 */
+	private static function asanak( $to, $text ) {
+		$res = self::request(
+			'https://panel.asanak.ir/webservice/v1rest/sendsms',
+			array(
+				'body' => array(
+					'username'    => Khabar_Settings::get( 'sms_username' ),
+					'password'    => Khabar_Settings::get( 'sms_password' ),
+					'source'      => Khabar_Settings::get( 'sms_sender' ),
+					'destination' => $to,
+					'message'     => $text,
+				),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		// Success: a list of message ids; failure: an object / text describing the error.
+		$list = isset( $res['raw'] ) ? array() : $res;
+		return ( $list && array_keys( $list ) === range( 0, count( $list ) - 1 ) && is_numeric( reset( $list ) ) ) ? true : new WP_Error( 'khabar_sms', 'Asanak: ' . mb_substr( wp_json_encode( $res, JSON_UNESCAPED_UNICODE ), 0, 300 ) );
+	}
+
+	/**
+	 * Raygan SMS (smspanel.trez.ir JSON API, basic auth).
+	 */
+	private static function raygansms( $to, $text ) {
+		$res = self::request(
+			'http://smspanel.trez.ir/api/smsAPI/SendMessage',
+			array(
+				'headers' => array(
+					'Content-Type'  => 'application/json',
+					'Accept'        => 'application/json',
+					'Authorization' => 'Basic ' . base64_encode( Khabar_Settings::get( 'sms_username' ) . ':' . Khabar_Settings::get( 'sms_password' ) ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
+				),
+				'body'    => wp_json_encode(
+					array(
+						'PhoneNumber'         => Khabar_Settings::get( 'sms_sender' ),
+						'Message'             => $text,
+						'Mobiles'             => array( $to ),
+						'UserGroupID'         => uniqid( 'khabar', false ),
+						'SendDateInTimeStamp' => time(),
+					)
+				),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		return ( isset( $res['Code'] ) && 0 === (int) $res['Code'] ) ? true : new WP_Error( 'khabar_sms', isset( $res['Message'] ) ? $res['Message'] : 'Raygan SMS error' );
+	}
+
+	/**
+	 * Saba Novin (v1 REST, key in path).
+	 */
+	private static function sabanovin( $to, $text ) {
+		$url = 'https://api.sabanovin.com/v1/' . rawurlencode( (string) Khabar_Settings::get( 'sms_api_key' ) ) . '/sms/send.json';
+		$url = add_query_arg(
+			array(
+				'gateway' => rawurlencode( (string) Khabar_Settings::get( 'sms_sender' ) ),
+				'to'      => rawurlencode( $to ),
+				'text'    => rawurlencode( $text ),
+			),
+			$url
+		);
+		$res = self::request( $url, array( 'method' => 'GET' ) );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		return ( isset( $res['status']['code'] ) && 200 === (int) $res['status']['code'] ) ? true : new WP_Error( 'khabar_sms', isset( $res['status']['message'] ) ? $res['status']['message'] : 'Saba Novin error' );
+	}
+
+	/**
+	 * Payam Resan (APISend.aspx).
+	 */
+	private static function payamresan( $to, $text ) {
+		$url = add_query_arg(
+			array(
+				'Username' => rawurlencode( (string) Khabar_Settings::get( 'sms_username' ) ),
+				'Password' => rawurlencode( (string) Khabar_Settings::get( 'sms_password' ) ),
+				'From'     => rawurlencode( (string) Khabar_Settings::get( 'sms_sender' ) ),
+				'To'       => rawurlencode( $to ),
+				'Text'     => rawurlencode( $text ),
+			),
+			'http://www.payam-resan.com/APISend.aspx'
+		);
+		$res = self::request( $url, array( 'method' => 'GET' ) );
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		// The service answers with a numeric message id (> 0) on success, or a negative / textual error code.
+		$raw = isset( $res['raw'] ) ? trim( (string) $res['raw'] ) : trim( (string) wp_json_encode( $res ) );
+		return ( is_numeric( $raw ) && (float) $raw > 0 ) ? true : new WP_Error( 'khabar_sms', 'Payam Resan: ' . mb_substr( wp_strip_all_tags( $raw ), 0, 200 ) );
 	}
 
 	/**

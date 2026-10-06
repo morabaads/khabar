@@ -695,9 +695,11 @@ class Khabar_Admin {
 		);
 		$hints = array(
 			'kavenegar'   => __( 'کاوه‌نگار: «کد پترن» همان نام قالب در پنل است. نام متغیرها را token، token2، token3 (و token10، token20) بگذارید؛ مقدار آن‌ها فاصله نمی‌پذیرد و خودکار اصلاح می‌شود.', 'khabar' ),
-			'melipayamak' => __( 'ملی پیامک: «کد پترن» همان bodyId است. مقدارها به ترتیب نوشتن و با ; ارسال می‌شوند؛ نام متغیر فقط برای شما است.', 'khabar' ),
+			'payamak_panel' => __( 'ملی پیامک و پنل‌های سازگار: «کد پترن» همان bodyId است. مقدارها به ترتیب نوشتن و با ; ارسال می‌شوند؛ نام متغیر فقط برای شما است.', 'khabar' ),
 			'ippanel'     => __( 'فراز / IPPanel: «کد پترن» را وارد کنید و نام متغیرها را دقیقاً مثل نام‌های تعریف‌شده در پترن بنویسید.', 'khabar' ),
 			'smsir'       => __( 'SMS.ir: «کد پترن» شناسه‌ی عددی قالب است و نام پارامترها دقیقاً همان نام‌های قالب است (مثلاً Code).', 'khabar' ),
+			'ghasedak'    => __( 'قاصدک: «کد پترن» نام قالب (templateName) در پنل است و نام متغیرها همان param های قالب.', 'khabar' ),
+			'iranpayamak' => __( 'ایران پیامک: «کد پترن» کد الگو است و نام متغیرها همان نام‌های تعریف‌شده در الگو.', 'khabar' ),
 			'webhook'     => __( 'وب‌سرویس سفارشی از پترن استفاده نمی‌کند؛ از «قالب پیام» متنی استفاده می‌شود.', 'khabar' ),
 		);
 		$row = function ( $i, $item ) use ( $name, $events, $chips ) {
@@ -744,7 +746,13 @@ class Khabar_Admin {
 			return ob_get_clean();
 		};
 		?>
-		<div class="khabar-pat" data-next="<?php echo (int) count( $items ) + 100; ?>" data-hints="<?php echo esc_attr( wp_json_encode( $hints ) ); ?>">
+		<?php
+		$drivers = array();
+		foreach ( Khabar_Sms_Providers::all() as $pkey => $p ) {
+			$drivers[ $pkey ] = $p[1];
+		}
+		?>
+		<div class="khabar-pat" data-next="<?php echo (int) count( $items ) + 100; ?>" data-hints="<?php echo esc_attr( wp_json_encode( $hints ) ); ?>" data-drivers="<?php echo esc_attr( wp_json_encode( $drivers ) ); ?>" data-pattern-drivers="<?php echo esc_attr( wp_json_encode( Khabar_Sms_Providers::PATTERN_DRIVERS ) ); ?>">
 			<div class="khabar-pat-info">
 				<strong><?php esc_html_e( 'چطور کار می‌کند؟', 'khabar' ); ?></strong>
 				<ol>

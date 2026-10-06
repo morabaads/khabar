@@ -14,13 +14,21 @@ jQuery(function ($) {
 	});
 
 	/* ---- SMS pattern repeater ---- */
+	function driverOf($root) {
+		var gw = $('#khabar-sms_gateway').val();
+		var d = ($root.data('drivers') || {})[gw] || gw;
+		return d === 'compat' ? ($('#khabar-sms_platform').val() || 'payamak_panel') : d;
+	}
 	var starters = {
+		ghasedak: [['name', '{product_name}'], ['price', '{price}'], ['link', '{link}']],
+		iranpayamak: [['product', '{product_name}'], ['price', '{price}'], ['link', '{link}']],
+		payamak_panel: [['p1', '{product_name}'], ['p2', '{price}'], ['p3', '{link}']],
 		kavenegar: [['token', '{product_name}'], ['token2', '{price}'], ['token3', '{link}']],
 		melipayamak: [['p1', '{product_name}'], ['p2', '{price}'], ['p3', '{link}']],
 		ippanel: [['product', '{product_name}'], ['price', '{price}'], ['link', '{link}']],
 		smsir: [['Product', '{product_name}'], ['Price', '{price}'], ['Link', '{link}']]
 	};
-	var otpStarter = { kavenegar: [['token', '{code}']], melipayamak: [['p1', '{code}']], ippanel: [['code', '{code}']], smsir: [['Code', '{code}']] };
+	var otpStarter = { kavenegar: [['token', '{code}']], payamak_panel: [['p1', '{code}']], ghasedak: [['code', '{code}']], iranpayamak: [['code', '{code}']], ippanel: [['code', '{code}']], smsir: [['Code', '{code}']] };
 	var uid = Date.now();
 
 	function varRow(base, name, value) {
@@ -34,7 +42,7 @@ jQuery(function ($) {
 	}
 
 	function syncPatterns($root) {
-		var gw = $('#khabar-sms_gateway').val();
+		var gw = driverOf($root);
 		var hints = $root.data('hints') || {};
 		$root.find('.khabar-pat-gw').text(hints[gw] || '').prop('hidden', !hints[gw]);
 		var used = {};
@@ -47,7 +55,7 @@ jQuery(function ($) {
 		});
 		$root.find('.khabar-pat-empty').prop('hidden', !!$root.find('.khabar-pat-row').length);
 		// Pattern UI only matters in pattern mode.
-		var pattern = $('#khabar-sms_mode').val() === 'pattern' && gw !== 'webhook';
+		var pattern = $('#khabar-sms_mode').val() === 'pattern' && ($root.data('patternDrivers') || []).indexOf(gw) !== -1 && $('#khabar-sms_mode').closest('tr').css('display') !== 'none';
 		$root.closest('tr').toggle(pattern);
 	}
 
@@ -68,7 +76,7 @@ jQuery(function ($) {
 		var $sel = $row.find('.khabar-pat-event');
 		var free = $sel.find('option').filter(function () { return !used[this.value]; }).first().val();
 		if (free) { $sel.val(free); }
-		var gw = $('#khabar-sms_gateway').val();
+		var gw = driverOf($root);
 		var list = (free === 'otp' ? otpStarter[gw] : starters[gw]) || [];
 		var base = $row.find('.khabar-pat-vars').data('base');
 		$.each(list, function (_, v) { $row.find('.khabar-pat-vlist').append(varRow(base, v[0], v[1])); });
@@ -105,16 +113,22 @@ jQuery(function ($) {
 	// Rows that only apply to one gateway / provider (data-show-if='{"sms_gateway":["kavenegar"]}').
 	function syncConditional() {
 		$body.find('tr[data-show-if]').each(function () {
-			var rules = $(this).data('showIf') || {}, ok = true;
-			$.each(rules, function (key, values) {
-				var $f = $('#khabar-' + key);
-				if ($f.length && values.indexOf($f.val()) === -1) { ok = false; }
+			// A rule set is {field: [values]} (all must match); a list of rule sets matches if any does.
+			var rules = $(this).data('showIf') || {};
+			var sets = $.isArray(rules) ? rules : [rules];
+			var ok = sets.some(function (set) {
+				var all = true;
+				$.each(set, function (key, values) {
+					var $f = $('#khabar-' + key);
+					if ($f.length && (values.indexOf($f.val()) === -1 || $f.closest('tr').css('display') === 'none')) { all = false; }
+				});
+				return all;
 			});
 			$(this).toggle(ok);
 		});
 		$('.khabar-pat').each(function () { syncPatterns($(this)); });
 	}
-	$(document).on('change', '#khabar-sms_gateway, #khabar-whatsapp_provider', syncConditional);
+	$(document).on('change', '#khabar-body select', syncConditional);
 
 	function enhance() {
 		syncConditional();
