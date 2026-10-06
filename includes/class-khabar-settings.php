@@ -251,22 +251,27 @@ class Khabar_Settings {
 						'default' => 'kavenegar',
 					),
 					'sms_api_key'        => array(
+						'show_if' => array( 'sms_gateway' => array( 'kavenegar', 'ippanel', 'smsir' ) ),
 						'type'  => 'password',
 						'label' => __( 'API Key', 'khabar' ),
 					),
 					'sms_username'       => array(
+						'show_if' => array( 'sms_gateway' => array( 'melipayamak' ) ),
 						'type'  => 'text',
 						'label' => __( 'نام کاربری (ملی پیامک)', 'khabar' ),
 					),
 					'sms_password'       => array(
+						'show_if' => array( 'sms_gateway' => array( 'melipayamak' ) ),
 						'type'  => 'password',
 						'label' => __( 'رمز عبور (ملی پیامک)', 'khabar' ),
 					),
 					'sms_sender'         => array(
+						'show_if' => array( 'sms_gateway' => array( 'kavenegar', 'melipayamak', 'ippanel', 'smsir' ) ),
 						'type'  => 'text',
 						'label' => __( 'شماره فرستنده', 'khabar' ),
 					),
 					'sms_mode'           => array(
+						'show_if' => array( 'sms_gateway' => array( 'kavenegar', 'melipayamak', 'ippanel', 'smsir' ) ),
 						'type'    => 'select',
 						'label'   => __( 'نوع ارسال', 'khabar' ),
 						'options' => array(
@@ -281,11 +286,13 @@ class Khabar_Settings {
 						'default' => array(),
 					),
 					'sms_webhook_url'    => array(
+						'show_if' => array( 'sms_gateway' => array( 'webhook' ) ),
 						'type'  => 'text',
 						'label' => __( 'آدرس وب‌سرویس سفارشی', 'khabar' ),
 						'desc'  => __( 'متغیرها: {to} {message}', 'khabar' ),
 					),
 					'sms_webhook_body'   => array(
+						'show_if' => array( 'sms_gateway' => array( 'webhook' ) ),
 						'type'    => 'textarea',
 						'label'   => __( 'بدنه درخواست سفارشی (JSON، خالی = GET)', 'khabar' ),
 						'default' => '{"to":"{to}","text":"{message}"}',
@@ -304,19 +311,23 @@ class Khabar_Settings {
 						'default' => 'cloud',
 					),
 					'whatsapp_token'     => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
 						'type'  => 'password',
 						'label' => __( 'Access Token', 'khabar' ),
 					),
 					'whatsapp_phone_id'  => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
 						'type'  => 'text',
 						'label' => __( 'Phone Number ID', 'khabar' ),
 					),
 					'whatsapp_template'  => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
 						'type'  => 'text',
 						'label' => __( 'نام Template تایید شده', 'khabar' ),
 						'desc'  => __( 'بدنه تمپلیت باید یک متغیر {{1}} داشته باشد؛ متن پیام در آن قرار می‌گیرد. خالی = ارسال متن ساده.', 'khabar' ),
 					),
 					'whatsapp_lang'      => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
 						'type'    => 'text',
 						'label'   => __( 'زبان Template', 'khabar' ),
 						'default' => 'fa',
@@ -327,6 +338,7 @@ class Khabar_Settings {
 						'default' => '98',
 					),
 					'whatsapp_webhook_url' => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
 						'type'  => 'text',
 						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
 					),

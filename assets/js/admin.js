@@ -47,7 +47,7 @@ jQuery(function ($) {
 		});
 		$root.find('.khabar-pat-empty').prop('hidden', !!$root.find('.khabar-pat-row').length);
 		// Pattern UI only matters in pattern mode.
-		var pattern = $('#khabar-sms_mode').val() === 'pattern';
+		var pattern = $('#khabar-sms_mode').val() === 'pattern' && gw !== 'webhook';
 		$root.closest('tr').toggle(pattern);
 	}
 
@@ -102,7 +102,22 @@ jQuery(function ($) {
 		el.selectionStart = el.selectionEnd = s + t.length;
 	});
 
+	// Rows that only apply to one gateway / provider (data-show-if='{"sms_gateway":["kavenegar"]}').
+	function syncConditional() {
+		$body.find('tr[data-show-if]').each(function () {
+			var rules = $(this).data('showIf') || {}, ok = true;
+			$.each(rules, function (key, values) {
+				var $f = $('#khabar-' + key);
+				if ($f.length && values.indexOf($f.val()) === -1) { ok = false; }
+			});
+			$(this).toggle(ok);
+		});
+		$('.khabar-pat').each(function () { syncPatterns($(this)); });
+	}
+	$(document).on('change', '#khabar-sms_gateway, #khabar-whatsapp_provider', syncConditional);
+
 	function enhance() {
+		syncConditional();
 		initPatterns();
 		if ($.fn.wpColorPicker) { $body.find('.khabar-color').wpColorPicker(); }
 		// Flash notices become a floating toast so saving never moves the page.

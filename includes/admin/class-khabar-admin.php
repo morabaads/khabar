@@ -785,7 +785,13 @@ class Khabar_Admin {
 			echo '<tr><th colspan="2"><h2 class="khabar-heading">' . esc_html( $field['label'] ) . '</h2>' . ( ! empty( $field['desc'] ) ? '<p class="description">' . esc_html( $field['desc'] ) . '</p>' : '' ) . '</th></tr>';
 			return;
 		}
-		echo '<tr><th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
+		$attrs = ! empty( $field['show_if'] ) ? ' data-show-if="' . esc_attr( wp_json_encode( $field['show_if'] ) ) . '"' : '';
+		$attrs .= 'sms_patterns' === $field['type'] ? ' class="khabar-row-wide"' : '';
+		if ( 'sms_patterns' === $field['type'] ) {
+			echo '<tr' . $attrs . '><td colspan="2">';
+		} else {
+			echo '<tr' . $attrs . '><th scope="row"><label for="' . esc_attr( $id ) . '">' . esc_html( $field['label'] ) . '</label></th><td>';
+		}
 		switch ( $field['type'] ) {
 			case 'checkbox':
 				printf( '<label><input type="checkbox" id="%s" name="%s" value="1" %s> %s</label>', esc_attr( $id ), esc_attr( $name ), checked( (int) $value, 1, false ), esc_html__( 'فعال', 'khabar' ) );

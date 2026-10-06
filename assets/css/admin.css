@@ -119,8 +119,6 @@
 .khabar-view { margin: 0; }
 
 /* SMS pattern repeater */
-.khabar-set-card .form-table th:has(+ td .khabar-pat) { display: none; }
-.khabar-set-card .form-table td:has(.khabar-pat) { padding: 12px 0; }
 .khabar-pat-info { background: var(--ka-soft); border: 1px solid var(--ka-line); border-radius: 14px; padding: 12px 16px; margin-bottom: 14px; font-size: 13px; }
 .khabar-pat-info ol { margin: 6px 0 4px; padding-right: 20px; }
 .khabar-pat-info li { list-style: decimal; margin: 2px 0; }
@@ -147,7 +145,6 @@
 .khabar-pat-empty { margin: 0 0 12px; padding: 14px; text-align: center; border: 1.5px dashed var(--ka-line); border-radius: 14px; color: #6b6f7b; }
 @media (max-width: 782px) { .khabar-pat-head { grid-template-columns: 1fr 38px; } .khabar-pat-head .khabar-pat-code { grid-column: 1 / -1; order: 3; } .khabar-pat-var { grid-template-columns: 1fr 34px; } .khabar-pat-arrow { display: none; } .khabar-pat-var .khabar-pat-vval { grid-column: 1 / -1; order: 3; } }
 
-.khabar-set-card .form-table td:has(.khabar-pat) { width: 100%; }
 .khabar-admin input[type=text], .khabar-admin input[type=password], .khabar-admin input[type=number], .khabar-admin select, .khabar-admin textarea { box-sizing: border-box; }
 
 /* toast notices */
@@ -158,3 +155,14 @@
 #khabar-toasts .khabar-toast.is-out { opacity: 0; transform: translateY(8px); }
 #khabar-toasts .khabar-toast-x { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: none; border: 0; color: #aeb2d6; font-size: 18px; cursor: pointer; line-height: 1; }
 @keyframes khabar-toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* consistent field sizing */
+.khabar-set-card .form-table td input[type=text], .khabar-set-card .form-table td input[type=password], .khabar-set-card .form-table td input[type=number]:not(.small-text), .khabar-set-card .form-table td select { width: 100%; max-width: 440px; }
+.khabar-set-card .form-table td input.small-text { width: 110px; }
+.khabar-set-card .form-table td textarea { width: 100%; max-width: 640px; }
+.khabar-set-card .form-table td .wp-picker-container input[type=text] { width: 80px; }
+.khabar-set-card .form-table th label { display: block; padding-top: 8px; }
+/* full-width rows (pattern repeater) */
+.khabar-set-card .form-table tr.khabar-row-wide td { padding: 14px 0 6px; }
+.khabar-pat { max-width: 920px; }
+.khabar-set-card .form-table td .khabar-pat input[type=text], .khabar-set-card .form-table td .khabar-pat select { max-width: none; }
