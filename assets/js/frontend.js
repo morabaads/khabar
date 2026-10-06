@@ -118,7 +118,7 @@
 		this.$vform = $vform;
 
 		this.$root.on('click', '.khabar-open', function () { self.open($(this).data('mode')); });
-		this.$modal.on('click', '.khabar-close', function () { self.close(); });
+		this.$modal.on('click', '.khabar-close, .khabar-close-done', function () { self.close(); });
 		this.$modal.on('click', function (e) { if (e.target === self.$modal[0]) { self.close(); } });
 		$(document).on('keydown', function (e) { if (e.key === 'Escape') { self.close(); } });
 

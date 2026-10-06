@@ -144,14 +144,20 @@ $khabar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 			</form>
 
 			<div class="khabar-done" hidden>
-				<div class="khabar-done-icon">✅</div>
+				<div class="khabar-done-badge" aria-hidden="true">
+					<svg viewBox="0 0 52 52" width="52" height="52" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path class="khabar-done-check" d="M14 27l8 8 16-17"/></svg>
+				</div>
+				<h4 class="khabar-done-title"><?php esc_html_e( 'عالی، ثبت شد!', 'khabar' ); ?></h4>
 				<p class="khabar-done-text"></p>
 				<?php if ( $messengers ) : ?>
 					<div class="khabar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
 				<?php endif; ?>
-				<?php if ( is_user_logged_in() ) : ?>
-					<a href="<?php echo esc_url( wc_get_account_endpoint_url( Khabar_Account::ENDPOINT ) ); ?>"><?php esc_html_e( 'مشاهده خبرم کن‌های من', 'khabar' ); ?></a>
-				<?php endif; ?>
+				<div class="khabar-done-actions">
+					<?php if ( is_user_logged_in() ) : ?>
+						<a class="khabar-btn khabar-btn-primary" href="<?php echo esc_url( wc_get_account_endpoint_url( Khabar_Account::ENDPOINT ) ); ?>"><?php esc_html_e( 'مشاهده خبرم کن‌های من', 'khabar' ); ?></a>
+					<?php endif; ?>
+					<button type="button" class="khabar-btn <?php echo is_user_logged_in() ? 'khabar-btn-ghost' : 'khabar-btn-primary'; ?> khabar-close-done"><?php esc_html_e( 'متوجه شدم', 'khabar' ); ?></button>
+				</div>
 			</div>
 		</div>
 	</div>

@@ -276,3 +276,22 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 .khabar-contact { display: block; }
 .khabar-contact label[hidden] { display: none !important; }
 .khabar-channels { margin-bottom: 18px; }
+
+/* success screen */
+.khabar-done { text-align: center; padding: 18px 4px 6px; }
+.khabar-done[hidden] { display: none !important; }
+.khabar-done-badge { width: 92px; height: 92px; margin: 8px auto 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: radial-gradient(circle at 30% 25%, #34d27b, var(--khabar-ok)); box-shadow: 0 0 0 10px color-mix(in srgb, var(--khabar-ok) 12%, transparent), 0 0 0 22px color-mix(in srgb, var(--khabar-ok) 6%, transparent), 0 14px 28px color-mix(in srgb, var(--khabar-ok) 35%, transparent); animation: khabar-badge .5s cubic-bezier(.2, 1.4, .4, 1) both; }
+.khabar-done-badge svg { width: 54px; height: 54px; }
+.khabar-done-check { stroke-dasharray: 40; stroke-dashoffset: 40; animation: khabar-check .45s .25s ease-out forwards; }
+@keyframes khabar-badge { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes khabar-check { to { stroke-dashoffset: 0; } }
+.khabar-modal .khabar-done-title { margin: 0 0 6px !important; padding: 0 !important; font-size: 1.25rem !important; font-weight: 800 !important; color: var(--kb-ink) !important; }
+.khabar-done-text { margin: 0 auto 18px !important; max-width: 340px; color: var(--kb-muted); font-weight: 500 !important; line-height: 1.9; }
+.khabar-done-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.khabar-modal .khabar-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 50px; padding: 0 20px; border-radius: calc(var(--khabar-radius) + 4px); font-size: 1rem; font-weight: 800; text-decoration: none !important; cursor: pointer; transition: filter .15s, background .15s, transform .1s; }
+.khabar-modal .khabar-btn-primary { background: var(--kb-accent) !important; color: var(--khabar-on-accent) !important; border: 0 !important; box-shadow: 0 10px 22px color-mix(in srgb, var(--khabar-accent) 30%, transparent); }
+.khabar-modal .khabar-btn-ghost { background: var(--khabar-soft) !important; color: var(--kb-ink) !important; border: 1.5px solid var(--kb-line) !important; box-shadow: none; }
+.khabar-modal .khabar-btn:hover { filter: brightness(.96); }
+.khabar-modal .khabar-btn:active { transform: scale(.99); }
+.khabar-done .khabar-connect { margin: 0 0 8px; }
+@media (prefers-reduced-motion: reduce) { .khabar-done-badge, .khabar-done-check { animation: none; stroke-dashoffset: 0; } }
