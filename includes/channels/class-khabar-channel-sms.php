@@ -97,7 +97,9 @@ class Khabar_Channel_Sms {
 		$body = wp_remote_retrieve_body( $response );
 		$json = json_decode( $body, true );
 		if ( $code >= 400 ) {
-			return new WP_Error( 'khabar_sms_http', 'HTTP ' . $code . ': ' . mb_substr( $body, 0, 300 ) );
+			// Prefer the provider's own error text over the raw JSON.
+			$msg = is_array( $json ) ? ( $json['message'] ?? $json['Message'] ?? $json['return']['message'] ?? $json['StrRetStatus'] ?? null ) : null;
+			return new WP_Error( 'khabar_sms_http', 'HTTP ' . $code . ': ' . ( is_string( $msg ) && '' !== $msg ? $msg : mb_substr( $body, 0, 300 ) ) );
 		}
 		return is_array( $json ) ? $json : array( 'raw' => $body );
 	}
@@ -248,13 +250,18 @@ class Khabar_Channel_Sms {
 				)
 			);
 		} else {
+			// SMS.ir wants the line as a JSON number (e.g. 30007732000000), not a string.
+			$line = preg_replace( '/\D/', '', Khabar_Utils::latin_digits( (string) Khabar_Settings::get( 'sms_sender' ) ) );
+			if ( '' === $line ) {
+				return new WP_Error( 'khabar_sms', __( 'SMS.ir: «شماره فرستنده (خط)» را در تنظیمات پیامک وارد کنید (مثلاً 30007732000000).', 'khabar' ) );
+			}
 			$res = self::request(
 				'https://api.sms.ir/v1/send/bulk',
 				array(
 					'headers' => $headers,
 					'body'    => wp_json_encode(
 						array(
-							'lineNumber'  => Khabar_Settings::get( 'sms_sender' ),
+							'lineNumber'  => (int) $line,
 							'messageText' => $text,
 							'mobiles'     => array( $to ),
 						)
