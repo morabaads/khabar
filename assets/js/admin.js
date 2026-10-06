@@ -105,7 +105,17 @@ jQuery(function ($) {
 	function enhance() {
 		initPatterns();
 		if ($.fn.wpColorPicker) { $body.find('.khabar-color').wpColorPicker(); }
-		$body.find('.khabar-notice').delay(6000).fadeOut(400);
+		// Flash notices become a floating toast so saving never moves the page.
+		var $n = $body.find('.khabar-notice');
+		if ($n.length) {
+			var $wrap = $('#khabar-toasts');
+			if (!$wrap.length) { $wrap = $('<div id="khabar-toasts" class="khabar-admin" aria-live="polite">').appendTo(document.body); }
+			$n.each(function () {
+				var $t = $(this).detach().addClass('khabar-toast').appendTo($wrap);
+				$('<button type="button" class="khabar-toast-x" aria-label="بستن">×</button>').appendTo($t).on('click', function () { $t.remove(); });
+				setTimeout(function () { $t.addClass('is-out'); setTimeout(function () { $t.remove(); }, 350); }, 4500);
+			});
+		}
 	}
 	enhance();
 	if (!$app.length || !window.fetch || !window.URL) { return; }
@@ -183,7 +193,7 @@ jQuery(function ($) {
 		e.preventDefault();
 		var method = (form.method || 'get').toLowerCase();
 		if (method === 'post') {
-			go(action, { method: 'POST', body: fd }, true, true);
+			go(action, { method: 'POST', body: fd }, true, false);
 		} else {
 			var u = new URL(action, location.href);
 			u.search = new URLSearchParams(fd).toString();
