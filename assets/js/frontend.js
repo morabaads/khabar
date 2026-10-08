@@ -208,9 +208,9 @@
 		this.$done.prop('hidden', true);
 		showMsg(this.$form.find('.khabar-msg'), '');
 
-		// "When back in stock" is meaningless for an item that is already in stock (price alert button).
+		// "When back in stock" is meaningless for an item that is already in stock.
 		var inStockNow = this.variation ? !!this.variation.is_in_stock : (!this.variable && String(this.$root.data('instock')) === '1');
-		this.$form.find('[name=in_stock]').closest('.khabar-cond').prop('hidden', mode === 'price' && inStockNow);
+		this.$form.find('[name=in_stock]').closest('.khabar-cond').prop('hidden', inStockNow);
 		// Default: only the first available condition is ticked.
 		this.$form.find('.khabar-cond:not([hidden]) input[type=checkbox]').first().prop('checked', true).trigger('change');
 

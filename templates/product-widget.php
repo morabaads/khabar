@@ -15,6 +15,8 @@ defined( 'ABSPATH' ) || exit;
 $khabar_uid        = isset( $khabar_uid ) ? $khabar_uid : 'khabar-' . $product->get_id();
 $khabar_vars       = isset( $khabar_vars ) ? $khabar_vars : '';
 $khabar_has_stock  = in_array( 'stock', $types, true );
+// "When back in stock" only makes sense if something is out of stock right now.
+$khabar_stock_opt  = $khabar_has_stock && ( $variable ? $any_oos : ! $in_stock );
 $khabar_has_price  = array_intersect( array( 'price_drop', 'price_rise', 'price_change' ), $types );
 $khabar_contact    = $s['contact_mode'];
 $khabar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
@@ -82,7 +84,7 @@ $khabar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 
 				<fieldset class="khabar-conditions">
 					<legend><?php echo Khabar_Frontend::icon( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'khabar' ); ?></span></legend>
-					<?php if ( $khabar_has_stock ) : ?>
+					<?php if ( $khabar_stock_opt ) : ?>
 						<label class="khabar-cond"><input type="checkbox" name="in_stock" value="1"><span class="khabar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'khabar' ); ?></span><span class="khabar-cond-ic"><?php echo Khabar_Frontend::icon( 'box' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_drop', $types, true ) ) : ?>
