@@ -156,8 +156,8 @@ class Khabar_Elementor_Notify_Widget extends Khabar_Elementor_Base {
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
-		$this->add_control( 'link_color', array( 'label' => __( 'رنگ لینک هشدار قیمت', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar-cta-price .khabar-link' => 'color: {{VALUE}};' ) ) );
-		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'link_typo', 'selector' => '{{WRAPPER}} .khabar-cta-price .khabar-link' ) );
+		$this->add_control( 'link_color', array( 'label' => __( 'رنگ لینک هشدار قیمت', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar-cta-price .khabar-price-btn' => 'color: {{VALUE}};' ) ) );
+		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'link_typo', 'selector' => '{{WRAPPER}} .khabar-cta-price .khabar-price-btn' ) );
 		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی فرم', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar' => '--khabar-accent: {{VALUE}};' ) ) );
 		$this->add_control( 'count_color', array( 'label' => __( 'رنگ «نفر منتظر»', 'khabar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .khabar-waiting' => 'color: {{VALUE}};' ) ) );
 		$this->end_controls_section();

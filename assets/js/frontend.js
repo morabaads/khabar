@@ -208,11 +208,11 @@
 		this.$done.prop('hidden', true);
 		showMsg(this.$form.find('.khabar-msg'), '');
 
-		if (mode === 'price') {
-			this.$form.find('[data-toggle=price_below]').prop('checked', true).trigger('change');
-		} else {
-			this.$form.find('[name=in_stock]').prop('checked', true);
-		}
+		// "When back in stock" is meaningless for an item that is already in stock (price alert button).
+		var inStockNow = this.variation ? !!this.variation.is_in_stock : (!this.variable && String(this.$root.data('instock')) === '1');
+		this.$form.find('[name=in_stock]').closest('.khabar-cond').prop('hidden', mode === 'price' && inStockNow);
+		// Default: only the first available condition is ticked.
+		this.$form.find('.khabar-cond:not([hidden]) input[type=checkbox]').first().prop('checked', true).trigger('change');
 
 		// Pre-select the attributes currently chosen on the product page (Feature 2).
 		var selection = this.$vform.length ? currentSelection(this.$vform) : {};

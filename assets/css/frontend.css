@@ -295,3 +295,13 @@ body.dark .khabar-ph, [data-theme="dark"] .khabar-ph, .khabar-dark .khabar-ph, .
 .khabar-modal .khabar-btn:active { transform: scale(.99); }
 .khabar-done .khabar-connect { margin: 0 0 8px; }
 @media (prefers-reduced-motion: reduce) { .khabar-done-badge, .khabar-done-check { animation: none; stroke-dashoffset: 0; } }
+
+/* price-alert button (in-stock products) */
+.khabar-cta-price { margin: 10px 0; }
+.khabar .khabar-price-btn { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px 9px 18px; border: 1.5px solid color-mix(in srgb, var(--khabar-accent) 35%, var(--khabar-line)); border-radius: 999px; background: color-mix(in srgb, var(--khabar-accent) 6%, var(--khabar-bg)); color: var(--khabar-ink); font-family: var(--khabar-font); font-size: .92rem; font-weight: 700; line-height: 1.5; text-decoration: none; cursor: pointer; box-shadow: none; transition: border-color .15s, background .15s, transform .1s; }
+.khabar .khabar-price-btn:hover { border-color: var(--khabar-accent); background: color-mix(in srgb, var(--khabar-accent) 11%, var(--khabar-bg)); color: var(--khabar-ink); }
+.khabar .khabar-price-btn:active { transform: scale(.98); }
+.khabar .khabar-price-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--khabar-accent) 35%, transparent); outline-offset: 2px; }
+.khabar-price-ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--khabar-accent); color: var(--khabar-on-accent); flex: 0 0 26px; }
+.khabar-price-ic .khabar-ic { width: 15px; height: 15px; }
+.khabar-modal .khabar-cond[hidden] { display: none !important; }

@@ -42,7 +42,7 @@ $khabar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 
 	<?php if ( $khabar_has_price && $s['show_price_alert'] ) : ?>
 	<div class="khabar-cta khabar-cta-price" <?php echo $in_stock ? '' : 'hidden'; ?>>
-		<button type="button" class="khabar-link khabar-open" data-mode="price">📉 <?php echo esc_html( $s['button_text_price'] ); ?></button>
+		<button type="button" class="khabar-price-btn khabar-open" data-mode="price"><span class="khabar-price-ic"><?php echo Khabar_Frontend::icon( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $s['button_text_price'] ); ?></span></button>
 	</div>
 	<?php endif; ?>
 
