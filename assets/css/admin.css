@@ -232,3 +232,9 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 /* tables inside cards */
 .khabar-admin .widefat { border-radius: 14px; }
 .khabar-admin .widefat thead th, .khabar-admin .widefat thead td { background: #f6f7fa; color: #3b3e4e; }
+
+/* layout: full-width command bar, centred framed content */
+#khabar-app.khabar-admin { max-width: none; margin-left: 0; margin-right: 0; }
+#khabar-app > .khabar-hero { margin-right: 0; margin-left: 0; }
+#khabar-body { max-width: 1320px; margin: 0 auto 24px; padding: 18px; border: 1px solid #ebecf1; border-radius: 26px; background: rgba(255, 255, 255, .55); box-shadow: 0 1px 2px rgba(18, 19, 24, .03); box-sizing: border-box; }
+@media (max-width: 782px) { #khabar-body { padding: 10px; border-radius: 18px; } }
