@@ -16,6 +16,7 @@ class Khabar_Admin {
 	 */
 	public static function init() {
 		add_action( 'admin_menu', array( __CLASS__, 'menu' ) );
+		add_filter( 'submenu_file', array( __CLASS__, 'submenu_file' ) );
 		add_action( 'admin_init', array( __CLASS__, 'legacy_redirect' ), 1 );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'assets' ) );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'menu_assets' ) );
@@ -75,8 +76,29 @@ class Khabar_Admin {
 		$active = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'active'" ); // phpcs:ignore
 		$bubble = $active ? ' <span class="awaiting-mod">' . number_format_i18n( $active ) . '</span>' : '';
 
-		$hook = add_menu_page( __( 'خبرم کن', 'khabar' ), __( 'خبرم کن', 'khabar' ) . $bubble, self::CAP, 'khabar', array( __CLASS__, 'page_app' ), 'dashicons-bell', 56 );
+		$label = '<span class="khabar-mn"><b>' . esc_html__( 'خبرم کن', 'khabar' ) . $bubble . '</b><small>' . esc_html__( 'اعلان موجودی و قیمت', 'khabar' ) . '</small></span>';
+		$hook  = add_menu_page( __( 'خبرم کن', 'khabar' ), $label, self::CAP, 'khabar', array( __CLASS__, 'page_app' ), 'dashicons-bell', 56 );
 		add_action( 'load-' . $hook, array( __CLASS__, 'load_app' ) );
+
+		// Sidebar shortcuts into the single-page app (each opens its section).
+		foreach ( self::views() as $slug => $view ) {
+			$target = 'dashboard' === $slug ? 'khabar' : 'admin.php?page=khabar&view=' . $slug;
+			add_submenu_page( 'khabar', $view[0], $view[0], self::CAP, $target, 'dashboard' === $slug ? array( __CLASS__, 'page_app' ) : '' );
+		}
+	}
+
+	/**
+	 * Highlight the sidebar shortcut of the open section.
+	 *
+	 * @param string|null $file Submenu file.
+	 * @return string|null
+	 */
+	public static function submenu_file( $file ) {
+		if ( isset( $_GET['page'] ) && 'khabar' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$view = self::current_view();
+			return 'dashboard' === $view ? 'khabar' : 'admin.php?page=khabar&view=' . $view;
+		}
+		return $file;
 	}
 
 	/**

@@ -1,6 +1,63 @@
 @font-face { font-family: "Dana"; src: url("../fonts/DanaVF.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
-#toplevel_page_khabar .wp-menu-name,
-#toplevel_page_khabar .wp-submenu,
-#toplevel_page_khabar .wp-submenu a,
-#toplevel_page_khabar .awaiting-mod { font-family: "Dana", Tahoma, "Segoe UI", sans-serif !important; }
-#toplevel_page_khabar .wp-submenu a { font-size: 13px; line-height: 1.9; }
+
+/* ===== "خبرم کن" sidebar entry: branded card + dark flyout ===== */
+#adminmenu #toplevel_page_khabar { --kb-o1: #ff8a3d; --kb-o2: #f4511e; margin: 6px 8px; }
+#adminmenu #toplevel_page_khabar,
+#adminmenu #toplevel_page_khabar * { font-family: "Dana", Tahoma, "Segoe UI", sans-serif !important; }
+
+#adminmenu #toplevel_page_khabar > a.menu-top {
+	display: flex; align-items: center; min-height: 52px; padding: 6px 0;
+	border-radius: 14px; border: 1px solid rgba(244, 81, 30, .55);
+	background: linear-gradient(135deg, #20222e 0%, #17181f 100%);
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+	transition: border-color .15s, box-shadow .15s;
+}
+#adminmenu #toplevel_page_khabar > a.menu-top:hover,
+#adminmenu #toplevel_page_khabar.opensub > a.menu-top,
+#adminmenu #toplevel_page_khabar.wp-has-current-submenu > a.menu-top { border-color: var(--kb-o2); background: linear-gradient(135deg, #262837 0%, #1a1b24 100%); box-shadow: 0 8px 22px rgba(244, 81, 30, .25); }
+#adminmenu #toplevel_page_khabar .wp-menu-arrow { display: none; }
+
+/* icon tile */
+#adminmenu #toplevel_page_khabar div.wp-menu-image { position: static; float: none; flex: 0 0 34px; width: 34px; height: 34px; margin: 0 8px; border-radius: 10px; background: linear-gradient(135deg, var(--kb-o1), var(--kb-o2)); box-shadow: 0 4px 12px rgba(244, 81, 30, .45); display: grid; place-items: center; }
+#adminmenu #toplevel_page_khabar div.wp-menu-image::before { color: #fff !important; padding: 0; font-size: 18px; width: 18px; height: 18px; opacity: 1; }
+
+/* title + subtitle */
+#adminmenu #toplevel_page_khabar div.wp-menu-name { padding: 0 6px 0 4px; flex: 1; min-width: 0; }
+#adminmenu .khabar-mn { display: flex; flex-direction: column; line-height: 1.45; }
+#adminmenu .khabar-mn b { color: #fff; font-weight: 800; font-size: 13.5px; display: flex; align-items: center; gap: 6px; }
+#adminmenu .khabar-mn small { color: #ff9b6a; font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#adminmenu #toplevel_page_khabar .awaiting-mod { background: var(--kb-o2); color: #fff; margin: 0; }
+
+/* submenu: dark rounded panel (flyout and expanded) */
+#adminmenu #toplevel_page_khabar .wp-submenu { background: #17181f; border-radius: 16px; padding: 8px; box-shadow: 0 16px 40px rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .06); }
+#adminmenu #toplevel_page_khabar.wp-has-current-submenu .wp-submenu { margin-top: 6px; box-shadow: none; }
+#adminmenu #toplevel_page_khabar .wp-submenu-head { display: none; }
+#adminmenu #toplevel_page_khabar .wp-submenu li { margin: 2px 0; }
+#adminmenu #toplevel_page_khabar .wp-submenu a {
+	display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 11px;
+	color: #c9cbd6; font-size: 13px; font-weight: 600; line-height: 1.6; transition: background .15s, color .15s;
+}
+#adminmenu #toplevel_page_khabar .wp-submenu a::before {
+	font-family: dashicons !important; font-size: 16px; line-height: 1; flex: 0 0 30px; height: 30px; display: grid; place-items: center;
+	border-radius: 9px; background: rgba(255, 255, 255, .06); color: #e5e7ef;
+}
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(2) a::before { content: "\f226"; } /* dashboard */
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(3) a::before { content: "\f163"; } /* requests */
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(4) a::before { content: "\f185"; } /* reports */
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(5) a::before { content: "\f466"; } /* logs */
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(6) a::before { content: "\f238"; } /* forecast */
+#adminmenu #toplevel_page_khabar .wp-submenu li:nth-child(7) a::before { content: "\f111"; } /* settings */
+#adminmenu #toplevel_page_khabar .wp-submenu a:hover,
+#adminmenu #toplevel_page_khabar .wp-submenu a:focus { background: rgba(255, 255, 255, .06); color: #fff; box-shadow: none; }
+#adminmenu #toplevel_page_khabar .wp-submenu li.current a,
+#adminmenu #toplevel_page_khabar .wp-submenu li.current a:hover {
+	background: linear-gradient(135deg, var(--kb-o1), var(--kb-o2)); color: #fff; font-weight: 800;
+	box-shadow: 0 6px 16px rgba(244, 81, 30, .35);
+}
+#adminmenu #toplevel_page_khabar .wp-submenu li.current a::before { background: rgba(255, 255, 255, .22); color: #fff; }
+
+/* folded sidebar: icon only */
+.folded #adminmenu #toplevel_page_khabar { margin: 6px 4px; }
+.folded #adminmenu #toplevel_page_khabar div.wp-menu-name { display: none; }
+.folded #adminmenu #toplevel_page_khabar > a.menu-top { justify-content: center; padding: 6px 0; }
+.folded #adminmenu #toplevel_page_khabar.wp-has-current-submenu .wp-submenu { margin-top: 0; }

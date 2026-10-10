@@ -166,6 +166,15 @@ jQuery(function ($) {
 	function setActive(url) {
 		var view = 'dashboard';
 		try { view = new URL(url, location.href).searchParams.get('view') || 'dashboard'; } catch (e) {}
+		// Keep the sidebar shortcut in sync.
+		$('#toplevel_page_khabar .wp-submenu li').each(function () {
+			var $a = $(this).children('a');
+			if (!$a.length) { return; }
+			var v = 'dashboard';
+			try { v = new URL($a.attr('href'), location.href).searchParams.get('view') || 'dashboard'; } catch (e) {}
+			$(this).toggleClass('current', v === view);
+			$a.toggleClass('current', v === view).attr('aria-current', v === view ? 'page' : null);
+		});
 		var label = '';
 		$app.find('.khabar-nav .nav-tab').each(function () {
 			var on = $(this).data('view') === view;
@@ -201,6 +210,13 @@ jQuery(function ($) {
 			location.href = url;
 		}).then(function () { $app.removeClass('is-loading'); });
 	}
+
+	// Sidebar shortcuts also switch sections in place while the app is open.
+	$('#toplevel_page_khabar .wp-submenu').on('click', 'a[href]', function (e) {
+		if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !isAppUrl(this.href)) { return; }
+		e.preventDefault();
+		go(this.href, {}, true, true);
+	});
 
 	$app.on('click', 'a[href]', function (e) {
 		if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) { return; }
