@@ -292,3 +292,12 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-admin .khabar-forecast-table thead th, .khabar-admin .khabar-forecast-table tbody td { padding-left: 7px; padding-right: 7px; }
 .kf-product { min-width: 210px; }
 .khabar-admin .khabar-forecast-table thead th { white-space: normal; line-height: 1.5; min-width: 52px; }
+
+/* diagnostics */
+.khabar-health { margin: 0; padding: 0; display: grid; gap: 8px; }
+.khabar-health li { list-style: none; margin: 0; padding: 10px 14px; border-radius: 12px; border-right: 4px solid; font-size: 13px; }
+.khabar-health li.is-ok { background: #e9f8ef; border-color: #22c55e; color: #12733a; }
+.khabar-health li.is-warn { background: #fff4e0; border-color: #f59e0b; color: #8a5300; }
+.khabar-health li.is-error { background: #fdecee; border-color: #ef4444; color: #a11b26; }
+.khabar-diag-table td { vertical-align: top; line-height: 1.8; }
+.khabar-warn { color: #a15c00; }

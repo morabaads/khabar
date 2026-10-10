@@ -22,6 +22,8 @@ class Khabar_Rules {
 		$in     = 'instock' === $status || ( 'onbackorder' === $status && Khabar_Settings::get( 'backorder_as_in_stock' ) );
 		return array(
 			'id'         => $product->get_id(),
+			'status'     => $status,
+			'stocked'    => $in,
 			'in_stock'   => $in && $product->is_purchasable(),
 			'manage'     => $product->managing_stock(),
 			'qty'        => $product->managing_stock() ? (int) $product->get_stock_quantity() : null,
@@ -117,6 +119,51 @@ class Khabar_Rules {
 			default:
 				return 'combo';
 		}
+	}
+
+	/**
+	 * Human explanation of why a subscription is / is not satisfied (diagnostics).
+	 *
+	 * @param object $sub  Subscription.
+	 * @param array  $snap Snapshot.
+	 * @param array  $opts Options as for evaluate().
+	 * @return array ok (bool), reason (string)
+	 */
+	public static function explain( $sub, $snap, $opts = array() ) {
+		$opts  = array_merge( array( 'price_requires_stock' => true, 'cooldown_ok' => true, 'low_stock_threshold' => 0 ), $opts );
+		$event = self::evaluate( $sub, $snap, $opts );
+		if ( $event ) {
+			return array( 'ok' => true, 'reason' => __( 'شرایط برقرار است و باید اعلان ارسال شود', 'khabar' ) );
+		}
+		$price      = $snap['price'];
+		$price_cond = null !== $sub->price_below || null !== $sub->price_above || $sub->price_change;
+		$not_stock  = ! $snap['in_stock'];
+		$why_stock  = ! empty( $snap['stocked'] ) && $not_stock ? __( 'کالا موجود است ولی قابل خرید نیست (قیمت ندارد یا منتشر نشده)', 'khabar' ) : __( 'کالا هنوز ناموجود است', 'khabar' );
+		if ( ( $sub->in_stock || $sub->min_qty ) && $not_stock ) {
+			return array( 'ok' => false, 'reason' => $why_stock );
+		}
+		if ( ! ( $sub->in_stock || $sub->min_qty ) && $price_cond && $opts['price_requires_stock'] && $not_stock ) {
+			return array( 'ok' => false, 'reason' => __( 'شرط قیمت فقط برای کالای موجود بررسی می‌شود و کالا ناموجود است', 'khabar' ) );
+		}
+		if ( $sub->min_qty && $snap['manage'] && (int) $snap['qty'] < (int) $sub->min_qty ) {
+			/* translators: 1: stock 2: wanted */
+			return array( 'ok' => false, 'reason' => sprintf( __( 'موجودی (%1$s) کمتر از حداقل درخواستی (%2$s) است', 'khabar' ), (int) $snap['qty'], (int) $sub->min_qty ) );
+		}
+		if ( null !== $sub->price_below && ( null === $price || $price > (float) $sub->price_below ) ) {
+			/* translators: 1: current 2: target */
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز به قیمت هدف (%2$s) نرسیده است', 'khabar' ), Khabar_Utils::price_text( $price ), Khabar_Utils::price_text( $sub->price_below ) ) );
+		}
+		if ( null !== $sub->price_above && ( null === $price || $price < (float) $sub->price_above ) ) {
+			/* translators: 1: current 2: threshold */
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز از %2$s بیشتر نشده است', 'khabar' ), Khabar_Utils::price_text( $price ), Khabar_Utils::price_text( $sub->price_above ) ) );
+		}
+		if ( $sub->price_change ) {
+			if ( ! $opts['cooldown_ok'] ) {
+				return array( 'ok' => false, 'reason' => __( 'در فاصله‌ی زمانی بین دو اعلان تغییر قیمت است', 'khabar' ) );
+			}
+			return array( 'ok' => false, 'reason' => __( 'قیمت از زمان ثبت درخواست تغییری نکرده است', 'khabar' ) );
+		}
+		return array( 'ok' => false, 'reason' => __( 'هیچ شرطی برقرار نیست', 'khabar' ) );
 	}
 
 	/**

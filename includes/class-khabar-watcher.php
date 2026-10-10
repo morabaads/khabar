@@ -87,8 +87,16 @@ class Khabar_Watcher {
 		$ids   = array_map( 'intval', self::$pending );
 		$table = Khabar_Install::table( 'subscriptions' );
 		$have  = $wpdb->get_col( "SELECT DISTINCT product_id FROM {$table} WHERE status = 'active' AND product_id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		// When an admin edits stock/price in the dashboard, notify right away instead of waiting for
+		// WP-Cron / Action Scheduler (which never runs on sites with cron disabled or no traffic).
+		$sync = is_admin() && ! wp_doing_cron() && current_user_can( 'edit_products' ) && apply_filters( 'khabar_sync_check_on_save', true );
 		foreach ( $have as $pid ) {
-			Khabar_Utils::queue( 'khabar_check_product', array( (int) $pid ) );
+			$waiting = $sync ? Khabar_Subscriptions::waiting_count( (int) $pid, null, true ) : 0;
+			if ( $sync && $waiting <= 20 ) {
+				Khabar_Dispatcher::check_product( (int) $pid );
+			} else {
+				Khabar_Utils::queue( 'khabar_check_product', array( (int) $pid ) );
+			}
 		}
 		self::$pending = array();
 	}

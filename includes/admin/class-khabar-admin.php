@@ -54,6 +54,7 @@ class Khabar_Admin {
 			'logs'      => array( __( 'لاگ ارسال', 'khabar' ), array( __CLASS__, 'page_logs' ) ),
 			'forecast'  => array( __( 'پیش‌بینی تقاضا', 'khabar' ), array( 'Khabar_Forecast_Page', 'page' ) ),
 			'settings'  => array( __( 'تنظیمات', 'khabar' ), array( __CLASS__, 'page_settings' ) ),
+			'diagnose'  => array( __( 'عیب‌یابی ارسال', 'khabar' ), array( __CLASS__, 'page_diagnose' ), 'hidden' ),
 		);
 	}
 
@@ -82,6 +83,9 @@ class Khabar_Admin {
 
 		// Sidebar shortcuts into the single-page app (each opens its section).
 		foreach ( self::views() as $slug => $view ) {
+			if ( ! empty( $view[2] ) ) {
+				continue;
+			}
 			$target = 'dashboard' === $slug ? 'khabar' : 'admin.php?page=khabar&view=' . $slug;
 			add_submenu_page( 'khabar', $view[0], $view[0], self::CAP, $target, 'dashboard' === $slug ? array( __CLASS__, 'page_app' ) : '' );
 		}
@@ -155,7 +159,7 @@ class Khabar_Admin {
 			ob_start();
 			?>
 			<nav class="khabar-tabs khabar-nav" aria-label="<?php esc_attr_e( 'بخش‌های خبرم کن', 'khabar' ); ?>">
-				<?php foreach ( $views as $slug => $v ) : ?>
+				<?php foreach ( $views as $slug => $v ) : if ( ! empty( $v[2] ) ) { continue; } ?>
 					<a class="nav-tab <?php echo $slug === $view ? 'nav-tab-active' : ''; ?>" data-view="<?php echo esc_attr( $slug ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=' . $slug ) ); ?>"><?php echo Khabar_Frontend::icon( isset( $icons[ $slug ] ) ? $icons[ $slug ] : 'grid' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $v[0] ); ?></span></a>
 				<?php endforeach; ?>
 			</nav>
@@ -318,7 +322,7 @@ class Khabar_Admin {
 								<td><strong><?php echo esc_html( number_format_i18n( $row->people ) ); ?></strong></td>
 								<td><?php echo $p->is_in_stock() ? '<span class="khabar-status khabar-status-notified">' . esc_html__( 'موجود', 'khabar' ) . '</span>' : '<span class="khabar-status khabar-status-cancelled">' . esc_html__( 'ناموجود', 'khabar' ) . '</span>'; ?></td>
 								<td><?php echo wp_kses_post( $p->get_price_html() ); ?></td>
-								<td><a class="button button-small" href="<?php echo esc_url( $run ); ?>"><?php esc_html_e( 'بررسی و ارسال', 'khabar' ); ?></a></td>
+								<td style="white-space:nowrap"><a class="button button-small" href="<?php echo esc_url( $run ); ?>"><?php esc_html_e( 'بررسی و ارسال', 'khabar' ); ?></a> <a class="button button-small" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=diagnose&product_id=' . $row->product_id ) ); ?>"><?php esc_html_e( 'عیب‌یابی', 'khabar' ); ?></a></td>
 							</tr>
 						<?php endforeach; ?>
 						</tbody>
@@ -462,8 +466,77 @@ class Khabar_Admin {
 		self::guard( 'khabar_run_product' );
 		$pid  = isset( $_GET['product_id'] ) ? absint( $_GET['product_id'] ) : 0;
 		$sent = $pid ? Khabar_Dispatcher::run_now( $pid ) : 0;
+		if ( $pid && ! $sent ) {
+			self::back( admin_url( 'admin.php?page=khabar&view=diagnose&product_id=' . $pid ), __( 'اعلانی ارسال نشد؛ دلیل هر درخواست را در جدول زیر ببینید.', 'khabar' ), 'error' );
+		}
 		/* translators: %s count */
 		self::back( wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=khabar' ), sprintf( __( '%s مشتری مطلع شدند. (فقط درخواست‌هایی که شرایطشان برقرار است ارسال می‌شوند.)', 'khabar' ), number_format_i18n( $sent ) ) );
+	}
+
+	/**
+	 * Diagnostics: why a product's waiting customers were (not) notified.
+	 */
+	public static function page_diagnose() {
+		global $wpdb;
+		$pid   = isset( $_GET['product_id'] ) ? absint( $_GET['product_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification
+		$table = Khabar_Install::table( 'subscriptions' );
+		$ids   = $wpdb->get_col( "SELECT product_id FROM {$table} WHERE status IN ('active','pending') GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 100" ); // phpcs:ignore
+		if ( ! $pid && $ids ) {
+			$pid = (int) $ids[0];
+		}
+		$rows    = $pid ? Khabar_Dispatcher::diagnose( $pid ) : array();
+		$health  = Khabar_Dispatcher::health( $pid );
+		$product = $pid ? wc_get_product( $pid ) : null;
+		?>
+		<div class="khabar-view">
+			<form method="get" class="khabar-report-filter">
+				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="diagnose">
+				<label><?php esc_html_e( 'محصول', 'khabar' ); ?>
+					<select name="product_id" style="width:320px">
+						<?php foreach ( $ids as $id ) : $p = wc_get_product( $id ); if ( ! $p ) { continue; } ?>
+							<option value="<?php echo esc_attr( $id ); ?>" <?php selected( $pid, (int) $id ); ?>><?php echo esc_html( $p->get_name() ); ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				<?php submit_button( __( 'بررسی', 'khabar' ), 'secondary', '', false ); ?>
+				<?php if ( $pid ) : ?>
+					<a class="button button-primary" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=khabar_run_product&product_id=' . $pid ), 'khabar_run_product' ) ); ?>"><?php esc_html_e( 'بررسی و ارسال اکنون', 'khabar' ); ?></a>
+				<?php endif; ?>
+			</form>
+
+			<div class="khabar-card">
+				<h2><?php esc_html_e( 'وضعیت سیستم', 'khabar' ); ?></h2>
+				<ul class="khabar-health">
+					<?php foreach ( $health as $h ) : ?>
+						<li class="is-<?php echo esc_attr( $h[0] ); ?>"><?php echo esc_html( $h[1] ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+
+			<div class="khabar-card">
+				<h2><?php echo esc_html( $product ? sprintf( /* translators: %s product */ __( 'درخواست‌های «%s»', 'khabar' ), $product->get_name() ) : __( 'درخواستی برای بررسی وجود ندارد', 'khabar' ) ); ?></h2>
+				<?php if ( $rows ) : ?>
+					<div class="khabar-table-scroll"><table class="widefat khabar-forecast-table khabar-diag-table">
+						<thead><tr><th><?php esc_html_e( 'مشتری', 'khabar' ); ?></th><th><?php esc_html_e( 'شرایط', 'khabar' ); ?></th><th><?php esc_html_e( 'نتیجه بررسی', 'khabar' ); ?></th><th><?php esc_html_e( 'کانال‌های قابل ارسال', 'khabar' ); ?></th></tr></thead>
+						<tbody>
+						<?php foreach ( $rows as $r ) : $sub = $r['sub']; ?>
+							<tr>
+								<td><strong><?php echo esc_html( $sub->name ? $sub->name : '#' . $sub->id ); ?></strong><br><small class="khabar-muted" dir="ltr"><?php echo esc_html( trim( $sub->phone . ' ' . $sub->email ) ); ?></small></td>
+								<td><?php echo esc_html( Khabar_Subscriptions::conditions_label( $sub ) ); ?><?php echo $sub->attributes ? '<br><small class="khabar-muted">' . esc_html( Khabar_Utils::attributes_label( $sub->attributes ) ) . '</small>' : ''; ?></td>
+								<td><span class="kf-conf <?php echo $r['ok'] ? 'is-high' : 'is-medium'; ?>"><?php echo esc_html( $r['ok'] ? __( 'آماده ارسال', 'khabar' ) : __( 'ارسال نمی‌شود', 'khabar' ) ); ?></span><br><small><?php echo esc_html( $r['reason'] ); ?></small></td>
+								<td><?php echo $r['channels'] ? esc_html( implode( '، ', array_map( function ( $c ) { $all = Khabar_Settings::channels(); return isset( $all[ $c ] ) ? $all[ $c ] : $c; }, $r['channels'] ) ) ) : '<span class="kf-dash">—</span>'; ?>
+									<?php foreach ( $r['warnings'] as $w ) : ?><br><small class="khabar-warn">⚠ <?php echo esc_html( $w ); ?></small><?php endforeach; ?>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table></div>
+				<?php else : ?>
+					<p><?php esc_html_e( 'این محصول درخواست فعالی ندارد.', 'khabar' ); ?></p>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
 	}
 
 	/* ------------------------------------------------------------------ */
