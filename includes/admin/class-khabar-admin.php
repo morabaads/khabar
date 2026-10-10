@@ -150,12 +150,18 @@ class Khabar_Admin {
 		$views = self::views();
 		?>
 		<div class="wrap khabar-admin" id="khabar-app">
-			<?php self::header( __( 'مدیریت اعلان موجودی و قیمت', 'khabar' ), __( 'درخواست‌ها، گزارش‌ها، لاگ ارسال و تنظیمات در یک صفحه', 'khabar' ) ); ?>
-			<nav class="nav-tab-wrapper khabar-tabs khabar-nav" aria-label="<?php esc_attr_e( 'بخش‌های خبرم کن', 'khabar' ); ?>">
+			<?php
+			$icons = array( 'dashboard' => 'grid', 'requests' => 'list', 'reports' => 'chart', 'logs' => 'send', 'forecast' => 'trend', 'settings' => 'gear' );
+			ob_start();
+			?>
+			<nav class="khabar-tabs khabar-nav" aria-label="<?php esc_attr_e( 'بخش‌های خبرم کن', 'khabar' ); ?>">
 				<?php foreach ( $views as $slug => $v ) : ?>
-					<a class="nav-tab <?php echo $slug === $view ? 'nav-tab-active' : ''; ?>" data-view="<?php echo esc_attr( $slug ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=' . $slug ) ); ?>"><?php echo esc_html( $v[0] ); ?></a>
+					<a class="nav-tab <?php echo $slug === $view ? 'nav-tab-active' : ''; ?>" data-view="<?php echo esc_attr( $slug ); ?>" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=' . $slug ) ); ?>"><?php echo Khabar_Frontend::icon( isset( $icons[ $slug ] ) ? $icons[ $slug ] : 'grid' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $v[0] ); ?></span></a>
 				<?php endforeach; ?>
 			</nav>
+			<?php
+			self::header( __( 'اتاق خبرم کن', 'khabar' ), __( 'اعلان موجودی و قیمت', 'khabar' ), ob_get_clean() );
+			?>
 			<div id="khabar-body" aria-live="polite">
 				<?php
 				self::notices( true );
@@ -223,33 +229,23 @@ class Khabar_Admin {
 	 * @param string $title    Title.
 	 * @param string $subtitle Subtitle.
 	 */
-	public static function header( $title, $subtitle = '' ) {
+	public static function header( $title, $subtitle = '', $nav = '' ) {
 		global $wpdb;
-		$pills = array();
-		$on    = (array) Khabar_Settings::get( 'channels_enabled', array() );
-		foreach ( Khabar_Settings::channels() as $key => $label ) {
-			if ( in_array( $key, $on, true ) ) {
-				$pills[] = $label;
-			}
-		}
 		$active = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Khabar_Install::table( 'subscriptions' ) . " WHERE status = 'active'" ); // phpcs:ignore
 		?>
 		<header class="khabar-hero">
 			<div class="khabar-hero-brand">
 				<span class="khabar-hero-logo"><?php echo Khabar_Frontend::icon( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 				<div>
-					<h1><?php echo esc_html( __( 'خبرم کن', 'khabar' ) . ' · ' . $title ); ?></h1>
-					<?php if ( $subtitle ) : ?>
-						<p><?php echo esc_html( $subtitle ); ?></p>
-					<?php endif; ?>
+					<h1><?php esc_html_e( 'خبرم کن', 'khabar' ); ?></h1>
+					<p><?php echo esc_html( $subtitle ? $subtitle : $title ); ?></p>
 				</div>
 			</div>
-			<div class="khabar-hero-pills">
-				<span class="khabar-pill is-count"><?php /* translators: %s number */ printf( esc_html__( '%s درخواست فعال', 'khabar' ), esc_html( number_format_i18n( $active ) ) ); ?></span>
-				<?php foreach ( $pills as $label ) : ?>
-					<span class="khabar-pill"><i></i><?php echo esc_html( $label ); ?> · <?php esc_html_e( 'فعال', 'khabar' ); ?></span>
-				<?php endforeach; ?>
-			</div>
+			<?php echo $nav; // phpcs:ignore WordPress.Security.EscapeOutput ?>
+			<a class="khabar-hero-ghost" href="<?php echo esc_url( admin_url( 'admin.php?page=khabar&view=requests&status=active' ) ); ?>">
+				<span class="khabar-hero-dot"></span>
+				<?php /* translators: %s number */ printf( esc_html__( '%s درخواست فعال', 'khabar' ), '<b>' . esc_html( number_format_i18n( $active ) ) . '</b>' ); ?>
+			</a>
 		</header>
 		<hr class="wp-header-end">
 		<?php
@@ -294,7 +290,7 @@ class Khabar_Admin {
 					array( __( 'درآمد از اعلان‌ها', 'khabar' ), Khabar_Utils::price_text( $k['revenue'] ), __( '۳۰ روز اخیر', 'khabar' ) ),
 				);
 				foreach ( $cards as $card ) {
-					printf( '<div class="khabar-kpi"><span>%s</span><strong>%s</strong><small>%s</small></div>', esc_html( $card[0] ), esc_html( $card[1] ), esc_html( $card[2] ) );
+					printf( '<div class="khabar-kpi"><span>%s</span><strong>%s</strong><small>%s</small></div>', esc_html( $card[0] ), esc_html( $card[1] ), esc_html( $card[2] ) ); // Icons come from CSS (nth-child).
 				}
 				?>
 			</div>
