@@ -93,7 +93,7 @@ class Khabar_Forecast_Page {
 				<?php if ( ! $rows ) : ?>
 					<p><?php esc_html_e( 'کالایی با منتظر موجود شدن وجود ندارد.', 'khabar' ); ?></p>
 				<?php else : ?>
-				<table class="widefat striped">
+				<div class="khabar-table-scroll"><table class="widefat striped khabar-forecast-table">
 					<thead><tr>
 						<th><?php esc_html_e( 'کالا', 'khabar' ); ?></th>
 						<th><?php esc_html_e( 'SKU', 'khabar' ); ?></th>
@@ -127,7 +127,7 @@ class Khabar_Forecast_Page {
 						</tr>
 					<?php endforeach; ?>
 					</tbody>
-				</table>
+				</table></div>
 				<?php endif; ?>
 			</div>
 

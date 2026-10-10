@@ -152,7 +152,10 @@ class Khabar_Utils {
 		if ( '' === $price || null === $price ) {
 			return '';
 		}
-		return trim( html_entity_decode( wp_strip_all_tags( wc_price( $price ) ), ENT_QUOTES, 'UTF-8' ) );
+		$text = trim( html_entity_decode( wp_strip_all_tags( wc_price( $price ) ), ENT_QUOTES, 'UTF-8' ) );
+		// Stores using "left/right" (no space) currency positions glue the symbol to the digits; keep them readable.
+		$text = preg_replace( '/([\d\x{06F0}-\x{06F9}])(\p{L})/u', '$1 $2', $text );
+		return preg_replace( '/(\p{L})([\d\x{06F0}-\x{06F9}])/u', '$1 $2', $text );
 	}
 
 	/**
