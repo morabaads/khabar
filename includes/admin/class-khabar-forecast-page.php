@@ -111,19 +111,25 @@ class Khabar_Forecast_Page {
 					<tbody>
 					<?php foreach ( $rows as $r ) : $c = $r['calc']; ?>
 						<tr>
-							<td><a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( self::label( $r['product'] ) ); ?></a>
-								<br><small class="khabar-muted"><?php /* translators: %s days */ printf( esc_html__( 'قدیمی‌ترین انتظار: %s روز', 'khabar' ), esc_html( number_format_i18n( $r['days_out'] ) ) ); ?></small></td>
-							<td dir="ltr"><?php echo esc_html( $r['sku'] ? $r['sku'] : '—' ); ?></td>
-							<td class="num"><?php echo null === $r['stock'] ? '—' : esc_html( number_format_i18n( $r['stock'] ) ); ?></td>
+							<td class="kf-product-td"><div class="kf-product">
+								<?php $kf_img = $r['product']->get_image_id() ? $r['product']->get_image_id() : ( $r['product']->get_parent_id() ? get_post_thumbnail_id( $r['product']->get_parent_id() ) : 0 ); ?>
+								<span class="kf-thumb"><?php echo $kf_img ? wp_get_attachment_image( $kf_img, array( 44, 44 ) ) : ''; ?></span>
+								<span class="kf-name">
+									<a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( self::label( $r['product'] ) ); ?></a>
+									<small><?php /* translators: %s days */ printf( esc_html__( 'قدیمی‌ترین انتظار: %s روز', 'khabar' ), esc_html( number_format_i18n( $r['days_out'] ) ) ); ?></small>
+								</span>
+							</div></td>
+							<td><?php echo $r['sku'] ? '<code class="kf-sku">' . esc_html( $r['sku'] ) . '</code>' : '<span class="kf-dash">—</span>'; ?></td>
+							<td class="num"><?php echo null === $r['stock'] ? '<span class="kf-dash">—</span>' : '<span class="kf-stock' . ( $r['stock'] <= 0 ? ' is-out' : '' ) . '">' . esc_html( number_format_i18n( $r['stock'] ) ) . '</span>'; ?></td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $r['waiting'], 1 ) ); ?></td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $r['new_per_day'], 2 ) ); ?></td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $r['conv'] * 100, 1 ) ); ?>٪</td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $r['sales_30'], 1 ) ); ?></td>
 							<td class="num" title="<?php echo esc_attr( sprintf( /* translators: 1 waitlist 2 new 3 organic */ __( 'منتظران: %1$s + منتظران جدید: %2$s + فروش عادی: %3$s', 'khabar' ), $c['waitlist'], $c['new'], $c['organic'] ) ); ?>"><?php echo esc_html( number_format_i18n( $c['demand'], 1 ) ); ?></td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $c['safety'] ) ); ?></td>
-							<td class="num"><strong><?php echo esc_html( number_format_i18n( $c['order'] ) ); ?></strong></td>
-							<td class="num"><?php echo esc_html( Khabar_Utils::price_text( $r['revenue'] ) ); ?></td>
-							<td><?php echo esc_html( $conf[ $r['confidence'] ] ); ?></td>
+							<td class="num"><span class="kf-order<?php echo $c['order'] > 0 ? '' : ' is-zero'; ?>"><?php echo esc_html( number_format_i18n( $c['order'] ) ); ?></span></td>
+							<td class="num kf-value"><?php echo esc_html( Khabar_Utils::price_text( $r['revenue'] ) ); ?></td>
+							<td><span class="kf-conf is-<?php echo esc_attr( $r['confidence'] ); ?>"><?php echo esc_html( $conf[ $r['confidence'] ] ); ?></span></td>
 						</tr>
 					<?php endforeach; ?>
 					</tbody>

@@ -261,3 +261,34 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-admin .khabar-kpi { grid-template-columns: 40px minmax(0, 1fr); column-gap: 10px; padding: 16px 14px 14px; }
 .khabar-admin .khabar-kpi::before { width: 40px; height: 40px; font-size: 19px; border-radius: 12px; }
 .khabar-admin .khabar-kpi strong { font-size: clamp(16px, 1.2vw, 22px); overflow-wrap: normal; word-break: keep-all; }
+
+/* forecast table */
+.khabar-admin .khabar-forecast-table { border: 0; border-collapse: separate; border-spacing: 0; }
+.khabar-admin .khabar-forecast-table thead th { padding: 12px 10px; background: #f6f7fa; color: #6b6f7b; font-size: 12px; font-weight: 700; border-bottom: 1px solid #e7e8ee; }
+.khabar-admin .khabar-forecast-table thead th.num, .khabar-admin .khabar-forecast-table td.num { text-align: center; }
+.khabar-admin .khabar-forecast-table tbody td { padding: 12px 10px; border-bottom: 1px solid #f0f1f5; font-size: 13px; color: #2b2e3b; font-variant-numeric: tabular-nums; }
+.khabar-admin .khabar-forecast-table.striped > tbody > :nth-child(odd) { background: #fff; }
+.khabar-admin .khabar-forecast-table tbody tr:hover td { background: #fbfbfd; }
+.khabar-admin .khabar-forecast-table tbody tr:last-child td { border-bottom: 0; }
+.kf-product { display: flex; align-items: center; gap: 12px; min-width: 260px; }
+.kf-thumb { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: #f3f4f7; border: 1px solid #ececf2; }
+.kf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.kf-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kf-name a { color: #15161d !important; font-weight: 700; line-height: 1.6; text-decoration: none; }
+.kf-name a:hover { color: var(--ka) !important; }
+.kf-name small { color: #8a8d9b; font-size: 11.5px; }
+.khabar-admin code.kf-sku { display: inline-block; padding: 3px 8px; border-radius: 8px; background: #f3f4f7; color: #4b4e5e; font-size: 11.5px; white-space: nowrap; }
+.kf-dash { color: #b6b8c3; }
+.kf-stock { display: inline-block; min-width: 26px; padding: 2px 8px; border-radius: 999px; background: #e9f8ef; color: #12733a; font-weight: 700; }
+.kf-stock.is-out { background: #fdecee; color: #b4232f; }
+.kf-order { display: inline-grid; place-items: center; min-width: 34px; height: 30px; padding: 0 10px; border-radius: 10px; background: linear-gradient(135deg, #ff7a45, var(--ka)); color: #fff; font-weight: 800; box-shadow: 0 4px 12px rgba(244, 81, 30, .25); }
+.kf-order.is-zero { background: #f1f2f5; color: #8a8d9b; box-shadow: none; }
+.kf-value { font-weight: 700; color: #15161d; white-space: nowrap; }
+.kf-conf { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.kf-conf.is-high { background: #e9f8ef; color: #12733a; }
+.kf-conf.is-medium { background: #fff4e0; color: #9a5b00; }
+.kf-conf.is-low { background: #f1f2f5; color: #6b6f7b; }
+.khabar-admin .khabar-forecast-table { min-width: 0; width: 100%; }
+.khabar-admin .khabar-forecast-table thead th, .khabar-admin .khabar-forecast-table tbody td { padding-left: 7px; padding-right: 7px; }
+.kf-product { min-width: 210px; }
+.khabar-admin .khabar-forecast-table thead th { white-space: normal; line-height: 1.5; min-width: 52px; }
