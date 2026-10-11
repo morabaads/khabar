@@ -163,7 +163,7 @@
 		}
 	};
 
-	// Show only the contact fields the ticked channels need (SMS/WhatsApp -> mobile, email -> email; name always).
+	// Show only the contact fields the ticked channels need (SMS/Bale -> mobile, email -> email; name always).
 	Widget.prototype.syncContact = function () {
 		var $ch = this.$form.find('.khabar-channels input:checked');
 		if (!this.$form.find('.khabar-channels').length) { return; }

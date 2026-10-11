@@ -657,42 +657,15 @@ t( isset( $by[ $fc_vars[41] ] ) && 0.5 === (float) $by[ $fc_vars[41] ]['waiting'
 t( ! isset( $by[ $fc_vars[42] ] ), 'in-stock size 42 not in purchase list' );
 t( $by[ $fc_vars[40] ]['calc']['order'] >= 1, 'suggested order for size 40: ' . $by[ $fc_vars[40] ]['calc']['order'] );
 
-echo "\n== WhatsApp providers ==\n";
-// Provider-specific answers for the intercepted HTTP calls.
-$wa_reply = function ( $pre, $args, $url ) {
-	if ( false !== strpos( $url, 'green' ) ) {
-		return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => '{"idMessage":"BAE5"}', 'headers' => array(), 'cookies' => array() );
-	}
-	if ( false !== strpos( $url, 'ultramsg' ) ) {
-		return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => '{"sent":"true","message":"ok","id":1}', 'headers' => array(), 'cookies' => array() );
-	}
-	return $pre;
-};
-add_filter( 'pre_http_request', $wa_reply, 20, 3 ); // After the capturing filter, so it can replace the stub answer.
-$wa_last = function () {
-	$r = end( $GLOBALS['khabar_http'] );
-	return array( $r['url'], is_string( $r['body'] ) ? json_decode( $r['body'], true ) : $r['body'] );
-};
-$wa_cases = array(
-	'cloud'     => array( array( 'whatsapp_token' => 'T', 'whatsapp_phone_id' => '555', 'whatsapp_base_url' => 'https://wa-proxy.example.workers.dev/', 'whatsapp_template' => '' ), 'https://wa-proxy.example.workers.dev/v20.0/555/messages', 'to', '989121234567' ),
-	'greenapi'  => array( array( 'whatsapp_instance' => '7103', 'whatsapp_api_key' => 'GTOK', 'whatsapp_base_url' => 'https://7103.api.greenapi.com' ), 'https://7103.api.greenapi.com/waInstance7103/sendMessage/GTOK', 'chatId', '989121234567@c.us' ),
-	'ultramsg'  => array( array( 'whatsapp_instance' => 'instance1', 'whatsapp_api_key' => 'UTOK', 'whatsapp_base_url' => '' ), 'https://api.ultramsg.com/instance1/messages/chat', 'to', '+989121234567' ),
-	'waha'      => array( array( 'whatsapp_instance' => '', 'whatsapp_api_key' => 'WK', 'whatsapp_base_url' => 'https://wa.example.com' ), 'https://wa.example.com/api/sendText', 'chatId', '989121234567@c.us' ),
-	'evolution' => array( array( 'whatsapp_instance' => 'shop', 'whatsapp_api_key' => 'EK', 'whatsapp_base_url' => 'https://evo.example.com' ), 'https://evo.example.com/message/sendText/shop', 'number', '989121234567' ),
-	'webhook'   => array( array( 'whatsapp_webhook_url' => 'https://gw.example.ir/send', 'whatsapp_webhook_body' => '{"receiver":"{chat_id}","text":"{message}"}', 'whatsapp_webhook_headers' => "Authorization: Bearer XYZ" ), 'https://gw.example.ir/send', 'receiver', '989121234567@c.us' ),
-);
-foreach ( $wa_cases as $prov => $c ) {
-	settings( array_merge( array( 'whatsapp_provider' => $prov, 'whatsapp_country' => '98' ), $c[0] ) );
-	$GLOBALS['khabar_http'] = array();
-	$r = Khabar_Channel_Whatsapp::send( '09121234567', "سلام \"دنیا\"\nخط دوم" );
-	list( $u, $b ) = $wa_last();
-	t( true === $r && $u === $c[1] && isset( $b[ $c[2] ] ) && $b[ $c[2] ] === $c[3], "whatsapp {$prov}: {$u}" . ( is_wp_error( $r ) ? ' ERR ' . $r->get_error_message() : '' ) );
-}
-t( in_array( "سلام \"دنیا\"\nخط دوم", (array) $b, true ), 'webhook body keeps quotes/newlines as valid JSON' );
-settings( array( 'whatsapp_provider' => 'evolution', 'whatsapp_base_url' => '' ) );
-t( is_wp_error( Khabar_Channel_Whatsapp::send( '09121234567', 'x' ) ), 'missing server address → error, no request' );
-remove_filter( 'pre_http_request', $wa_reply, 20 );
-settings( array( 'whatsapp_provider' => 'cloud', 'whatsapp_base_url' => '' ) );
+echo "\n== WhatsApp removed ==\n";
+t( ! isset( Khabar_Settings::channels()['whatsapp'] ) && ! class_exists( 'Khabar_Channel_Whatsapp' ), 'whatsapp channel no longer exists' );
+settings( array( 'channels_enabled' => array( 'sms', 'whatsapp' ), 'whatsapp_token' => 'old' ) );
+$wa_sub = (object) array( 'id' => 0, 'phone' => '09121234567', 'email' => '', 'user_id' => 0, 'owner_key' => '', 'channel_list' => array( 'whatsapp', 'sms' ) );
+t( array( 'sms' ) === Khabar_Channels::resolve( $wa_sub ), 'stale whatsapp in old settings/subscriptions is ignored' );
+Khabar_Settings::save( array( 'channels_enabled' => array( 'sms' ) ), 'channels' );
+$o = get_option( Khabar_Settings::OPTION );
+t( ! isset( $o['whatsapp_token'] ) && ! in_array( 'whatsapp', $o['channels_enabled'], true ), 'leftover whatsapp settings dropped on save' );
+settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
 echo "\n== Messenger channel ids & bot check ==\n";
 foreach ( array( 'khabaramkon' => '@khabaramkon', '@khabaramkon' => '@khabaramkon', 'https://ble.ir/khabaramkon' => '@khabaramkon', 't.me/shop/' => '@shop', '-1001234' => '-1001234', '5551234' => '5551234', '' => '' ) as $in => $want ) {

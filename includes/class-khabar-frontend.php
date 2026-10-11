@@ -133,7 +133,6 @@ class Khabar_Frontend {
 	public static function channel_icon( $channel ) {
 		$map = array(
 			'sms'      => 'chat',
-			'whatsapp' => 'chat',
 			'email'    => 'mail',
 			'telegram' => 'send',
 			'bale'     => 'send',

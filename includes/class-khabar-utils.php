@@ -50,7 +50,7 @@ class Khabar_Utils {
 	}
 
 	/**
-	 * Convert local Iranian mobile to international (no plus) for APIs such as WhatsApp.
+	 * Convert local Iranian mobile to international (no plus) for messaging APIs.
 	 *
 	 * @param string $phone   Phone.
 	 * @param string $country Country code.

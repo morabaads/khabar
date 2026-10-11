@@ -404,8 +404,8 @@ class Khabar_Dispatcher {
 				if ( in_array( $ch, $row['channels'], true ) ) {
 					continue;
 				}
-				if ( in_array( $ch, array( 'sms', 'whatsapp' ), true ) && ! $sub->phone ) {
-					$row['warnings'][] = __( 'پیامک/واتساپ انتخاب شده ولی شماره موبایل ثبت نشده', 'khabar' );
+				if ( 'sms' === $ch && ! $sub->phone ) {
+					$row['warnings'][] = __( 'پیامک انتخاب شده ولی شماره موبایل ثبت نشده', 'khabar' );
 				} elseif ( 'email' === $ch && ! $sub->email ) {
 					$row['warnings'][] = __( 'ایمیل انتخاب شده ولی آدرس ایمیل ثبت نشده', 'khabar' );
 				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) && Khabar_Messenger::phone_ready( $ch ) && ! $sub->phone ) {

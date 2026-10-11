@@ -35,11 +35,12 @@ class Khabar_Channels {
 	 * @return string[]
 	 */
 	public static function resolve( $sub ) {
-		$enabled = (array) Khabar_Settings::get( 'channels_enabled', array() );
+		// WhatsApp was removed in 1.7.1; it may still be stored in old settings / subscriptions.
+		$enabled = array_diff( (array) Khabar_Settings::get( 'channels_enabled', array() ), array( 'whatsapp' ) );
 		$chosen  = $sub->channel_list ? array_intersect( $sub->channel_list, $enabled ) : $enabled;
 		$out     = array();
 		foreach ( $chosen as $channel ) {
-			if ( in_array( $channel, array( 'sms', 'whatsapp' ), true ) && ! $sub->phone ) {
+			if ( 'sms' === $channel && ! $sub->phone ) {
 				continue;
 			}
 			if ( 'email' === $channel && ! $sub->email ) {
@@ -100,10 +101,6 @@ class Khabar_Channels {
 				case 'sms':
 					$recipient = $sub->phone;
 					$result    = Khabar_Channel_Sms::send( $sub->phone, $message['text'], $event, $message['vars'] );
-					break;
-				case 'whatsapp':
-					$recipient = $sub->phone;
-					$result    = Khabar_Channel_Whatsapp::send( $sub->phone, $message['text'] );
 					break;
 				case 'onsite':
 				case 'push':
@@ -190,9 +187,6 @@ class Khabar_Channels {
 		switch ( $row->channel ) {
 			case 'sms':
 				$result = Khabar_Channel_Sms::send( $row->recipient, $row->message, 'text', array() );
-				break;
-			case 'whatsapp':
-				$result = Khabar_Channel_Whatsapp::send( $row->recipient, $row->message );
 				break;
 			case 'email':
 				$result = Khabar_Channel_Email::send( $row->recipient, get_bloginfo( 'name' ), wpautop( esc_html( $row->message ) ) );

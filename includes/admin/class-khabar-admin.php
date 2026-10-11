@@ -765,7 +765,6 @@ class Khabar_Admin {
 						<select name="channel">
 							<option value="sms"><?php esc_html_e( 'پیامک', 'khabar' ); ?></option>
 							<option value="email"><?php esc_html_e( 'ایمیل', 'khabar' ); ?></option>
-							<option value="whatsapp"><?php esc_html_e( 'واتساپ', 'khabar' ); ?></option>
 							<option value="telegram"><?php esc_html_e( 'تلگرام (chat id یا @channel)', 'khabar' ); ?></option>
 							<option value="bale_safir"><?php esc_html_e( 'بله — شماره موبایل (سفیر)', 'khabar' ); ?></option>
 							<option value="bale"><?php esc_html_e( 'بله (chat id یا @channel)', 'khabar' ); ?></option>
@@ -1260,9 +1259,6 @@ class Khabar_Admin {
 		switch ( $channel ) {
 			case 'email':
 				$result = Khabar_Channel_Email::send( $to, $text, '<p>' . esc_html( $text ) . '</p>' );
-				break;
-			case 'whatsapp':
-				$result = Khabar_Channel_Whatsapp::send( $to, $text );
 				break;
 			case 'bale_safir':
 				$result = Khabar_Messenger::send_safir( $to, array( 'subject' => '', 'text' => $text, 'url' => home_url( '/' ) ) );

@@ -48,7 +48,6 @@ class Khabar_Settings {
 			'email'    => __( 'ایمیل', 'khabar' ),
 			'onsite'   => __( 'اعلان داخل سایت', 'khabar' ),
 			'push'     => __( 'پوش نوتیفیکیشن', 'khabar' ),
-			'whatsapp' => __( 'واتساپ', 'khabar' ),
 			'telegram' => __( 'تلگرام', 'khabar' ),
 			'bale'     => __( 'بله', 'khabar' ),
 		);
@@ -330,128 +329,6 @@ class Khabar_Settings {
 						'type'    => 'textarea',
 						'label'   => __( 'بدنه درخواست سفارشی (JSON، خالی = GET)', 'khabar' ),
 						'default' => '{"to":"{to}","text":"{message}"}',
-					),
-					'_wa_heading'        => array(
-						'type'  => 'heading',
-						'label' => __( 'واتساپ', 'khabar' ),
-					),
-					'_wa_conn_group'     => array(
-						'type'  => 'group',
-						'label' => __( 'سرویس‌دهنده و اتصال', 'khabar' ),
-						'desc'  => __( 'API رسمی متا، اتصال شماره شخصی با QR، یا وب‌سرویس دلخواه', 'khabar' ),
-						'icon'  => 'chat',
-						'ready' => array( 'whatsapp_token', 'whatsapp_phone_id', 'whatsapp_webhook_url', 'whatsapp_instance', 'whatsapp_api_key' ),
-					),
-					'whatsapp_provider'  => array(
-						'type'    => 'select',
-						'label'   => __( 'سرویس‌دهنده', 'khabar' ),
-						'options' => array(
-							'cloud'     => __( 'WhatsApp Cloud API رسمی (Meta) — نیازمند حساب تجاری متا', 'khabar' ),
-							'greenapi'  => __( 'Green API — اتصال شماره شخصی با QR', 'khabar' ),
-							'ultramsg'  => __( 'UltraMsg — اتصال شماره شخصی با QR', 'khabar' ),
-							'waha'      => __( 'WAHA — متن‌باز، نصب روی سرور خودتان (QR)', 'khabar' ),
-							'evolution' => __( 'Evolution API — متن‌باز، نصب روی سرور خودتان (QR)', 'khabar' ),
-							'webhook'   => __( 'وب‌سرویس سفارشی (هر سامانه دیگر)', 'khabar' ),
-						),
-						'desc'    => __( 'سرویس‌های QR با شماره واتساپ شخصی کار می‌کنند و حساب تجاری متا لازم ندارند (مناسب حساب ایرانی). واتساپ ممکن است شماره‌ای را که پیام انبوه می‌فرستد محدود کند؛ از یک شماره جداگانه استفاده کنید.', 'khabar' ),
-						'default' => 'cloud',
-					),
-					'whatsapp_base_url'  => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'cloud', 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
-						'type'    => 'text',
-						'label'   => __( 'آدرس سرور API', 'khabar' ),
-						'desc_by' => array(
-							'whatsapp_provider' => array(
-								'cloud'     => __( 'خالی = graph.facebook.com. اگر هاست در ایران است، آدرس یک پراکسی معکوس (مثلاً Cloudflare Worker) را وارد کنید.', 'khabar' ),
-								'greenapi'  => __( 'apiUrl اینستنس از کنسول Green API (مثل https://7103.api.greenapi.com). خالی = api.green-api.com', 'khabar' ),
-								'ultramsg'  => __( 'خالی بگذارید (api.ultramsg.com)، مگر پراکسی داشته باشید.', 'khabar' ),
-								'waha'      => __( 'آدرس سرور WAHA شما، مثل https://wa.example.com', 'khabar' ),
-								'evolution' => __( 'آدرس سرور Evolution API شما، مثل https://evo.example.com', 'khabar' ),
-							),
-						),
-					),
-					'whatsapp_token'     => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
-						'type'  => 'password',
-						'label' => __( 'Access Token', 'khabar' ),
-					),
-					'whatsapp_phone_id'  => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
-						'type'  => 'text',
-						'label' => __( 'Phone Number ID', 'khabar' ),
-					),
-					'whatsapp_instance'  => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
-						'type'    => 'text',
-						'label'   => __( 'شناسه اینستنس / نام سشن', 'khabar' ),
-						'desc_by' => array(
-							'whatsapp_provider' => array(
-								'greenapi'  => __( 'idInstance از کنسول Green API', 'khabar' ),
-								'ultramsg'  => __( 'Instance ID از پنل UltraMsg، مثل instance12345', 'khabar' ),
-								'waha'      => __( 'نام سشن WAHA؛ خالی = default', 'khabar' ),
-								'evolution' => __( 'نام اینستنسی که در Evolution API ساخته‌اید', 'khabar' ),
-							),
-						),
-					),
-					'whatsapp_api_key'   => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
-						'type'    => 'password',
-						'label'   => __( 'توکن / کلید API', 'khabar' ),
-						'desc_by' => array(
-							'whatsapp_provider' => array(
-								'greenapi'  => __( 'apiTokenInstance از کنسول Green API', 'khabar' ),
-								'ultramsg'  => __( 'Token از پنل UltraMsg', 'khabar' ),
-								'waha'      => __( 'کلید X-Api-Key سرور WAHA', 'khabar' ),
-								'evolution' => __( 'کلید apikey اینستنس Evolution API', 'khabar' ),
-							),
-						),
-					),
-					'whatsapp_country'   => array(
-						'type'    => 'text',
-						'label'   => __( 'پیش‌شماره کشور', 'khabar' ),
-						'default' => '98',
-					),
-					'whatsapp_webhook_url' => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
-						'type'  => 'text',
-						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
-					),
-					'whatsapp_webhook_body' => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
-						'type'    => 'textarea',
-						'label'   => __( 'بدنه درخواست (JSON)', 'khabar' ),
-						'dir'     => 'ltr',
-						'desc'    => __( 'متغیرها: {to} شماره بین‌المللی (98912…)، {chat_id} همان با ‎@c.us، {message} متن پیام.', 'khabar' ),
-						'default' => '{"to":"{to}","message":"{message}"}',
-					),
-					'whatsapp_webhook_headers' => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
-						'type'    => 'textarea',
-						'label'   => __( 'هدرهای درخواست', 'khabar' ),
-						'dir'     => 'ltr',
-						'desc'    => __( 'هر خط یک هدر، مثل Authorization: Bearer XXXX', 'khabar' ),
-					),
-					'_wa_tpl_group'      => array(
-						'type'      => 'group',
-						'label'     => __( 'قالب پیام (Template)', 'khabar' ),
-						'desc'      => __( 'برای پیام به مشتریانی که در ۲۴ ساعت اخیر پیام نداده‌اند لازم است', 'khabar' ),
-						'icon'      => 'chat',
-						'ready'     => array( 'whatsapp_template' ),
-						'on_label'  => __( 'تمپلیت فعال', 'khabar' ),
-						'off_label' => __( 'متن ساده', 'khabar' ),
-						'show_if'   => array( 'whatsapp_provider' => array( 'cloud' ) ),
-					),
-					'whatsapp_template'  => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
-						'type'  => 'text',
-						'label' => __( 'نام Template تایید شده', 'khabar' ),
-						'desc'  => __( 'بدنه تمپلیت باید یک متغیر {{1}} داشته باشد؛ متن پیام در آن قرار می‌گیرد. خالی = ارسال متن ساده.', 'khabar' ),
-					),
-					'whatsapp_lang'      => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
-						'type'    => 'text',
-						'label'   => __( 'زبان Template', 'khabar' ),
-						'default' => 'fa',
 					),
 					'_msg_heading'       => array(
 						'type'  => 'heading',
@@ -842,7 +719,7 @@ class Khabar_Settings {
 			);
 			$schema['templates']['fields'][ 'tpl_' . $event . '_sms' ]     = array(
 				'type'    => 'textarea',
-				'label'   => __( 'متن کوتاه (پیامک / واتساپ / پوش / داخل سایت)', 'khabar' ),
+				'label'   => __( 'متن کوتاه (پیامک / پیام‌رسان / پوش / داخل سایت)', 'khabar' ),
 				'default' => $tpl['sms'],
 			);
 			$schema['templates']['fields'][ 'tpl_' . $event . '_subject' ] = array(
@@ -967,8 +844,13 @@ class Khabar_Settings {
 					$current[ $key ] = sanitize_text_field( (string) $raw );
 			}
 		}
-		// Eitaa was removed in 1.5.6: drop its leftover credentials.
+		// Eitaa (1.5.6) and WhatsApp (1.7.1) were removed: drop their leftover settings.
 		unset( $current['eitaa_token'], $current['eitaa_channel'] );
+		foreach ( array_keys( $current ) as $k ) {
+			if ( 0 === strpos( $k, 'whatsapp_' ) ) {
+				unset( $current[ $k ] );
+			}
+		}
 		update_option( self::OPTION, $current );
 		self::$cache = null;
 	}
