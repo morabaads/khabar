@@ -24,7 +24,9 @@ class Khabar_Rules {
 			'id'         => $product->get_id(),
 			'status'     => $status,
 			'stocked'    => $in,
-			'in_stock'   => $in && $product->is_purchasable(),
+			// WooCommerce never treats a product without a price as purchasable; a published, stocked item
+			// without a price (catalog / "ask for price" shops, imported items) must still trigger stock alerts.
+			'in_stock'   => $in && ( $product->is_purchasable() || ( '' === (string) $product->get_price() && 'publish' === $product->get_status() ) ),
 			'manage'     => $product->managing_stock(),
 			'qty'        => $product->managing_stock() ? (int) $product->get_stock_quantity() : null,
 			'price'      => '' === $product->get_price() ? null : (float) $product->get_price(),
@@ -138,7 +140,7 @@ class Khabar_Rules {
 		$price      = $snap['price'];
 		$price_cond = null !== $sub->price_below || null !== $sub->price_above || $sub->price_change;
 		$not_stock  = ! $snap['in_stock'];
-		$why_stock  = ! empty( $snap['stocked'] ) && $not_stock ? __( 'کالا موجود است ولی قابل خرید نیست (قیمت ندارد یا منتشر نشده)', 'khabar' ) : __( 'کالا هنوز ناموجود است', 'khabar' );
+		$why_stock  = ! empty( $snap['stocked'] ) && $not_stock ? __( 'کالا موجود است ولی قابل خرید نیست (منتشر نشده یا غیرفعال است)', 'khabar' ) : __( 'کالا هنوز ناموجود است', 'khabar' );
 		if ( ( $sub->in_stock || $sub->min_qty ) && $not_stock ) {
 			return array( 'ok' => false, 'reason' => $why_stock );
 		}

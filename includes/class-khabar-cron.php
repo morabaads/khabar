@@ -39,10 +39,20 @@ class Khabar_Cron {
 		}
 		$wpdb->query( $wpdb->prepare( "DELETE FROM {$notes} WHERE created_at < %s", Khabar_Utils::now( -90 * DAY_IN_SECONDS ) ) ); // phpcs:ignore
 
-		// Safety sweep, spread over time.
-		$ids = $wpdb->get_col( "SELECT DISTINCT product_id FROM {$subs} WHERE status = 'active'" ); // phpcs:ignore
+		self::sweep();
+	}
+
+	/**
+	 * Safety sweep: queue a check of every product with waiting customers, spread over time.
+	 *
+	 * @param int $start Seconds before the first check.
+	 */
+	public static function sweep( $start = 60 ) {
+		global $wpdb;
+		$subs = Khabar_Install::table( 'subscriptions' );
+		$ids  = $wpdb->get_col( "SELECT DISTINCT product_id FROM {$subs} WHERE status = 'active'" ); // phpcs:ignore
 		foreach ( $ids as $i => $pid ) {
-			Khabar_Utils::queue( 'khabar_check_product', array( (int) $pid ), 60 + $i * 5 );
+			Khabar_Utils::queue( 'khabar_check_product', array( (int) $pid ), $start + $i * 5 );
 		}
 	}
 }

@@ -248,7 +248,7 @@ class Khabar_Dispatcher {
 				'customer_name'  => $sub->name ? $sub->name : __( 'مشتری', 'khabar' ),
 				'product_name'   => $parent ? $parent->get_name() : $target->get_name(),
 				'variation'      => $variation ? '(' . $variation . ')' : '',
-				'price'          => Khabar_Utils::price_text( $snap['price'] ),
+				'price'          => null === $snap['price'] ? __( 'استعلام در سایت', 'khabar' ) : Khabar_Utils::price_text( $snap['price'] ),
 				'old_price'      => Khabar_Utils::price_text( $sub->base_price ),
 				'regular_price'  => Khabar_Utils::price_text( $target->get_regular_price() ),
 				'target_price'   => Khabar_Utils::price_text( $target_p ),

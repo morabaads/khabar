@@ -46,6 +46,18 @@ class Khabar_Install {
 		if ( get_option( 'khabar_db_version' ) !== KHABAR_DB_VERSION ) {
 			self::activate();
 		}
+		// After every plugin update re-check all waiting requests once, so fixes apply right away
+		// instead of at the next daily sweep.
+		if ( get_option( 'khabar_version' ) !== KHABAR_VERSION ) {
+			update_option( 'khabar_version', KHABAR_VERSION );
+			add_action(
+				'init',
+				function () {
+					Khabar_Cron::sweep( 5 );
+				},
+				20
+			);
+		}
 	}
 
 	/**

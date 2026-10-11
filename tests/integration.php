@@ -723,6 +723,22 @@ remove_filter( 'pre_http_request', $safir_err, 20 );
 settings( array( 'bale_safir_key' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 t( ! Khabar_Messenger::phone_ready( 'bale' ), 'without key Safir is off (bot linking used instead)' );
 
+echo "\n== In stock but no price ==\n";
+settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'waves_enabled' => 0, 'exclusive_enabled' => 0, 'coupon_enabled' => 0 ) );
+list( $np_pid, $np_vars ) = variable_product( 'لپ تاپ بدون قیمت', 0, array( 41 => 0, 42 => 0 ) );
+$np_var = $np_vars[41];
+$v = wc_get_product( $np_var );
+$v->set_manage_stock( false ); $v->set_stock_status( 'outofstock' ); $v->set_regular_price( '' ); $v->save();
+$np_sub = Khabar_Subscriptions::create( array( 'product_id' => $np_pid, 'variation_id' => $np_var, 'in_stock' => 1, 'phone' => '09121239999', 'name' => 'علی' ) );
+$v = wc_get_product( $np_var ); $v->set_stock_status( 'instock' ); $v->save();
+$v = wc_get_product( $np_var );
+t( '' === $v->get_price() && ! $v->is_purchasable() && $v->is_in_stock(), 'precondition: variation in stock, no price, not purchasable for WooCommerce' );
+reset_capture();
+Khabar_Dispatcher::check_product( $np_pid );
+t( 'notified' === sub_status( $np_sub ), 'in-stock variation without price is notified' );
+$np_sms = end( $GLOBALS['khabar_sms'] );
+t( $np_sms && false !== strpos( $np_sms['text'], 'استعلام در سایت' ), 'empty price shown as «استعلام در سایت»' );
+
 echo "\n== No duplicate sends ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'coupon_enabled' => 0, 'waves_enabled' => 0, 'exclusive_enabled' => 0 ) );
 $dup_pid = simple_product( 'دسته بازی MR-55', 500000, 0 );
