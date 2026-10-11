@@ -106,6 +106,18 @@ class Khabar_Admin {
 	}
 
 	/**
+	 * Keep the app page clean: drop notices other plugins/WordPress print (reviews, promos, nags).
+	 * Khabar's own flash notices are printed inside the app, not through these hooks.
+	 */
+	public static function silence_foreign_notices() {
+		foreach ( array( 'admin_notices', 'all_admin_notices', 'network_admin_notices', 'user_admin_notices' ) as $hook ) {
+			remove_all_actions( $hook );
+		}
+		remove_action( 'admin_notices', 'update_nag', 3 );
+		remove_action( 'admin_notices', 'maintenance_nag', 10 );
+	}
+
+	/**
 	 * Old per-section URLs (page=khabar-settings …) redirect to the single page.
 	 */
 	public static function legacy_redirect() {
@@ -124,6 +136,7 @@ class Khabar_Admin {
 	 * Runs before any output on the app page: bulk actions and, for AJAX navigation, the bare fragment.
 	 */
 	public static function load_app() {
+		self::silence_foreign_notices();
 		if ( 'requests' === self::current_view() ) {
 			self::handle_bulk();
 		}

@@ -301,3 +301,12 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-health li.is-error { background: #fdecee; border-color: #ef4444; color: #a11b26; }
 .khabar-diag-table td { vertical-align: top; line-height: 1.8; }
 .khabar-warn { color: #a15c00; }
+
+/* Notices injected by other plugins (late hooks / scripts) stay hidden on the Khabar page. */
+.toplevel_page_khabar #wpbody-content > .notice,
+.toplevel_page_khabar #wpbody-content > .updated,
+.toplevel_page_khabar #wpbody-content > .error,
+.toplevel_page_khabar #wpbody-content > .update-nag,
+.toplevel_page_khabar #khabar-app .notice:not(.khabar-notice):not(.khabar-toast),
+.toplevel_page_khabar #khabar-app .updated:not(.khabar-notice),
+.toplevel_page_khabar #khabar-app .update-nag { display: none !important; }
