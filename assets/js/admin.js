@@ -214,6 +214,14 @@ jQuery(function ($) {
 		}
 	});
 
+	$(document).on('click', '.khabar-copy', function () {
+		var $b = $(this), text = $b.data('copy'), label = $b.text();
+		var done = function () { $b.text($b.data('done')); setTimeout(function () { $b.text(label); }, 1500); };
+		if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(done); return; }
+		var $t = $('<textarea>').val(text).css({ position: 'fixed', opacity: 0 }).appendTo('body');
+		$t[0].select(); try { document.execCommand('copy'); done(); } catch (e) {} $t.remove();
+	});
+
 	// Option cards that show another setting's value (e.g. the channel id) follow it live.
 	$(document).on('input', '#khabar-body :input[id^="khabar-"]', function () {
 		var key = this.id.replace(/^khabar-/, ''), v = $.trim(this.value || '');

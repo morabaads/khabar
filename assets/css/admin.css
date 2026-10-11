@@ -393,3 +393,20 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-media-actions { display: flex; align-items: center; gap: 12px; }
 .khabar-media-actions .button { min-height: 36px; border-radius: 10px; }
 .khabar-media-clear { color: #b42318 !important; }
+
+/* Messenger bots (compact) */
+.khabar-bots { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--ka-line); }
+.khabar-bots-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.khabar-bots-head h2 { margin: 0 0 2px; font-size: 14.5px; }
+.khabar-bots-head .description { margin: 0; font-size: 12.5px; }
+.khabar-bots-head form { flex: none; margin: 0; }
+.khabar-bots-head .button { min-height: 34px; border-radius: 10px; }
+.khabar-kv { margin: 0; padding: 0; border: 1px solid var(--ka-line); border-radius: 12px; overflow: hidden; }
+.khabar-kv li { display: flex; align-items: center; gap: 10px; margin: 0; padding: 8px 12px; font-size: 12.5px; }
+.khabar-kv li + li { border-top: 1px solid #eef0f5; }
+.khabar-kv-label { flex: 0 0 auto; min-width: 64px; white-space: nowrap; font-weight: 700; color: #4b4e5e; }
+.khabar-kv code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 3px 8px; border-radius: 7px; background: #f6f7fa; font-size: 11.5px; color: #4b4e5e; }
+.khabar-kv-state { flex: none; padding: 2px 9px; border-radius: 999px; background: #f1f2f5; color: #6b6f7b; font-size: 11.5px; font-weight: 700; }
+.khabar-kv-state.is-ok { background: #e9f8ef; color: #12733a; }
+.khabar-copy { flex: none; font-size: 12px !important; font-weight: 700; text-decoration: none !important; }
+@media (max-width: 600px) { .khabar-bots-head { flex-direction: column; align-items: stretch; } .khabar-kv-label { min-width: 0; } }

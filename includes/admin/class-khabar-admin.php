@@ -776,21 +776,39 @@ class Khabar_Admin {
 						<?php submit_button( __( 'ارسال تست', 'khabar' ), 'secondary', '', false ); ?>
 					</form>
 					<?php self::sms_test_box(); ?>
-					<h2><?php esc_html_e( 'ربات‌های پیام‌رسان', 'khabar' ); ?></h2>
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<input type="hidden" name="action" value="khabar_set_webhooks">
-						<?php wp_nonce_field( 'khabar_set_webhooks' ); ?>
-						<p class="description"><?php esc_html_e( 'پس از ذخیره توکن‌ها این دکمه را بزنید تا تلگرام/بله پیام‌های کاربران (Start) را به سایت شما بفرستند.', 'khabar' ); ?></p>
-						<?php foreach ( array( 'telegram', 'bale' ) as $khabar_net ) : ?>
-							<p><code dir="ltr" style="font-size:11px"><?php echo esc_html( preg_replace( '/secret=[^&]+/', 'secret=…', Khabar_Messenger::webhook_url( $khabar_net ) ) ); ?></code></p>
-						<?php endforeach; ?>
-						<?php submit_button( __( 'ثبت وب‌هوک ربات‌ها', 'khabar' ), 'secondary', '', false ); ?>
-					</form>
 					<?php $keys = Khabar_Push::keys(); ?>
-					<p class="description">
-						<?php esc_html_e( 'کلید عمومی VAPID:', 'khabar' ); ?>
-						<code dir="ltr"><?php echo esc_html( $keys ? $keys['public'] : __( 'OpenSSL در دسترس نیست', 'khabar' ) ); ?></code>
-					</p>
+					<div class="khabar-bots">
+						<div class="khabar-bots-head">
+							<div>
+								<h2><?php esc_html_e( 'ربات‌های پیام‌رسان', 'khabar' ); ?></h2>
+								<p class="description"><?php esc_html_e( 'بعد از ذخیره توکن‌ها، وب‌هوک را ثبت کنید تا Start کاربران به سایت برسد.', 'khabar' ); ?></p>
+							</div>
+							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+								<input type="hidden" name="action" value="khabar_set_webhooks">
+								<?php wp_nonce_field( 'khabar_set_webhooks' ); ?>
+								<?php submit_button( __( 'ثبت وب‌هوک ربات‌ها', 'khabar' ), 'secondary small', '', false ); ?>
+							</form>
+						</div>
+						<ul class="khabar-kv">
+							<?php
+							foreach ( array( 'telegram' => __( 'تلگرام', 'khabar' ), 'bale' => __( 'بله', 'khabar' ) ) as $khabar_net => $khabar_label ) :
+								$khabar_has = (bool) Khabar_Settings::get( $khabar_net . '_token' );
+								?>
+								<li>
+									<span class="khabar-kv-label"><?php echo esc_html( $khabar_label ); ?></span>
+									<code dir="ltr" title="<?php esc_attr_e( 'آدرس وب‌هوک (کلید مخفی پنهان شده)', 'khabar' ); ?>"><?php echo esc_html( rawurldecode( preg_replace( '#^https?://[^/]+#', '', rest_url( 'khabar/v1/bot/' . $khabar_net ) ) ) ); // Never shows the secret. ?></code>
+									<span class="khabar-kv-state<?php echo $khabar_has ? ' is-ok' : ''; ?>"><?php echo $khabar_has ? esc_html__( 'توکن ثبت شده', 'khabar' ) : esc_html__( 'بدون توکن', 'khabar' ); ?></span>
+								</li>
+							<?php endforeach; ?>
+							<li>
+								<span class="khabar-kv-label"><?php esc_html_e( 'کلید VAPID', 'khabar' ); ?></span>
+								<code dir="ltr" class="khabar-kv-copyable"><?php echo esc_html( $keys ? $keys['public'] : __( 'OpenSSL در دسترس نیست', 'khabar' ) ); ?></code>
+								<?php if ( $keys ) : ?>
+									<button type="button" class="button-link khabar-copy" data-copy="<?php echo esc_attr( $keys['public'] ); ?>" data-done="<?php esc_attr_e( 'کپی شد', 'khabar' ); ?>"><?php esc_html_e( 'کپی', 'khabar' ); ?></button>
+								<?php endif; ?>
+							</li>
+						</ul>
+					</div>
 				</div>
 			<?php endif; ?>
 
