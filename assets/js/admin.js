@@ -133,6 +133,12 @@ jQuery(function ($) {
 			accBadge($(this));
 		});
 		$('.khabar-pat').each(function () { syncPatterns($(this)); });
+		// Hints that depend on another setting (e.g. the chosen provider).
+		$body.find('[data-desc-by]').each(function () {
+			var by = $(this).data('descBy') || {}, text = $(this).data('descDefault') || '';
+			$.each(by, function (key, map) { var v = $('#khabar-' + key).val(); if (map[v]) { text = map[v]; } });
+			$(this).text(text).prop('hidden', !text);
+		});
 	}
 	$(document).on('change', '#khabar-body select', syncConditional);
 

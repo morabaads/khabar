@@ -4,7 +4,7 @@ Tags: woocommerce, back in stock, price alert, waitlist, sms
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.5.9
+Stable tag: 1.6.0
 License: GPLv2 or later
 
 Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooCommerce via SMS (Kavenegar, Melipayamak, IPPanel, SMS.ir, custom), email, on-site, web push and WhatsApp.
@@ -14,6 +14,9 @@ Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooC
 See README.md for full documentation (Persian).
 
 == Changelog ==
+
+= 1.6.0 =
+* WhatsApp: Green API, UltraMsg, WAHA and Evolution API drivers (personal number via QR, no Meta business account), API host override for a reverse proxy (Iranian hosts), custom gateway body and headers.
 
 = 1.1.0 =
 * Telegram & Bale personal notifications (bot deep-link linking) and channel broadcasts (Telegram, Bale).

@@ -1145,7 +1145,7 @@ class Khabar_Admin {
 				break;
 			case 'textarea':
 			case 'html':
-				printf( '<textarea id="%s" name="%s" rows="%d" class="large-text" %s>%s</textarea>', esc_attr( $id ), esc_attr( $name ), 'html' === $field['type'] ? 5 : 3, 'html' === $field['type'] ? 'dir="auto"' : '', esc_textarea( $value ) );
+				printf( '<textarea id="%s" name="%s" rows="%d" class="large-text" %s>%s</textarea>', esc_attr( $id ), esc_attr( $name ), 'html' === $field['type'] ? 5 : 3, 'html' === $field['type'] ? 'dir="auto"' : ( ! empty( $field['dir'] ) ? 'dir="' . esc_attr( $field['dir'] ) . '"' : '' ), esc_textarea( $value ) );
 				if ( $default && $default !== $value ) {
 					printf( ' <button type="button" class="button-link khabar-reset" data-target="%s" data-default="%s">%s</button>', esc_attr( $id ), esc_attr( $default ), esc_html__( 'بازگردانی پیش‌فرض', 'khabar' ) );
 				}
@@ -1162,7 +1162,14 @@ class Khabar_Admin {
 			default:
 				printf( '<input type="text" class="regular-text" id="%s" name="%s" value="%s">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );
 		}
-		if ( ! empty( $field['desc'] ) ) {
+		if ( ! empty( $field['desc_by'] ) ) {
+			// Hint that depends on another setting (e.g. per provider): {setting: {value: text}}; JS swaps it live.
+			$dep  = key( $field['desc_by'] );
+			$map  = current( $field['desc_by'] );
+			$cur  = (string) Khabar_Settings::get( $dep );
+			$text = isset( $map[ $cur ] ) ? $map[ $cur ] : ( ! empty( $field['desc'] ) ? $field['desc'] : '' );
+			printf( '<p class="description" data-desc-by="%s" data-desc-default="%s">%s</p>', esc_attr( wp_json_encode( $field['desc_by'] ) ), esc_attr( ! empty( $field['desc'] ) ? $field['desc'] : '' ), esc_html( $text ) );
+		} elseif ( ! empty( $field['desc'] ) ) {
 			echo '<p class="description">' . esc_html( $field['desc'] ) . '</p>';
 		}
 		echo '</td></tr>';

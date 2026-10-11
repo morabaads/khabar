@@ -338,18 +338,37 @@ class Khabar_Settings {
 					'_wa_conn_group'     => array(
 						'type'  => 'group',
 						'label' => __( 'سرویس‌دهنده و اتصال', 'khabar' ),
-						'desc'  => __( 'WhatsApp Cloud API یا وب‌سرویس سفارشی', 'khabar' ),
+						'desc'  => __( 'API رسمی متا، اتصال شماره شخصی با QR، یا وب‌سرویس دلخواه', 'khabar' ),
 						'icon'  => 'chat',
-						'ready' => array( 'whatsapp_token', 'whatsapp_phone_id', 'whatsapp_webhook_url' ),
+						'ready' => array( 'whatsapp_token', 'whatsapp_phone_id', 'whatsapp_webhook_url', 'whatsapp_instance', 'whatsapp_api_key' ),
 					),
 					'whatsapp_provider'  => array(
 						'type'    => 'select',
 						'label'   => __( 'سرویس‌دهنده', 'khabar' ),
 						'options' => array(
-							'cloud'   => __( 'WhatsApp Cloud API (Meta)', 'khabar' ),
-							'webhook' => __( 'وب‌سرویس سفارشی', 'khabar' ),
+							'cloud'     => __( 'WhatsApp Cloud API رسمی (Meta) — نیازمند حساب تجاری متا', 'khabar' ),
+							'greenapi'  => __( 'Green API — اتصال شماره شخصی با QR', 'khabar' ),
+							'ultramsg'  => __( 'UltraMsg — اتصال شماره شخصی با QR', 'khabar' ),
+							'waha'      => __( 'WAHA — متن‌باز، نصب روی سرور خودتان (QR)', 'khabar' ),
+							'evolution' => __( 'Evolution API — متن‌باز، نصب روی سرور خودتان (QR)', 'khabar' ),
+							'webhook'   => __( 'وب‌سرویس سفارشی (هر سامانه دیگر)', 'khabar' ),
 						),
+						'desc'    => __( 'سرویس‌های QR با شماره واتساپ شخصی کار می‌کنند و حساب تجاری متا لازم ندارند (مناسب حساب ایرانی). واتساپ ممکن است شماره‌ای را که پیام انبوه می‌فرستد محدود کند؛ از یک شماره جداگانه استفاده کنید.', 'khabar' ),
 						'default' => 'cloud',
+					),
+					'whatsapp_base_url'  => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'cloud', 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
+						'type'    => 'text',
+						'label'   => __( 'آدرس سرور API', 'khabar' ),
+						'desc_by' => array(
+							'whatsapp_provider' => array(
+								'cloud'     => __( 'خالی = graph.facebook.com. اگر هاست در ایران است، آدرس یک پراکسی معکوس (مثلاً Cloudflare Worker) را وارد کنید.', 'khabar' ),
+								'greenapi'  => __( 'apiUrl اینستنس از کنسول Green API (مثل https://7103.api.greenapi.com). خالی = api.green-api.com', 'khabar' ),
+								'ultramsg'  => __( 'خالی بگذارید (api.ultramsg.com)، مگر پراکسی داشته باشید.', 'khabar' ),
+								'waha'      => __( 'آدرس سرور WAHA شما، مثل https://wa.example.com', 'khabar' ),
+								'evolution' => __( 'آدرس سرور Evolution API شما، مثل https://evo.example.com', 'khabar' ),
+							),
+						),
 					),
 					'whatsapp_token'     => array(
 						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
@@ -361,6 +380,32 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'Phone Number ID', 'khabar' ),
 					),
+					'whatsapp_instance'  => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
+						'type'    => 'text',
+						'label'   => __( 'شناسه اینستنس / نام سشن', 'khabar' ),
+						'desc_by' => array(
+							'whatsapp_provider' => array(
+								'greenapi'  => __( 'idInstance از کنسول Green API', 'khabar' ),
+								'ultramsg'  => __( 'Instance ID از پنل UltraMsg، مثل instance12345', 'khabar' ),
+								'waha'      => __( 'نام سشن WAHA؛ خالی = default', 'khabar' ),
+								'evolution' => __( 'نام اینستنسی که در Evolution API ساخته‌اید', 'khabar' ),
+							),
+						),
+					),
+					'whatsapp_api_key'   => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'greenapi', 'ultramsg', 'waha', 'evolution' ) ),
+						'type'    => 'password',
+						'label'   => __( 'توکن / کلید API', 'khabar' ),
+						'desc_by' => array(
+							'whatsapp_provider' => array(
+								'greenapi'  => __( 'apiTokenInstance از کنسول Green API', 'khabar' ),
+								'ultramsg'  => __( 'Token از پنل UltraMsg', 'khabar' ),
+								'waha'      => __( 'کلید X-Api-Key سرور WAHA', 'khabar' ),
+								'evolution' => __( 'کلید apikey اینستنس Evolution API', 'khabar' ),
+							),
+						),
+					),
 					'whatsapp_country'   => array(
 						'type'    => 'text',
 						'label'   => __( 'پیش‌شماره کشور', 'khabar' ),
@@ -370,6 +415,21 @@ class Khabar_Settings {
 						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
 						'type'  => 'text',
 						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
+					),
+					'whatsapp_webhook_body' => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
+						'type'    => 'textarea',
+						'label'   => __( 'بدنه درخواست (JSON)', 'khabar' ),
+						'dir'     => 'ltr',
+						'desc'    => __( 'متغیرها: {to} شماره بین‌المللی (98912…)، {chat_id} همان با ‎@c.us، {message} متن پیام.', 'khabar' ),
+						'default' => '{"to":"{to}","message":"{message}"}',
+					),
+					'whatsapp_webhook_headers' => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
+						'type'    => 'textarea',
+						'label'   => __( 'هدرهای درخواست', 'khabar' ),
+						'dir'     => 'ltr',
+						'desc'    => __( 'هر خط یک هدر، مثل Authorization: Bearer XXXX', 'khabar' ),
 					),
 					'_wa_tpl_group'      => array(
 						'type'      => 'group',
