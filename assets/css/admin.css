@@ -310,3 +310,24 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .toplevel_page_khabar #khabar-app .notice:not(.khabar-notice):not(.khabar-toast),
 .toplevel_page_khabar #khabar-app .updated:not(.khabar-notice),
 .toplevel_page_khabar #khabar-app .update-nag { display: none !important; }
+
+/* Filter toolbar: equal-size fields and buttons on one baseline. */
+.khabar-admin .khabar-report-filter { align-items: flex-end; gap: 12px; }
+.khabar-admin .khabar-report-filter label { display: flex; flex-direction: column; gap: 6px; margin: 0; line-height: 1.4; }
+.khabar-admin .khabar-report-filter input[type=number],
+.khabar-admin .khabar-report-filter select { margin: 0; }
+.khabar-admin .khabar-report-filter input[type=number],
+.khabar-admin .khabar-report-filter select,
+.khabar-admin .khabar-report-filter .button { box-sizing: border-box; height: 42px; min-height: 42px; margin-top: 0; margin-bottom: 0; line-height: 1; vertical-align: bottom; }
+.khabar-admin .khabar-report-filter input[type=number],
+.khabar-admin .khabar-report-filter select { padding: 0 12px; font-size: 14px; }
+.khabar-admin .khabar-report-filter select { padding-inline-end: 30px; background-position: left 10px center; }
+.khabar-admin .khabar-report-filter select:not([style*=width]) { min-width: 220px; }
+.khabar-admin .khabar-report-filter.khabar-fc-filter input[type=number],
+.khabar-admin .khabar-report-filter.khabar-fc-filter select { width: 140px; min-width: 0; max-width: none; text-align: center; text-align-last: center; }
+.khabar-admin .khabar-report-filter .button { display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 10px; }
+@media (max-width: 600px) {
+	.khabar-admin .khabar-fc-filter label { flex: 1 1 calc(50% - 12px); }
+	.khabar-admin .khabar-fc-filter input[type=number], .khabar-admin .khabar-fc-filter select { width: 100%; }
+	.khabar-admin .khabar-report-filter .button-primary { margin-inline-start: 0; flex: 1 1 100%; }
+}

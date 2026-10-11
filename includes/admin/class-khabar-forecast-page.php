@@ -70,7 +70,7 @@ class Khabar_Forecast_Page {
 		?>
 		<div class="khabar-view">
 
-			<form method="get" class="khabar-report-filter">
+			<form method="get" class="khabar-report-filter khabar-fc-filter">
 				<input type="hidden" name="page" value="khabar"><input type="hidden" name="view" value="forecast">
 				<label><?php esc_html_e( 'زمان تحویل (روز)', 'khabar' ); ?> <input type="number" min="0" class="small-text" name="lead" value="<?php echo esc_attr( $p['lead'] ); ?>"></label>
 				<label><?php esc_html_e( 'پوشش موجودی (روز)', 'khabar' ); ?> <input type="number" min="0" class="small-text" name="cover" value="<?php echo esc_attr( $p['cover'] ); ?>"></label>
