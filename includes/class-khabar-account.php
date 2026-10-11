@@ -161,10 +161,10 @@ class Khabar_Account {
 		$channels = array_intersect_key( Khabar_Settings::channels(), array_flip( (array) Khabar_Settings::get( 'channels_enabled' ) ) );
 		$messengers = array();
 		foreach ( array( 'telegram', 'bale' ) as $network ) {
-			if ( Khabar_Messenger::personal_ready( $network ) ) {
-				$messengers[] = $network;
-			} else {
+			if ( ! Khabar_Messenger::available( $network ) ) {
 				unset( $channels[ $network ] );
+			} elseif ( Khabar_Messenger::needs_link( $network ) ) {
+				$messengers[] = $network;
 			}
 		}
 		include Khabar_Utils::template( 'my-alerts.php' );

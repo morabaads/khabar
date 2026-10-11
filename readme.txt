@@ -4,7 +4,7 @@ Tags: woocommerce, back in stock, price alert, waitlist, sms
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.7.0
 License: GPLv2 or later
 
 Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooCommerce via SMS (Kavenegar, Melipayamak, IPPanel, SMS.ir, custom), email, on-site, web push and WhatsApp.
@@ -14,6 +14,9 @@ Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooC
 See README.md for full documentation (Persian).
 
 == Changelog ==
+
+= 1.7.0 =
+* Bale personal notifications through Bale Safir: sent straight to the customer's phone number, no bot Start/linking needed. Bot linking stays as the fallback when Safir is not configured.
 
 = 1.6.1 =
 * Telegram/Bale: channel ids without @ (or pasted t.me / ble.ir links) are normalized; new 'Check bots' diagnostic (token, bot username, webhook registration and last delivery error, linked customers, channel access/admin).

@@ -724,6 +724,32 @@ t( 'error' === $levels( Khabar_Messenger::check( 'bale' ), 'یکی نیست' ), 
 remove_filter( 'pre_http_request', $bot_reply, 20 );
 settings( array( 'bale_bot' => 'kbot', 'bale_channel' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
+echo "\n== Bale Safir (message to phone number, no Start) ==\n";
+settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite', 'bale' ), 'bale_token' => '123456:abcdef', 'bale_bot' => 'kbot', 'bale_safir_key' => 'SAFIRKEY', 'bale_safir_bot_id' => '', 'user_selects_channel' => 1, 'verify_contact' => 'none' ) );
+t( Khabar_Messenger::phone_ready( 'bale' ) && 123456 === Khabar_Messenger::safir_bot_id(), 'safir ready; bot id taken from token prefix' );
+t( ! Khabar_Messenger::needs_link( 'bale' ), 'no Start/connect needed for bale' );
+$sf_pid = simple_product( 'دسته بازی MR-55 سفیر', 500000, 0 );
+list( $code, $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $sf_pid, 'in_stock' => 1, 'email' => 'nophone@example.com', 'channels' => array( 'bale' ) ) );
+t( 400 === $code, 'bale ticked without phone → asks for mobile number' );
+list( $code, $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $sf_pid, 'in_stock' => 1, 'phone' => '09121230000', 'channels' => array( 'bale' ) ) );
+t( 200 === $code, 'subscribe with bale + phone' );
+ob_start(); echo Khabar_Frontend::render( wc_get_product( $sf_pid ), array( 'force' => true ) ); $html = ob_get_clean();
+t( false === strpos( $html, 'khabar-connect' ), 'product form shows no "connect to bale" button' );
+$GLOBALS['khabar_http'] = array();
+wc_update_product_stock( wc_get_product( $sf_pid ), 3, 'set' );
+Khabar_Dispatcher::check_product( $sf_pid );
+$sf = http_to( 'safir.bale.ai/api/v3/send_message' );
+$sb = $sf ? json_decode( $sf[0]['body'], true ) : array();
+t( $sb && 123456 === $sb['bot_id'] && '989121230000' === $sb['phone_number'] && ! empty( $sb['request_id'] ) && false !== strpos( $sb['message_data']['message']['text'], 'MR-55' ), 'restock → Safir send_message to 989121230000: ' . mb_substr( str_replace( "\n", ' | ', $sb['message_data']['message']['text'] ?? '' ), 0, 60 ) );
+t( 'notified' === sub_status( $d['ids'][0] ), 'subscription marked notified after Safir send' );
+$safir_err = function ( $pre, $args, $url ) { return false !== strpos( $url, 'safir.bale.ai' ) ? array( 'response' => array( 'code' => 400, 'message' => 'Bad' ), 'body' => '{"error_data":[{"code":17,"description":"not bale user"}]}', 'headers' => array(), 'cookies' => array() ) : $pre; };
+add_filter( 'pre_http_request', $safir_err, 20, 3 );
+$r = Khabar_Messenger::send_safir( '09120000000', array( 'subject' => '', 'text' => 'x', 'url' => '' ) );
+t( is_wp_error( $r ) && false !== strpos( $r->get_error_message(), 'حساب کاربری ندارد' ), 'Safir error 17 explained: ' . ( is_wp_error( $r ) ? $r->get_error_message() : '' ) );
+remove_filter( 'pre_http_request', $safir_err, 20 );
+settings( array( 'bale_safir_key' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
+t( ! Khabar_Messenger::phone_ready( 'bale' ), 'without key Safir is off (bot linking used instead)' );
+
 echo "\n== No duplicate sends ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'coupon_enabled' => 0, 'waves_enabled' => 0, 'exclusive_enabled' => 0 ) );
 $dup_pid = simple_product( 'دسته بازی MR-55', 500000, 0 );

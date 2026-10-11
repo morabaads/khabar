@@ -408,6 +408,8 @@ class Khabar_Dispatcher {
 					$row['warnings'][] = __( 'پیامک/واتساپ انتخاب شده ولی شماره موبایل ثبت نشده', 'khabar' );
 				} elseif ( 'email' === $ch && ! $sub->email ) {
 					$row['warnings'][] = __( 'ایمیل انتخاب شده ولی آدرس ایمیل ثبت نشده', 'khabar' );
+				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) && Khabar_Messenger::phone_ready( $ch ) && ! $sub->phone ) {
+					$row['warnings'][] = __( 'بله انتخاب شده ولی شماره موبایل ثبت نشده (سفیر به شماره موبایل ارسال می‌کند)', 'khabar' );
 				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) ) {
 					/* translators: %s network */
 					$row['warnings'][] = sprintf( __( '%s انتخاب شده ولی مشتری ربات را Start نکرده (حساب متصل نیست)', 'khabar' ), 'telegram' === $ch ? __( 'تلگرام', 'khabar' ) : __( 'بله', 'khabar' ) );

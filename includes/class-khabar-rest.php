@@ -176,7 +176,8 @@ class Khabar_Rest {
 		$mode     = $s['contact_mode'];
 		$enabled  = (array) $s['channels_enabled'];
 		$channels = $s['user_selects_channel'] ? array_values( array_intersect( array_map( 'sanitize_key', (array) $req->get_param( 'channels' ) ), $enabled ) ) : array();
-		$need_ph  = (bool) array_intersect( $channels, array( 'sms', 'whatsapp' ) );
+		// Bale through Safir is sent to the phone number, like SMS and WhatsApp.
+		$need_ph  = (bool) array_intersect( $channels, Khabar_Messenger::phone_ready( 'bale' ) ? array( 'sms', 'whatsapp', 'bale' ) : array( 'sms', 'whatsapp' ) );
 		$need_em  = in_array( 'email', $channels, true );
 		if ( $channels && ( $need_ph || $need_em ) ) {
 			// The ticked channels decide which contact is required.

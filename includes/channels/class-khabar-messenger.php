@@ -75,6 +75,166 @@ class Khabar_Messenger {
 		return $n && $n['personal'] && $n['token'] && $n['bot'] && Khabar_Settings::has( 'channels_enabled', $network );
 	}
 
+	/* ------------------------------------------------------------------ */
+	/* Bale Safir: messages straight to a phone number (no Start needed)    */
+	/* ------------------------------------------------------------------ */
+
+	const SAFIR_URL = 'https://safir.bale.ai/api/v3/send_message';
+
+	/**
+	 * Bot ("بازو") id for Safir: the setting, or the number before ":" in the bot token.
+	 *
+	 * @return int
+	 */
+	public static function safir_bot_id() {
+		$id = preg_replace( '/\D/', '', (string) Khabar_Settings::get( 'bale_safir_bot_id', '' ) );
+		if ( '' === $id && preg_match( '/^(\d+):/', trim( (string) Khabar_Settings::get( 'bale_token', '' ) ), $m ) ) {
+			$id = $m[1];
+		}
+		return (int) $id;
+	}
+
+	/**
+	 * Can Bale messages go to phone numbers (Safir configured and Bale enabled)?
+	 *
+	 * @param string $network Network.
+	 * @return bool
+	 */
+	public static function phone_ready( $network ) {
+		return 'bale' === $network && Khabar_Settings::has( 'channels_enabled', 'bale' ) && '' !== trim( (string) Khabar_Settings::get( 'bale_safir_key', '' ) ) && self::safir_bot_id() > 0;
+	}
+
+	/**
+	 * Offer this messenger to customers at all (by phone through Safir, or by linking the bot).
+	 *
+	 * @param string $network Network.
+	 * @return bool
+	 */
+	public static function available( $network ) {
+		return self::phone_ready( $network ) || self::personal_ready( $network );
+	}
+
+	/**
+	 * Does the customer have to link the bot (press Start) to get personal messages?
+	 *
+	 * @param string $network Network.
+	 * @return bool
+	 */
+	public static function needs_link( $network ) {
+		return self::personal_ready( $network ) && ! self::phone_ready( $network );
+	}
+
+	/**
+	 * Can a subscription be reached on this messenger?
+	 *
+	 * @param string $network Network.
+	 * @param object $sub     Subscription.
+	 * @return bool
+	 */
+	public static function can_reach( $network, $sub ) {
+		if ( self::phone_ready( $network ) && $sub->phone ) {
+			return true;
+		}
+		return (bool) self::chat_id( Khabar_Channels::owner_of( $sub ), $network );
+	}
+
+	/**
+	 * Deliver a notification to a subscription: by phone number through Safir when possible,
+	 * otherwise to the chat the customer linked.
+	 *
+	 * @param string $network Network.
+	 * @param object $sub     Subscription.
+	 * @param array  $message Built message (subject, text, url).
+	 * @return array [ recipient, true|WP_Error ]
+	 */
+	public static function deliver( $network, $sub, $message ) {
+		if ( self::phone_ready( $network ) && $sub->phone ) {
+			return array( $sub->phone, self::send_safir( $sub->phone, $message ) );
+		}
+		$owner = Khabar_Channels::owner_of( $sub );
+		return array( self::chat_id( $owner, $network ), self::send_to_owner( $network, $owner, $message ) );
+	}
+
+	/**
+	 * Send through Bale Safir (https://docs.bale.ai/safir) to a phone number.
+	 *
+	 * @param string $phone   Mobile (any local/international form).
+	 * @param array  $message subject, text, url.
+	 * @return true|WP_Error
+	 */
+	public static function send_safir( $phone, $message ) {
+		$key    = trim( (string) Khabar_Settings::get( 'bale_safir_key', '' ) );
+		$bot_id = self::safir_bot_id();
+		if ( '' === $key || ! $bot_id ) {
+			return new WP_Error( 'khabar_safir', __( 'کلید API یا شناسه بازوی سفیر بله تنظیم نشده است.', 'khabar' ) );
+		}
+		$to = Khabar_Utils::international_phone( Khabar_Utils::normalize_phone( $phone ), '98' );
+		if ( ! $to ) {
+			return new WP_Error( 'khabar_safir', __( 'شماره موبایل نامعتبر', 'khabar' ) );
+		}
+		$text = ! empty( $message['subject'] ) ? '🔔 ' . $message['subject'] . "\n\n" . $message['text'] : $message['text'];
+		$body = array( 'text' => $text );
+		$url  = isset( $message['url'] ) ? (string) $message['url'] : '';
+		if ( $url && 0 === strpos( $url, 'https://' ) ) {
+			// The button carries the link; keep the text clean.
+			$body['text']         = trim( str_replace( $url, '', $text ) );
+			$body['reply_markup'] = array(
+				'inline_keyboard' => array(
+					array(
+						array(
+							'text' => __( '🛒 مشاهده و خرید', 'khabar' ),
+							'url'  => $url,
+						),
+					),
+				),
+			);
+		}
+		$res = wp_remote_post(
+			self::SAFIR_URL,
+			array(
+				'timeout' => 15,
+				'headers' => array(
+					'api-access-key' => $key,
+					'Content-Type'   => 'application/json',
+				),
+				'body'    => wp_json_encode(
+					array(
+						'request_id'   => wp_generate_uuid4(),
+						'bot_id'       => $bot_id,
+						'phone_number' => $to,
+						'message_data' => array( 'message' => $body ),
+					)
+				),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		$code = wp_remote_retrieve_response_code( $res );
+		$raw  = wp_remote_retrieve_body( $res );
+		$data = json_decode( $raw, true );
+		$err  = is_array( $data ) && ! empty( $data['error_data'] ) ? $data['error_data'] : null;
+		if ( is_array( $err ) && isset( $err[0] ) ) {
+			$err = $err[0];
+		}
+		if ( $code >= 200 && $code < 300 && ! $err ) {
+			return true;
+		}
+		$known = array(
+			'2'  => __( 'خطای داخلی سرور سفیر', 'khabar' ),
+			'3'  => __( 'محدودیت سرعت ارسال سفیر', 'khabar' ),
+			'4'  => __( 'داده ارسالی نامعتبر است', 'khabar' ),
+			'8'  => __( 'شماره موبایل نامعتبر است', 'khabar' ),
+			'17' => __( 'این شماره در بله حساب کاربری ندارد', 'khabar' ),
+			'20' => __( 'اعتبار سفیر کافی نیست (شارژ پنل کسب‌وکار بله)', 'khabar' ),
+			'21' => __( 'به سقف تعداد مخاطبان سفیر رسیده‌اید', 'khabar' ),
+		);
+		$ecode = is_array( $err ) ? (string) ( isset( $err['code'] ) ? $err['code'] : ( isset( $err['error'] ) ? $err['error'] : '' ) ) : '';
+		$edesc = is_array( $err ) ? (string) ( isset( $err['description'] ) ? $err['description'] : ( isset( $err['message'] ) ? $err['message'] : '' ) ) : '';
+		$text  = isset( $known[ $ecode ] ) ? $known[ $ecode ] : ( $edesc ? $edesc : 'HTTP ' . $code . ': ' . mb_substr( $raw, 0, 200 ) );
+		return new WP_Error( 'khabar_safir', __( 'سفیر بله: ', 'khabar' ) . $text . ( $ecode ? ' (' . $ecode . ')' : '' ) );
+	}
+
 	/**
 	 * Secret used to authenticate webhook calls.
 	 *
@@ -123,8 +283,20 @@ class Khabar_Messenger {
 		global $wpdb;
 		$n   = self::network( $network );
 		$out = array();
+		$safir = self::phone_ready( $network );
+		if ( $safir ) {
+			/* translators: %d bot id */
+			$out[] = array( 'ok', sprintf( __( 'سفیر تنظیم شده (بازو %d): اعلان شخصی مستقیم به شماره موبایل مشتری در بله ارسال می‌شود و Start لازم نیست. صحت کلید را با «ارسال آزمایشی ← بله (شماره موبایل)» بسنجید.', 'khabar' ), self::safir_bot_id() ) );
+		} elseif ( 'bale' === $network && Khabar_Settings::get( 'bale_safir_key' ) && ! self::safir_bot_id() ) {
+			$out[] = array( 'error', __( 'کلید سفیر وارد شده ولی شناسه بازو (bot_id) مشخص نیست؛ آن را وارد کنید یا توکن ربات را بگذارید.', 'khabar' ) );
+		} elseif ( 'bale' === $network ) {
+			$out[] = array( 'warn', __( 'سفیر تنظیم نشده؛ پیام شخصی فقط به مشتریانی می‌رسد که ربات را Start کرده‌اند. برای ارسال مستقیم به شماره موبایل، کلید سفیر را وارد کنید.', 'khabar' ) );
+		}
 		if ( ! $n || ! $n['token'] ) {
-			return array( array( 'error', __( 'توکن ربات وارد نشده است.', 'khabar' ) ) );
+			$out[] = $safir
+				? array( 'warn', __( 'توکن ربات وارد نشده؛ فقط برای اعلام در کانال بله لازم است.', 'khabar' ) )
+				: array( 'error', __( 'توکن ربات وارد نشده است.', 'khabar' ) );
+			return $out;
 		}
 		$me = self::api( $network, 'getMe', array() );
 		if ( is_wp_error( $me ) ) {
@@ -134,7 +306,7 @@ class Khabar_Messenger {
 		$username = isset( $me['username'] ) ? (string) $me['username'] : '';
 		/* translators: %s bot username */
 		$out[] = array( 'ok', sprintf( __( 'توکن درست است؛ ربات ‎@%s پاسخ داد.', 'khabar' ), $username ) );
-		if ( ! $n['bot'] ) {
+		if ( ! $n['bot'] && ! $safir ) {
 			$out[] = array( 'error', __( 'نام کاربری ربات وارد نشده؛ دکمه «دریافت در پیام‌رسان» به مشتری نمایش داده نمی‌شود.', 'khabar' ) );
 		} elseif ( $username && 0 !== strcasecmp( $username, $n['bot'] ) ) {
 			/* translators: 1: username in settings 2: username of the token's bot */
@@ -171,11 +343,11 @@ class Khabar_Messenger {
 			}
 		}
 
-		$linked = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Khabar_Install::table( 'messenger' ) . ' WHERE network = %s', $network ) ); // phpcs:ignore
-		$out[]  = $linked
+		$linked = $safir ? -1 : (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Khabar_Install::table( 'messenger' ) . ' WHERE network = %s', $network ) ); // phpcs:ignore
+		$out[]  = $safir ? array( 'ok', __( 'با سفیر نیازی به اتصال (Start) مشتریان نیست.', 'khabar' ) ) : ( $linked
 			/* translators: %d customers */
 			? array( 'ok', sprintf( __( '%d مشتری حسابش را به ربات متصل کرده است.', 'khabar' ), $linked ) )
-			: array( 'warn', __( 'هنوز هیچ مشتری‌ای متصل نشده. پیام شخصی فقط به مشتریانی می‌رسد که بعد از ثبت درخواست روی «دریافت در پیام‌رسان» زده و در ربات Start را زده باشند.', 'khabar' ) );
+			: array( 'warn', __( 'هنوز هیچ مشتری‌ای متصل نشده. پیام شخصی فقط به مشتریانی می‌رسد که بعد از ثبت درخواست روی «دریافت در پیام‌رسان» زده و در ربات Start را زده باشند.', 'khabar' ) ) );
 
 		if ( $n['channel'] ) {
 			$chat = self::api( $network, 'getChat', array( 'chat_id' => $n['channel'] ) );

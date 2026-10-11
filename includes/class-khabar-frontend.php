@@ -296,11 +296,12 @@ class Khabar_Frontend {
 			unset( $channels['push'] );
 		}
 		foreach ( array( 'telegram', 'bale' ) as $network ) {
-			if ( isset( $channels[ $network ] ) && ! Khabar_Messenger::personal_ready( $network ) ) {
+			if ( isset( $channels[ $network ] ) && ! Khabar_Messenger::available( $network ) ) {
 				unset( $channels[ $network ] );
 			}
 		}
-		$messengers = array_values( array_intersect( array( 'telegram', 'bale' ), array_keys( $channels ) ) );
+		// "Connect" buttons only where the customer must start the bot (not for Bale via Safir).
+		$messengers = array_values( array_filter( array_intersect( array( 'telegram', 'bale' ), array_keys( $channels ) ), array( 'Khabar_Messenger', 'needs_link' ) ) );
 		$attributes = $variable ? self::attribute_options( $product ) : array();
 		$price      = '' === $product->get_price() ? '' : (float) $product->get_price();
 
