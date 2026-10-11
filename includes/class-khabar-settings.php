@@ -456,16 +456,29 @@ class Khabar_Settings {
 					),
 					'broadcast_networks' => array(
 						'type'    => 'multicheck',
-						'label'   => __( 'اعلام موجود شدن کالاهای پرتقاضا در کانال فروشگاه', 'khabar' ),
+						'style'   => 'cards',
+						'label'   => __( 'کانال‌های اعلام', 'khabar' ),
+						'desc'    => __( 'وقتی کالای پرتقاضا موجود شود، در کانال‌های انتخاب‌شده پست می‌شود؛ برای هر کالا حداکثر یک بار در ۲۴ ساعت.', 'khabar' ),
 						'options' => array(
 							'telegram' => __( 'کانال تلگرام', 'khabar' ),
 							'bale'     => __( 'کانال بله', 'khabar' ),
+						),
+						'icons'   => array(
+							'telegram' => 'send',
+							'bale'     => 'chat',
+						),
+						// Each card shows the channel id it will post to (from these settings).
+						'hints'   => array(
+							'telegram' => 'telegram_channel',
+							'bale'     => 'bale_channel',
 						),
 						'default' => array(),
 					),
 					'broadcast_min_waiting' => array(
 						'type'    => 'number',
-						'label'   => __( 'حداقل تعداد منتظر برای اعلام در کانال', 'khabar' ),
+						'label'   => __( 'حداقل تعداد منتظر', 'khabar' ),
+						'suffix'  => __( 'نفر', 'khabar' ),
+						'desc'    => __( 'فقط کالاهایی اعلام می‌شوند که دست‌کم این تعداد منتظر داشته باشند.', 'khabar' ),
 						'default' => 3,
 					),
 					'_push_heading'      => array(

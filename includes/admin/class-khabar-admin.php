@@ -1026,6 +1026,37 @@ class Khabar_Admin {
 	}
 
 	/**
+	 * Multicheck as selectable cards (icon, label and an optional hint read from another setting).
+	 *
+	 * @param string $name  Input name.
+	 * @param array  $field Field: options, icons, hints (option => setting key).
+	 * @param array  $value Checked options.
+	 */
+	private static function multicheck_cards( $name, $field, $value ) {
+		echo '<div class="khabar-cards">';
+		foreach ( $field['options'] as $opt => $label ) {
+			$hint_key = isset( $field['hints'][ $opt ] ) ? $field['hints'][ $opt ] : '';
+			$hint     = $hint_key ? trim( (string) Khabar_Settings::get( $hint_key ) ) : '';
+			printf(
+				'<label class="khabar-cardopt"><input type="checkbox" name="%1$s[]" value="%2$s" %3$s><span class="khabar-cardopt-box"><span class="khabar-cardopt-icon">%4$s</span><span class="khabar-cardopt-text"><b>%5$s</b>%6$s</span><span class="khabar-cardopt-tick" aria-hidden="true"></span></span></label>',
+				esc_attr( $name ),
+				esc_attr( $opt ),
+				checked( in_array( $opt, $value, true ), true, false ),
+				Khabar_Frontend::icon( isset( $field['icons'][ $opt ] ) ? $field['icons'][ $opt ] : 'bell' ), // phpcs:ignore WordPress.Security.EscapeOutput
+				esc_html( $label ),
+				$hint_key ? sprintf(
+					'<small class="khabar-cardopt-hint%1$s" data-hint-from="%2$s" data-empty="%3$s" dir="auto">%4$s</small>',
+					$hint ? '' : ' is-missing',
+					esc_attr( $hint_key ),
+					esc_attr__( 'شناسه کانال وارد نشده', 'khabar' ),
+					esc_html( $hint ? $hint : __( 'شناسه کانال وارد نشده', 'khabar' ) )
+				) : ''
+			);
+		}
+		echo '</div>';
+	}
+
+	/**
 	 * Render one settings field.
 	 *
 	 * @param string $key     Key.
@@ -1052,6 +1083,10 @@ class Khabar_Admin {
 				printf( '<label><input type="checkbox" id="%s" name="%s" value="1" %s> %s</label>', esc_attr( $id ), esc_attr( $name ), checked( (int) $value, 1, false ), esc_html__( 'فعال', 'khabar' ) );
 				break;
 			case 'multicheck':
+				if ( isset( $field['style'] ) && 'cards' === $field['style'] ) {
+					self::multicheck_cards( $name, $field, (array) $value );
+					break;
+				}
 				foreach ( $field['options'] as $opt => $label ) {
 					printf( '<label class="khabar-check"><input type="checkbox" name="%s[]" value="%s" %s> %s</label>', esc_attr( $name ), esc_attr( $opt ), checked( in_array( $opt, (array) $value, true ), true, false ), esc_html( $label ) );
 				}
@@ -1064,7 +1099,11 @@ class Khabar_Admin {
 				echo '</select>';
 				break;
 			case 'number':
-				printf( '<input type="number" min="0" class="small-text" id="%s" name="%s" value="%s">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );
+				$input = sprintf( '<input type="number" min="0" class="small-text" id="%s" name="%s" value="%s">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );
+				if ( ! empty( $field['suffix'] ) ) {
+					$input = '<span class="khabar-num-wrap">' . $input . '<span class="khabar-num-suffix">' . esc_html( $field['suffix'] ) . '</span></span>';
+				}
+				echo $input; // phpcs:ignore WordPress.Security.EscapeOutput
 				break;
 			case 'textarea':
 			case 'html':

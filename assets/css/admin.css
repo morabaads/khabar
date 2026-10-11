@@ -357,3 +357,27 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-acc-body { padding: 0 16px 6px; border-top: 1px solid var(--ka-line); }
 .khabar-acc-body .form-table th { width: 230px; }
 @media (max-width: 600px) { .khabar-acc-title small { display: none; } }
+
+/* Multicheck as option cards */
+.khabar-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(210px, 100%), 1fr)); gap: 10px; max-width: 560px; width: 100%; }
+.khabar-cardopt { position: relative; display: block; margin: 0; cursor: pointer; }
+.khabar-cardopt > input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.khabar-cardopt-box { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 12px; border: 1.5px solid #d5d8e2; border-radius: 12px; background: #fff; transition: border-color .15s, background .15s, box-shadow .15s; }
+.khabar-cardopt:hover .khabar-cardopt-box { border-color: #b9bdcb; }
+.khabar-cardopt > input:focus-visible + .khabar-cardopt-box { outline: 2px solid var(--ka); outline-offset: 2px; }
+.khabar-cardopt > input:checked + .khabar-cardopt-box { border-color: var(--ka); background: color-mix(in srgb, var(--ka) 6%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ka) 12%, transparent); }
+.khabar-cardopt-icon { flex: 0 0 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: #f1f2f5; color: #6b6f7b; }
+.khabar-cardopt-icon svg { width: 18px; height: 18px; }
+.khabar-cardopt > input:checked + .khabar-cardopt-box .khabar-cardopt-icon { background: color-mix(in srgb, var(--ka) 14%, #fff); color: var(--ka); }
+.khabar-cardopt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.5; }
+.khabar-cardopt-text b { font-size: 13.5px; color: var(--ka-ink); }
+.khabar-cardopt-hint { font-size: 12px; color: #6b6f7b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.khabar-cardopt-hint.is-missing { color: #b45309; }
+.khabar-cardopt-tick { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #c4c8d4; background: #fff; display: grid; place-items: center; }
+.khabar-cardopt > input:checked + .khabar-cardopt-box .khabar-cardopt-tick { border-color: var(--ka); background: var(--ka); }
+.khabar-cardopt > input:checked + .khabar-cardopt-box .khabar-cardopt-tick::after { content: ""; width: 5px; height: 9px; margin-top: -2px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+/* Number with a unit */
+.khabar-num-wrap { display: inline-flex; align-items: center; gap: 8px; }
+.khabar-num-wrap .small-text { width: 90px; text-align: center; }
+.khabar-num-suffix { color: #6b6f7b; font-size: 13px; }
+@media (max-width: 782px) { .khabar-cards { grid-template-columns: 1fr; max-width: none; } }

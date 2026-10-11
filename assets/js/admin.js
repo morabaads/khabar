@@ -178,6 +178,13 @@ jQuery(function ($) {
 		try { sessionStorage.setItem(ACC_KEY, JSON.stringify(open)); } catch (err) {}
 	}, true);
 	$(document).on('input change', 'details.khabar-acc :input', function () { accBadge($(this).closest('details.khabar-acc')); });
+	// Option cards that show another setting's value (e.g. the channel id) follow it live.
+	$(document).on('input', '#khabar-body :input[id^="khabar-"]', function () {
+		var key = this.id.replace(/^khabar-/, ''), v = $.trim(this.value || '');
+		$body.find('[data-hint-from="' + key + '"]').each(function () {
+			$(this).text(v || $(this).data('empty')).toggleClass('is-missing', !v);
+		});
+	});
 
 	function enhance() {
 		syncConditional();
