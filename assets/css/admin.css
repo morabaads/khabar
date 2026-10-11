@@ -410,3 +410,7 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-kv-state.is-ok { background: #e9f8ef; color: #12733a; }
 .khabar-copy { flex: none; font-size: 12px !important; font-weight: 700; text-decoration: none !important; }
 @media (max-width: 600px) { .khabar-bots-head { flex-direction: column; align-items: stretch; } .khabar-kv-label { min-width: 0; } }
+.khabar-bots-actions { display: flex; gap: 8px; flex: none; }
+.khabar-bots-actions form { margin: 0; }
+.khabar-bots-check-title { margin: 16px 0 8px; font-size: 13.5px; }
+@media (max-width: 600px) { .khabar-bots-actions { flex-wrap: wrap; } }

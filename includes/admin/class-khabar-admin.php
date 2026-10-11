@@ -28,6 +28,7 @@ class Khabar_Admin {
 		add_action( 'admin_post_khabar_sms_account', array( __CLASS__, 'sms_account' ) );
 		add_action( 'admin_post_khabar_sms_status', array( __CLASS__, 'sms_status' ) );
 		add_action( 'admin_post_khabar_set_webhooks', array( __CLASS__, 'set_webhooks' ) );
+		add_action( 'admin_post_khabar_check_bots', array( __CLASS__, 'check_bots' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notices' ) );
 	}
 
@@ -783,11 +784,18 @@ class Khabar_Admin {
 								<h2><?php esc_html_e( 'ربات‌های پیام‌رسان', 'khabar' ); ?></h2>
 								<p class="description"><?php esc_html_e( 'بعد از ذخیره توکن‌ها، وب‌هوک را ثبت کنید تا Start کاربران به سایت برسد.', 'khabar' ); ?></p>
 							</div>
-							<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-								<input type="hidden" name="action" value="khabar_set_webhooks">
-								<?php wp_nonce_field( 'khabar_set_webhooks' ); ?>
-								<?php submit_button( __( 'ثبت وب‌هوک ربات‌ها', 'khabar' ), 'secondary small', '', false ); ?>
-							</form>
+							<div class="khabar-bots-actions">
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="khabar_check_bots">
+									<?php wp_nonce_field( 'khabar_check_bots' ); ?>
+									<?php submit_button( __( 'بررسی ربات‌ها', 'khabar' ), 'secondary small', '', false ); ?>
+								</form>
+								<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+									<input type="hidden" name="action" value="khabar_set_webhooks">
+									<?php wp_nonce_field( 'khabar_set_webhooks' ); ?>
+									<?php submit_button( __( 'ثبت وب‌هوک ربات‌ها', 'khabar' ), 'secondary small', '', false ); ?>
+								</form>
+							</div>
 						</div>
 						<ul class="khabar-kv">
 							<?php
@@ -808,6 +816,22 @@ class Khabar_Admin {
 								<?php endif; ?>
 							</li>
 						</ul>
+						<?php
+						$khabar_check = get_transient( 'khabar_botcheck_' . get_current_user_id() );
+						if ( is_array( $khabar_check ) && $khabar_check ) :
+							delete_transient( 'khabar_botcheck_' . get_current_user_id() );
+							foreach ( $khabar_check as $khabar_net => $khabar_rows ) :
+								?>
+								<h3 class="khabar-bots-check-title"><?php echo esc_html( Khabar_Settings::channels()[ $khabar_net ] ); ?></h3>
+								<ul class="khabar-health">
+									<?php foreach ( $khabar_rows as $khabar_row ) : ?>
+										<li class="is-<?php echo esc_attr( $khabar_row[0] ); ?>"><?php echo esc_html( $khabar_row[1] ); ?></li>
+									<?php endforeach; ?>
+								</ul>
+								<?php
+							endforeach;
+						endif;
+						?>
 					</div>
 				</div>
 			<?php endif; ?>
@@ -1189,6 +1213,21 @@ class Khabar_Admin {
 	}
 
 	/**
+	 * Check the bots against the messengers' APIs and show the result in the bots box.
+	 */
+	public static function check_bots() {
+		self::guard( 'khabar_check_bots' );
+		$out = array();
+		foreach ( array( 'telegram', 'bale' ) as $network ) {
+			if ( Khabar_Settings::get( $network . '_token' ) || Khabar_Settings::has( 'channels_enabled', $network ) ) {
+				$out[ $network ] = Khabar_Messenger::check( $network );
+			}
+		}
+		set_transient( 'khabar_botcheck_' . get_current_user_id(), $out, 10 * MINUTE_IN_SECONDS );
+		self::back( admin_url( 'admin.php?page=khabar&view=settings&tab=channels' ), $out ? __( 'بررسی ربات‌ها انجام شد؛ نتیجه در بخش «ربات‌های پیام‌رسان» است.', 'khabar' ) : __( 'هیچ رباتی تنظیم نشده است.', 'khabar' ), $out ? 'success' : 'error' );
+	}
+
+	/**
 	 * Register Telegram / Bale webhooks.
 	 */
 	public static function set_webhooks() {
@@ -1226,7 +1265,7 @@ class Khabar_Admin {
 				break;
 			case 'telegram':
 			case 'bale':
-				$result = Khabar_Messenger::send( $channel, $to, $text );
+				$result = Khabar_Messenger::send( $channel, Khabar_Messenger::normalize_chat( $to ), $text );
 				break;
 			default:
 				$kind = isset( $_POST['sms_kind'] ) && 'otp' === $_POST['sms_kind'] ? 'otp' : 'text';

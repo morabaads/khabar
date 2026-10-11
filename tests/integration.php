@@ -694,6 +694,36 @@ t( is_wp_error( Khabar_Channel_Whatsapp::send( '09121234567', 'x' ) ), 'missing 
 remove_filter( 'pre_http_request', $wa_reply, 20 );
 settings( array( 'whatsapp_provider' => 'cloud', 'whatsapp_base_url' => '' ) );
 
+echo "\n== Messenger channel ids & bot check ==\n";
+foreach ( array( 'khabaramkon' => '@khabaramkon', '@khabaramkon' => '@khabaramkon', 'https://ble.ir/khabaramkon' => '@khabaramkon', 't.me/shop/' => '@shop', '-1001234' => '-1001234', '5551234' => '5551234', '' => '' ) as $in => $want ) {
+	t( $want === Khabar_Messenger::normalize_chat( $in ), "chat id '{$in}' → '{$want}'" );
+}
+settings( array( 'bale_token' => 'BLTOKEN', 'bale_bot' => 'kbot', 'bale_channel' => 'khabaramkon', 'channels_enabled' => array( 'sms', 'email', 'onsite', 'bale' ) ) );
+t( '@khabaramkon' === Khabar_Messenger::network( 'bale' )['channel'], 'bale channel without @ is posted to @khabaramkon' );
+$GLOBALS['bot_hook'] = '';
+$bot_reply = function ( $pre, $args, $url ) {
+	$ok = function ( $result ) { return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => wp_json_encode( array( 'ok' => true, 'result' => $result ) ), 'headers' => array(), 'cookies' => array() ); };
+	if ( false === strpos( $url, 'tapi.bale.ai' ) ) { return $pre; }
+	if ( false !== strpos( $url, '/getMe' ) ) { return $ok( array( 'id' => 77, 'username' => 'KBot' ) ); }
+	if ( false !== strpos( $url, '/getWebhookInfo' ) ) { return $ok( array( 'url' => $GLOBALS['bot_hook'], 'pending_update_count' => 0, 'last_error_message' => $GLOBALS['bot_hook'] ? 'Wrong response from the webhook: 403 Forbidden' : '', 'last_error_date' => time() ) ); }
+	if ( false !== strpos( $url, '/getChatMember' ) ) { return $ok( array( 'status' => 'member' ) ); }
+	if ( false !== strpos( $url, '/getChat' ) ) { return $ok( array( 'id' => -100, 'title' => 'خبرم کن' ) ); }
+	return $pre;
+};
+add_filter( 'pre_http_request', $bot_reply, 20, 3 );
+$levels = function ( $rows, $needle ) { foreach ( $rows as $r ) { if ( false !== strpos( $r[1], $needle ) ) { return $r[0]; } } return ''; };
+$rows = Khabar_Messenger::check( 'bale' );
+t( 'ok' === $levels( $rows, 'KBot' ), 'check: token ok, bot username compared case-insensitively' );
+t( 'error' === $levels( $rows, 'وب‌هوک ثبت نشده' ), 'check: missing webhook reported' );
+t( 'error' === $levels( $rows, 'ادمین نیست' ), 'check: bot not admin of channel reported' );
+$GLOBALS['bot_hook'] = Khabar_Messenger::webhook_url( 'bale' );
+$rows = Khabar_Messenger::check( 'bale' );
+t( 'ok' === $levels( $rows, 'درست ثبت شده' ) && 'error' === $levels( $rows, '403 Forbidden' ), 'check: registered webhook ok + last delivery error shown' );
+settings( array( 'bale_bot' => 'otherbot' ) );
+t( 'error' === $levels( Khabar_Messenger::check( 'bale' ), 'یکی نیست' ), 'check: wrong bot username reported' );
+remove_filter( 'pre_http_request', $bot_reply, 20 );
+settings( array( 'bale_bot' => 'kbot', 'bale_channel' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
+
 echo "\n== No duplicate sends ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'coupon_enabled' => 0, 'waves_enabled' => 0, 'exclusive_enabled' => 0 ) );
 $dup_pid = simple_product( 'دسته بازی MR-55', 500000, 0 );

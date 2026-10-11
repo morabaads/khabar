@@ -39,7 +39,7 @@ class Khabar_Messenger {
 				'api'      => ( $tg_base ? $tg_base : 'https://api.telegram.org' ) . '/bot%s/%s',
 				'link'     => 'https://t.me/%s?start=%s',
 				'personal' => true,
-				'channel'  => (string) Khabar_Settings::get( 'telegram_channel' ),
+				'channel'  => self::normalize_chat( Khabar_Settings::get( 'telegram_channel' ) ),
 			),
 			'bale'     => array(
 				'label'    => __( 'بله', 'khabar' ),
@@ -48,7 +48,7 @@ class Khabar_Messenger {
 				'api'      => 'https://tapi.bale.ai/bot%s/%s',
 				'link'     => 'https://ble.ir/%s?start=%s',
 				'personal' => true,
-				'channel'  => (string) Khabar_Settings::get( 'bale_channel' ),
+				'channel'  => self::normalize_chat( Khabar_Settings::get( 'bale_channel' ) ),
 			),
 		);
 	}
@@ -93,6 +93,108 @@ class Khabar_Messenger {
 	 */
 	public static function webhook_url( $network ) {
 		return add_query_arg( 'secret', self::secret( $network ), rest_url( 'khabar/v1/bot/' . $network ) );
+	}
+
+	/**
+	 * Normalize a chat / channel id: numeric ids stay as they are; a public username (with or without
+	 * "@", or a pasted t.me / ble.ir link) becomes "@username", the form the Bot APIs expect.
+	 *
+	 * @param string $id Raw id.
+	 * @return string
+	 */
+	public static function normalize_chat( $id ) {
+		$id = trim( (string) $id );
+		$id = preg_replace( '#^(?:https?://)?(?:www\.)?(?:t\.me|telegram\.me|ble\.ir|web\.bale\.ai)/+#i', '', $id );
+		$id = trim( $id, "/ \t" );
+		if ( '' === $id || preg_match( '/^-?\d+$/', $id ) ) {
+			return $id;
+		}
+		return '@' . ltrim( $id, '@' );
+	}
+
+	/**
+	 * Health check of a bot, straight from the messenger's API: token, bot username, webhook
+	 * registration and its last delivery error, linked customers and channel access.
+	 *
+	 * @param string $network telegram|bale.
+	 * @return array[] [ level (ok|warn|error), text ]
+	 */
+	public static function check( $network ) {
+		global $wpdb;
+		$n   = self::network( $network );
+		$out = array();
+		if ( ! $n || ! $n['token'] ) {
+			return array( array( 'error', __( 'توکن ربات وارد نشده است.', 'khabar' ) ) );
+		}
+		$me = self::api( $network, 'getMe', array() );
+		if ( is_wp_error( $me ) ) {
+			/* translators: %s error */
+			return array( array( 'error', sprintf( __( 'ربات پاسخ نداد (توکن اشتباه است یا سایت به سرور پیام‌رسان دسترسی ندارد): %s', 'khabar' ), $me->get_error_message() ) ) );
+		}
+		$username = isset( $me['username'] ) ? (string) $me['username'] : '';
+		/* translators: %s bot username */
+		$out[] = array( 'ok', sprintf( __( 'توکن درست است؛ ربات ‎@%s پاسخ داد.', 'khabar' ), $username ) );
+		if ( ! $n['bot'] ) {
+			$out[] = array( 'error', __( 'نام کاربری ربات وارد نشده؛ دکمه «دریافت در پیام‌رسان» به مشتری نمایش داده نمی‌شود.', 'khabar' ) );
+		} elseif ( $username && 0 !== strcasecmp( $username, $n['bot'] ) ) {
+			/* translators: 1: username in settings 2: username of the token's bot */
+			$out[] = array( 'error', sprintf( __( 'نام کاربری ربات در تنظیمات (%1$s) با ربات این توکن (%2$s) یکی نیست؛ مشتری به ربات اشتباه فرستاده می‌شود.', 'khabar' ), $n['bot'], $username ) );
+		}
+		if ( ! Khabar_Settings::has( 'channels_enabled', $network ) ) {
+			$out[] = array( 'error', __( 'این پیام‌رسان در «کانال‌های فعال» (بالای همین صفحه) تیک نخورده؛ پیام شخصی ارسال نمی‌شود.', 'khabar' ) );
+		}
+		if ( 0 !== strpos( rest_url(), 'https://' ) ) {
+			$out[] = array( 'error', __( 'آدرس سایت HTTPS نیست؛ پیام‌رسان‌ها وب‌هوک بدون HTTPS را قبول نمی‌کنند.', 'khabar' ) );
+		}
+
+		$info = self::api( $network, 'getWebhookInfo', array() );
+		if ( is_wp_error( $info ) ) {
+			/* translators: %s error */
+			$out[] = array( 'warn', sprintf( __( 'وضعیت وب‌هوک دریافت نشد: %s', 'khabar' ), $info->get_error_message() ) );
+		} else {
+			$url = isset( $info['url'] ) ? (string) $info['url'] : '';
+			if ( '' === $url ) {
+				$out[] = array( 'error', __( 'وب‌هوک ثبت نشده است؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید. بدون آن، Start مشتری به سایت نمی‌رسد و حسابش متصل نمی‌شود.', 'khabar' ) );
+			} elseif ( $url !== self::webhook_url( $network ) ) {
+				$out[] = array( 'error', __( 'وب‌هوک ربات به آدرس دیگری ثبت شده (مثلاً سایت یا افزونه دیگری)؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید.', 'khabar' ) );
+			} else {
+				$out[] = array( 'ok', __( 'وب‌هوک درست ثبت شده است.', 'khabar' ) );
+			}
+			if ( ! empty( $info['last_error_message'] ) ) {
+				$when  = ! empty( $info['last_error_date'] ) ? wp_date( 'Y/m/d H:i', (int) $info['last_error_date'] ) : '';
+				/* translators: 1: date 2: error */
+				$out[] = array( 'error', sprintf( __( 'پیام‌رسان آخرین بار نتوانست پیام کاربر را به سایت برساند (%1$s): %2$s — معمولاً فایروال، افزونه امنیتی یا مسدود بودن REST API سایت.', 'khabar' ), $when, $info['last_error_message'] ) );
+			}
+			if ( ! empty( $info['pending_update_count'] ) ) {
+				/* translators: %d count */
+				$out[] = array( 'warn', sprintf( __( '%d پیام کاربر در صف ربات مانده و هنوز به سایت نرسیده.', 'khabar' ), (int) $info['pending_update_count'] ) );
+			}
+		}
+
+		$linked = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Khabar_Install::table( 'messenger' ) . ' WHERE network = %s', $network ) ); // phpcs:ignore
+		$out[]  = $linked
+			/* translators: %d customers */
+			? array( 'ok', sprintf( __( '%d مشتری حسابش را به ربات متصل کرده است.', 'khabar' ), $linked ) )
+			: array( 'warn', __( 'هنوز هیچ مشتری‌ای متصل نشده. پیام شخصی فقط به مشتریانی می‌رسد که بعد از ثبت درخواست روی «دریافت در پیام‌رسان» زده و در ربات Start را زده باشند.', 'khabar' ) );
+
+		if ( $n['channel'] ) {
+			$chat = self::api( $network, 'getChat', array( 'chat_id' => $n['channel'] ) );
+			if ( is_wp_error( $chat ) ) {
+				/* translators: 1: channel 2: error */
+				$out[] = array( 'error', sprintf( __( 'کانال %1$s در دسترس ربات نیست: %2$s — شناسه را بررسی کنید و ربات را ادمین کانال کنید.', 'khabar' ), $n['channel'], $chat->get_error_message() ) );
+			} else {
+				$member = ! empty( $me['id'] ) ? self::api( $network, 'getChatMember', array( 'chat_id' => $n['channel'], 'user_id' => $me['id'] ) ) : null;
+				$status = is_array( $member ) && isset( $member['status'] ) ? $member['status'] : '';
+				if ( $status && ! in_array( $status, array( 'administrator', 'creator' ), true ) ) {
+					/* translators: %s channel */
+					$out[] = array( 'error', sprintf( __( 'ربات در کانال %s ادمین نیست؛ برای انتشار پست باید ادمین با اجازه ارسال پیام باشد.', 'khabar' ), $n['channel'] ) );
+				} else {
+					/* translators: 1: channel 2: title */
+					$out[] = array( 'ok', sprintf( __( 'کانال %1$s («%2$s») در دسترس ربات است.', 'khabar' ), $n['channel'], isset( $chat['title'] ) ? $chat['title'] : '' ) );
+				}
+			}
+		}
+		return $out;
 	}
 
 	/**
