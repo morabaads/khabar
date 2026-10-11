@@ -395,7 +395,7 @@ class Khabar_Settings {
 					),
 					'_msg_heading'       => array(
 						'type'  => 'heading',
-						'label' => __( 'پیام‌رسان‌ها (تلگرام، بله، ایتا)', 'khabar' ),
+						'label' => __( 'پیام‌رسان‌ها (تلگرام، بله)', 'khabar' ),
 						'desc'  => __( 'کاربر با یک کلیک ربات را استارت می‌کند و حسابش متصل می‌شود. پس از وارد کردن توکن، دکمه «ثبت وب‌هوک ربات‌ها» را بزنید (سایت باید HTTPS باشد).', 'khabar' ),
 					),
 					'_tg_group'          => array(
@@ -445,22 +445,6 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'شناسه کانال بله', 'khabar' ),
 					),
-					'_eitaa_group'       => array(
-						'type'  => 'group',
-						'label' => __( 'ایتا', 'khabar' ),
-						'desc'  => __( 'فقط اعلام در کانال (API ایتایار پیام شخصی ندارد)', 'khabar' ),
-						'icon'  => 'chat',
-						'ready' => array( 'eitaa_token', 'eitaa_channel' ),
-					),
-					'eitaa_token'        => array(
-						'type'  => 'password',
-						'label' => __( 'توکن ایتایار', 'khabar' ),
-						'desc'  => __( 'API ایتایار فقط امکان ارسال به کانال/گروه را دارد؛ ایتا برای اعلام عمومی در کانال استفاده می‌شود.', 'khabar' ),
-					),
-					'eitaa_channel'      => array(
-						'type'  => 'text',
-						'label' => __( 'شناسه کانال ایتا', 'khabar' ),
-					),
 					'_bc_group'          => array(
 						'type'      => 'group',
 						'label'     => __( 'اعلام در کانال فروشگاه', 'khabar' ),
@@ -476,7 +460,6 @@ class Khabar_Settings {
 						'options' => array(
 							'telegram' => __( 'کانال تلگرام', 'khabar' ),
 							'bale'     => __( 'کانال بله', 'khabar' ),
-							'eitaa'    => __( 'کانال ایتا', 'khabar' ),
 						),
 						'default' => array(),
 					),
@@ -890,6 +873,8 @@ class Khabar_Settings {
 					$current[ $key ] = sanitize_text_field( (string) $raw );
 			}
 		}
+		// Eitaa was removed in 1.5.6: drop its leftover credentials.
+		unset( $current['eitaa_token'], $current['eitaa_channel'] );
 		update_option( self::OPTION, $current );
 		self::$cache = null;
 	}

@@ -471,7 +471,7 @@ settings( array(
 	'channels_enabled' => array( 'sms', 'email', 'onsite', 'telegram', 'bale' ),
 	'telegram_token'   => 'TGTOKEN', 'telegram_bot' => 'khabar_bot', 'telegram_api_base' => 'https://api.telegram.org',
 	'bale_token'       => 'BLTOKEN', 'bale_bot' => 'kbot',
-	'eitaa_token'      => 'EITOKEN', 'eitaa_channel' => '@shopeitaa', 'telegram_channel' => '@tgshop',
+	'bale_channel'     => '@shopbale', 'telegram_channel' => '@tgshop',
 	'broadcast_networks' => array(), 'coupon_enabled' => 0, 'alt_enabled' => 0,
 ) );
 t( Khabar_Messenger::personal_ready( 'telegram' ) && Khabar_Messenger::personal_ready( 'bale' ), 'telegram and bale personal messaging ready' );
@@ -520,18 +520,21 @@ $GLOBALS['khabar_http'] = array();
 $wh( 'bale', '/start ' . $bcode, Khabar_Messenger::secret( 'bale' ), 999 );
 t( '999' === Khabar_Messenger::chat_id( $guest_owner, 'bale' ) && http_to( 'tapi.bale.ai/botBLTOKEN/sendMessage' ), 'bale linked via tapi.bale.ai' );
 
-echo "\n== Channel broadcast (Telegram + Eitaa) ==\n";
-settings( array( 'broadcast_networks' => array( 'telegram', 'eitaa' ), 'broadcast_min_waiting' => 2 ) );
+echo "\n== Channel broadcast (Telegram + Bale) ==\n";
+// 'eitaa' left over from an older version must be ignored.
+settings( array( 'broadcast_networks' => array( 'telegram', 'bale', 'eitaa' ), 'broadcast_min_waiting' => 2 ) );
 $bc_pid = simple_product( 'گوشی پرتقاضا', 20000000, 0 );
 rest( 'POST', 'subscribe', array( 'product_id' => $bc_pid, 'in_stock' => 1, 'phone' => '09134440001' ) );
 rest( 'POST', 'subscribe', array( 'product_id' => $bc_pid, 'in_stock' => 1, 'phone' => '09134440002' ) );
 $GLOBALS['khabar_http'] = array();
 wc_update_product_stock( wc_get_product( $bc_pid ), 5, 'set' );
 Khabar_Dispatcher::check_product( $bc_pid );
-$eitaa = http_to( 'eitaayar.ir/api/EITOKEN/sendMessage' );
+$on_channel = function ( $reqs, $chat ) { return array_values( array_filter( $reqs, function ( $r ) use ( $chat ) { return $chat === ( json_decode( $r['body'], true )['chat_id'] ?? '' ); } ) ); };
+$balec = $on_channel( http_to( 'botBLTOKEN/sendMessage' ), '@shopbale' );
 $tgc   = http_to( 'botTGTOKEN/sendMessage' );
-$eb    = $eitaa ? json_decode( $eitaa[0]['body'], true ) : array();
-t( $eb && '@shopeitaa' === $eb['chat_id'] && false !== strpos( $eb['text'], 'دوباره موجود شد' ), 'eitaa channel post: ' . str_replace( "\n", ' | ', mb_substr( $eb['text'] ?? '', 0, 80 ) ) );
+$eb    = $balec ? json_decode( $balec[0]['body'], true ) : array();
+t( $eb && '@shopbale' === $eb['chat_id'] && false !== strpos( $eb['text'], 'دوباره موجود شد' ), 'bale channel post: ' . str_replace( "\n", ' | ', mb_substr( $eb['text'] ?? '', 0, 80 ) ) );
+t( ! http_to( 'eitaayar.ir' ), 'eitaa removed: nothing sent there' );
 t( (bool) array_filter( $tgc, function ( $r ) { return '@tgshop' === json_decode( $r['body'], true )['chat_id']; } ), 'telegram channel post' );
 $GLOBALS['khabar_http'] = array();
 rest( 'POST', 'subscribe', array( 'product_id' => $bc_pid, 'price_change' => 1, 'phone' => '09134440003' ) );
@@ -540,7 +543,7 @@ rest( 'POST', 'subscribe', array( 'product_id' => $bc_pid, 'in_stock' => 1, 'pho
 rest( 'POST', 'subscribe', array( 'product_id' => $bc_pid, 'in_stock' => 1, 'phone' => '09134440005' ) );
 wc_update_product_stock( wc_get_product( $bc_pid ), 5, 'set' );
 Khabar_Dispatcher::check_product( $bc_pid );
-t( ! http_to( 'eitaayar.ir' ), 'no second broadcast for the same item within 24h' );
+t( ! $on_channel( http_to( 'botBLTOKEN/sendMessage' ), '@shopbale' ) && ! $on_channel( http_to( 'botTGTOKEN/sendMessage' ), '@tgshop' ), 'no second broadcast for the same item within 24h' );
 settings( array( 'broadcast_networks' => array(), 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
 echo "\n== Auto discount coupon ==\n";

@@ -1,7 +1,7 @@
 <?php
 /**
  * Messenger channels: Telegram & Bale (personal messages through a bot the customer
- * starts with a one-time deep link) and channel broadcasting for Telegram, Bale and Eitaa.
+ * starts with a one-time deep link) and channel broadcasting for Telegram and Bale.
  *
  * Linking flow:
  *   1. The visitor clicks "connect" → we create a one-time code bound to their owner key.
@@ -49,15 +49,6 @@ class Khabar_Messenger {
 				'link'     => 'https://ble.ir/%s?start=%s',
 				'personal' => true,
 				'channel'  => (string) Khabar_Settings::get( 'bale_channel' ),
-			),
-			'eitaa'    => array(
-				'label'    => __( 'ایتا', 'khabar' ),
-				'token'    => (string) Khabar_Settings::get( 'eitaa_token' ),
-				'bot'      => '',
-				'api'      => 'https://eitaayar.ir/api/%s/%s',
-				'link'     => '',
-				'personal' => false,
-				'channel'  => (string) Khabar_Settings::get( 'eitaa_channel' ),
 			),
 		);
 	}
@@ -163,7 +154,7 @@ class Khabar_Messenger {
 		}
 		$code = wp_remote_retrieve_response_code( $res );
 		$body = json_decode( wp_remote_retrieve_body( $res ), true );
-		// Telegram/Bale: {"ok":true,"result":…}; Eitaayar: {"ok":true,…}.
+		// Telegram/Bale: {"ok":true,"result":…}.
 		if ( $code >= 300 || ( is_array( $body ) && isset( $body['ok'] ) && ! $body['ok'] ) ) {
 			$desc = is_array( $body ) && isset( $body['description'] ) ? $body['description'] : 'HTTP ' . $code;
 			return new WP_Error( 'khabar_msg', $n['label'] . ': ' . $desc );
@@ -359,31 +350,24 @@ class Khabar_Messenger {
 		if ( ! $chat_id ) {
 			return new WP_Error( 'khabar_msg', __( 'حساب پیام‌رسان متصل نیست.', 'khabar' ) );
 		}
-		if ( 'eitaa' === $network ) {
-			$params = array(
-				'chat_id' => $chat_id,
-				'text'    => $url ? $text . "\n" . $url : $text,
-			);
-		} else {
-			$params = array(
-				'chat_id'                  => $chat_id,
-				'text'                     => $text,
-				'disable_web_page_preview' => false,
-			);
-			if ( $url && 0 === strpos( $url, 'https://' ) ) {
-				$params['reply_markup'] = array(
-					'inline_keyboard' => array(
+		$params = array(
+			'chat_id'                  => $chat_id,
+			'text'                     => $text,
+			'disable_web_page_preview' => false,
+		);
+		if ( $url && 0 === strpos( $url, 'https://' ) ) {
+			$params['reply_markup'] = array(
+				'inline_keyboard' => array(
+					array(
 						array(
-							array(
-								'text' => $button ? $button : __( '🛒 مشاهده و خرید', 'khabar' ),
-								'url'  => $url,
-							),
+							'text' => $button ? $button : __( '🛒 مشاهده و خرید', 'khabar' ),
+							'url'  => $url,
 						),
 					),
-				);
-			} elseif ( $url ) {
-				$params['text'] .= "\n" . $url;
-			}
+				),
+			);
+		} elseif ( $url ) {
+			$params['text'] .= "\n" . $url;
 		}
 		$res = self::api( $network, 'sendMessage', $params );
 		if ( is_wp_error( $res ) ) {

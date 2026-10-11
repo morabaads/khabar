@@ -463,7 +463,7 @@ class Khabar_Dispatcher {
 			$waiting = Khabar_Subscriptions::waiting_count( $product_id, null, true );
 			if ( $waiting < $min ) {
 				/* translators: 1: min 2: waiting */
-				$out[] = array( 'warn', sprintf( __( 'اعلام در کانال (تلگرام/بله/ایتا) فقط وقتی انجام می‌شود که دست‌کم %1$s نفر منتظر باشند و اعلان به آن‌ها ارسال شود؛ این محصول الان %2$s منتظر دارد. «حداقل تعداد منتظر» را در تنظیمات کمتر کنید.', 'khabar' ), number_format_i18n( $min ), number_format_i18n( $waiting ) ) );
+				$out[] = array( 'warn', sprintf( __( 'اعلام در کانال (تلگرام/بله) فقط وقتی انجام می‌شود که دست‌کم %1$s نفر منتظر باشند و اعلان به آن‌ها ارسال شود؛ این محصول الان %2$s منتظر دارد. «حداقل تعداد منتظر» را در تنظیمات کمتر کنید.', 'khabar' ), number_format_i18n( $min ), number_format_i18n( $waiting ) ) );
 			}
 		}
 		return $out;

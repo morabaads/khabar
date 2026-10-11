@@ -764,7 +764,6 @@ class Khabar_Admin {
 							<option value="whatsapp"><?php esc_html_e( 'واتساپ', 'khabar' ); ?></option>
 							<option value="telegram"><?php esc_html_e( 'تلگرام (chat id یا @channel)', 'khabar' ); ?></option>
 							<option value="bale"><?php esc_html_e( 'بله (chat id یا @channel)', 'khabar' ); ?></option>
-							<option value="eitaa"><?php esc_html_e( 'ایتا (شناسه کانال)', 'khabar' ); ?></option>
 						</select>
 						<select name="sms_kind" title="<?php esc_attr_e( 'نوع پیامک آزمایشی', 'khabar' ); ?>">
 							<option value="text"><?php esc_html_e( 'پیامک متنی', 'khabar' ); ?></option>
@@ -1143,7 +1142,6 @@ class Khabar_Admin {
 				break;
 			case 'telegram':
 			case 'bale':
-			case 'eitaa':
 				$result = Khabar_Messenger::send( $channel, $to, $text );
 				break;
 			default:
