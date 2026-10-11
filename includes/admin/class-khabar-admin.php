@@ -55,6 +55,7 @@ class Khabar_Admin {
 			'logs'      => array( __( 'لاگ ارسال', 'khabar' ), array( __CLASS__, 'page_logs' ) ),
 			'forecast'  => array( __( 'پیش‌بینی تقاضا', 'khabar' ), array( 'Khabar_Forecast_Page', 'page' ) ),
 			'settings'  => array( __( 'تنظیمات', 'khabar' ), array( __CLASS__, 'page_settings' ) ),
+			'help'      => array( __( 'راهنما', 'khabar' ), array( __CLASS__, 'page_help' ) ),
 			'diagnose'  => array( __( 'عیب‌یابی ارسال', 'khabar' ), array( __CLASS__, 'page_diagnose' ), 'hidden' ),
 		);
 	}
@@ -169,7 +170,7 @@ class Khabar_Admin {
 		?>
 		<div class="wrap khabar-admin" id="khabar-app">
 			<?php
-			$icons = array( 'dashboard' => 'grid', 'requests' => 'list', 'reports' => 'chart', 'logs' => 'send', 'forecast' => 'trend', 'settings' => 'gear' );
+			$icons = array( 'dashboard' => 'grid', 'requests' => 'list', 'reports' => 'chart', 'logs' => 'send', 'forecast' => 'trend', 'settings' => 'gear', 'help' => 'help' );
 			ob_start();
 			?>
 			<nav class="khabar-tabs khabar-nav" aria-label="<?php esc_attr_e( 'بخش‌های خبرم کن', 'khabar' ); ?>">
@@ -1099,6 +1100,155 @@ class Khabar_Admin {
 			);
 		}
 		echo '</div>';
+	}
+
+	/**
+	 * Help: a short, plain guide to each part of the plugin with links to the matching settings.
+	 */
+	public static function page_help() {
+		$set = function ( $tab ) {
+			return admin_url( 'admin.php?page=khabar&view=settings&tab=' . $tab );
+		};
+		$steps = array(
+			array( __( 'کانال ارسال را وصل کنید', 'khabar' ), __( 'تنظیمات ← کانال‌های ارسال: سامانه پیامک را تنظیم و «کانال‌های فعال» را تیک بزنید.', 'khabar' ) ),
+			array( __( 'ارسال آزمایشی بگیرید', 'khabar' ), __( 'پایین همان صفحه، یک پیام تست به شماره خودتان بفرستید.', 'khabar' ) ),
+			array( __( 'دکمه را در صفحه محصول ببینید', 'khabar' ), __( 'روی کالای ناموجود، دکمه «خبرم کن» خودکار نمایش داده می‌شود.', 'khabar' ) ),
+			array( __( 'بقیه‌اش خودکار است', 'khabar' ), __( 'وقتی موجودی یا قیمت تغییر کند، به منتظران خبر داده می‌شود.', 'khabar' ) ),
+		);
+		$topics = array(
+			array(
+				'icon'  => 'bell',
+				'title' => __( 'خبرم کن چطور کار می‌کند؟', 'khabar' ),
+				'items' => array(
+					__( 'مشتری روی «خبرم کن» می‌زند، تنوع (سایز/رنگ) و شرط را انتخاب می‌کند و موبایل یا ایمیلش را می‌دهد.', 'khabar' ),
+					__( 'شرط‌ها: موجود شدن، کمتر شدن قیمت از عدد دلخواه، بیشتر شدن قیمت، هر تغییر قیمت، یا حداقل موجودی.', 'khabar' ),
+					__( 'با تغییر موجودی یا قیمت (دستی، ایمپورت یا هر روش دیگر)، درخواست‌ها بررسی و پیام ارسال می‌شود.', 'khabar' ),
+					__( 'به هر درخواست فقط یک بار خبر داده می‌شود؛ «هر تغییر قیمت» تا وقتی لغو نشود ادامه دارد.', 'khabar' ),
+				),
+				'links' => array( array( __( 'تنظیمات عمومی', 'khabar' ), $set( 'general' ) ) ),
+			),
+			array(
+				'icon'  => 'send',
+				'title' => __( 'کانال‌های ارسال', 'khabar' ),
+				'items' => array(
+					__( 'پیامک: سامانه و کلید را وارد کنید. برای خط خدماتی، «نوع ارسال» را روی پترن بگذارید و کد پترن هر رویداد را اضافه کنید.', 'khabar' ),
+					__( 'ایمیل و اعلان داخل سایت: بدون تنظیم کار می‌کنند.', 'khabar' ),
+					__( 'پوش: سایت باید HTTPS باشد؛ فقط آیکون را انتخاب کنید.', 'khabar' ),
+					__( 'بله: با «سفیر» پیام مستقیم به شماره موبایل مشتری می‌رود. بدون سفیر، مشتری باید ربات را Start کند.', 'khabar' ),
+					__( 'تلگرام: توکن و نام ربات را بدهید و «ثبت وب‌هوک ربات‌ها» را بزنید؛ مشتری با دکمه «دریافت در تلگرام» وصل می‌شود.', 'khabar' ),
+					__( 'اعلام در کانال: موجود شدن کالاهای پرتقاضا در کانال تلگرام/بله پست می‌شود (ربات باید ادمین کانال باشد).', 'khabar' ),
+				),
+				'links' => array( array( __( 'کانال‌های ارسال', 'khabar' ), $set( 'channels' ) ) ),
+			),
+			array(
+				'icon'  => 'chat',
+				'title' => __( 'قالب پیام‌ها', 'khabar' ),
+				'items' => array(
+					__( 'برای هر رویداد یک متن کوتاه (پیامک و پیام‌رسان)، یک عنوان و یک متن ایمیل دارید.', 'khabar' ),
+					__( 'متغیرها مثل {product_name}، {price} و {link} موقع ارسال با مقدار واقعی جایگزین می‌شوند.', 'khabar' ),
+					__( 'هر وقت خواستید با «بازگردانی پیش‌فرض» به متن اولیه برگردید.', 'khabar' ),
+				),
+				'links' => array( array( __( 'قالب پیام‌ها', 'khabar' ), $set( 'templates' ) ) ),
+			),
+			array(
+				'icon'  => 'trend',
+				'title' => __( 'رشد فروش', 'khabar' ),
+				'items' => array(
+					__( 'کد تخفیف خودکار: برای هر منتظر یک کد یکبار مصرف و محدود به همان کالا ساخته و در پیام گذاشته می‌شود.', 'khabar' ),
+					__( 'محصول جایگزین: اگر کسی مدت زیادی منتظر مانده، محصولات مشابهِ موجود به او پیشنهاد می‌شود.', 'khabar' ),
+					__( 'تاریخچه قیمت: نمودار تغییر قیمت در صفحه محصول.', 'khabar' ),
+				),
+				'links' => array( array( __( 'رشد فروش', 'khabar' ), $set( 'growth' ) ) ),
+			),
+			array(
+				'icon'  => 'grid',
+				'title' => __( 'داشبورد، درخواست‌ها و گزارش‌ها', 'khabar' ),
+				'items' => array(
+					__( 'داشبورد: تعداد منتظران، پیام‌های ارسالی، کلیک، خرید و درآمد حاصل از اعلان‌ها.', 'khabar' ),
+					__( 'درخواست‌ها: همه درخواست‌ها با جستجو، فیلتر، لغو/حذف گروهی و خروجی اکسل.', 'khabar' ),
+					__( 'گزارش‌ها: پرتقاضاترین کالاها و سایز/رنگ‌ها.', 'khabar' ),
+					__( 'لاگ ارسال: نتیجه هر پیام؛ پیام ناموفق را می‌توانید دوباره بفرستید.', 'khabar' ),
+				),
+				'links' => array(
+					array( __( 'داشبورد', 'khabar' ), admin_url( 'admin.php?page=khabar' ) ),
+					array( __( 'لاگ ارسال', 'khabar' ), admin_url( 'admin.php?page=khabar&view=logs' ) ),
+				),
+			),
+			array(
+				'icon'  => 'box',
+				'title' => __( 'پیش‌بینی تقاضا', 'khabar' ),
+				'items' => array(
+					__( 'برای هر کالای ناموجود می‌گوید چند عدد سفارش بدهید، بر اساس تعداد منتظران و فروش قبلی.', 'khabar' ),
+					__( 'زمان تحویل تامین‌کننده و تعداد روزهای پوشش را تغییر دهید تا عدد پیشنهادی به‌روز شود.', 'khabar' ),
+					__( 'خروجی CSV آن را مستقیم برای تامین‌کننده بفرستید.', 'khabar' ),
+				),
+				'links' => array( array( __( 'پیش‌بینی تقاضا', 'khabar' ), admin_url( 'admin.php?page=khabar&view=forecast' ) ) ),
+			),
+			array(
+				'icon'  => 'gear',
+				'title' => __( 'پیشرفته (اختیاری)', 'khabar' ),
+				'items' => array(
+					__( 'ارسال موجی: وقتی موجودی کم است، اول به همان تعداد نفر اول خبر داده می‌شود، نه به همه.', 'khabar' ),
+					__( 'رزرو زودتر از دیگران: منتظران چند دقیقه فرصت خرید اختصاصی دارند.', 'khabar' ),
+					__( 'تایید با کد: شماره/ایمیل مهمان با کد یکبار مصرف تایید می‌شود تا شماره دیگران ثبت نشود.', 'khabar' ),
+				),
+				'links' => array( array( __( 'پیشرفته', 'khabar' ), $set( 'advanced' ) ) ),
+			),
+			array(
+				'icon'  => 'cube',
+				'title' => __( 'نمایش در سایت', 'khabar' ),
+				'items' => array(
+					__( 'جای دکمه در صفحه محصول را از «تنظیمات عمومی ← محل نمایش» عوض کنید. رنگ‌ها در «ظاهر و رنگ‌ها» است.', 'khabar' ),
+					__( 'شورت‌کدها: [khabar] دکمه، [khabar_my_alerts] پنل «خبرم کن‌های من»، [khabar_bell] زنگوله اعلان‌ها، [khabar_price_history] نمودار قیمت.', 'khabar' ),
+					__( 'در المنتور، ویجت‌ها در دسته «خبرم کن» هستند. اگر صفحه محصول را با المنتور ساخته‌اید، محل نمایش را «فقط با شورت‌کد» بگذارید.', 'khabar' ),
+					__( 'مشتری درخواست‌هایش را در «حساب کاربری ← خبرم کن‌های من» می‌بیند و ویرایش می‌کند.', 'khabar' ),
+				),
+				'links' => array( array( __( 'ظاهر و رنگ‌ها', 'khabar' ), $set( 'appearance' ) ) ),
+			),
+			array(
+				'icon'  => 'help',
+				'title' => __( 'پیام نرسید؟', 'khabar' ),
+				'items' => array(
+					__( 'لاگ ارسال را ببینید؛ علت خطا کنار هر پیام ناموفق نوشته شده است.', 'khabar' ),
+					__( 'ارسال آزمایشی بگیرید تا مطمئن شوید سامانه پیامک یا ربات درست تنظیم شده است.', 'khabar' ),
+					__( 'برای تلگرام و بله، دکمه «بررسی ربات‌ها» را بزنید.', 'khabar' ),
+					__( 'در داشبورد کنار هر محصول دکمه «عیب‌یابی» را بزنید تا علت ارسال نشدن هر درخواست را ببینید.', 'khabar' ),
+				),
+				'links' => array( array( __( 'لاگ ارسال', 'khabar' ), admin_url( 'admin.php?page=khabar&view=logs' ) ) ),
+			),
+		);
+		?>
+		<div class="khabar-view khabar-help">
+			<section class="khabar-set-card">
+				<header><h2><?php esc_html_e( 'شروع سریع', 'khabar' ); ?></h2></header>
+				<ol class="khabar-steps">
+					<?php foreach ( $steps as $i => $step ) : ?>
+						<li><span class="khabar-step-n"><?php echo esc_html( number_format_i18n( $i + 1 ) ); ?></span><div><b><?php echo esc_html( $step[0] ); ?></b><small><?php echo esc_html( $step[1] ); ?></small></div></li>
+					<?php endforeach; ?>
+				</ol>
+			</section>
+			<section class="khabar-set-card">
+				<header><h2><?php esc_html_e( 'بخش‌ها', 'khabar' ); ?></h2></header>
+				<?php foreach ( $topics as $i => $topic ) : ?>
+					<details class="khabar-acc" id="khabar-acc-help-<?php echo esc_attr( $i ); ?>">
+						<summary><span class="khabar-acc-icon"><?php echo Khabar_Frontend::icon( $topic['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span class="khabar-acc-title"><b><?php echo esc_html( $topic['title'] ); ?></b></span><span class="khabar-acc-chev" aria-hidden="true"></span></summary>
+						<div class="khabar-acc-body">
+							<ul class="khabar-help-list">
+								<?php foreach ( $topic['items'] as $item ) : ?>
+									<li><?php echo esc_html( $item ); ?></li>
+								<?php endforeach; ?>
+							</ul>
+							<p class="khabar-help-links">
+								<?php foreach ( $topic['links'] as $link ) : ?>
+									<a class="button button-small" href="<?php echo esc_url( $link[1] ); ?>"><?php echo esc_html( $link[0] ); ?> ←</a>
+								<?php endforeach; ?>
+							</p>
+						</div>
+					</details>
+				<?php endforeach; ?>
+			</section>
+		</div>
+		<?php
 	}
 
 	/**

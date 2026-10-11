@@ -128,6 +128,7 @@ jQuery(function ($) {
 		$body.find('tr[data-show-if]').each(function () { $(this).toggle(rulesOk(this)); });
 		// A settings group is shown when its own rule passes and at least one of its rows is.
 		$body.find('details.khabar-acc').each(function () {
+			if (!$(this).find('tr').length) { return; } // Not a settings panel (e.g. help cards).
 			var rows = $(this).find('tr').filter(function () { return this.style.display !== 'none'; }).length;
 			$(this).toggle(rows > 0 && (!this.hasAttribute('data-show-if') || rulesOk(this)));
 			accBadge($(this));

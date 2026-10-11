@@ -414,3 +414,16 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-bots-actions form { margin: 0; }
 .khabar-bots-check-title { margin: 16px 0 8px; font-size: 13.5px; }
 @media (max-width: 600px) { .khabar-bots-actions { flex-wrap: wrap; } }
+
+/* Help */
+.khabar-steps { margin: 14px 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; counter-reset: none; }
+.khabar-steps li { list-style: none; margin: 0; display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--ka-line); border-radius: 12px; background: var(--ka-soft); }
+.khabar-step-n { flex: 0 0 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: var(--ka); color: #fff; font-weight: 800; font-size: 13px; }
+.khabar-steps b { display: block; font-size: 13.5px; line-height: 1.6; }
+.khabar-steps small { display: block; color: #6b6f7b; font-size: 12.5px; line-height: 1.7; }
+.khabar-help .khabar-set-card > .khabar-acc:first-of-type { margin-top: 14px; }
+.khabar-help-list { margin: 12px 0 4px; padding: 0; }
+.khabar-help-list li { position: relative; margin: 0 0 6px; padding-inline-start: 16px; line-height: 1.9; font-size: 13.5px; }
+.khabar-help-list li::before { content: ""; position: absolute; inset-inline-start: 2px; top: 11px; width: 6px; height: 6px; border-radius: 50%; background: var(--ka); }
+.khabar-help-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 10px; }
+.khabar-help-links .button { border-radius: 9px; }
