@@ -202,6 +202,9 @@ class Khabar_Admin {
 		wp_enqueue_style( 'khabar-admin', KHABAR_URL . 'assets/css/admin.css', array(), KHABAR_VERSION );
 		$accent = sanitize_hex_color( (string) Khabar_Settings::get( 'color_accent', '' ) );
 		wp_add_inline_style( 'khabar-admin', '.khabar-admin{--ka:' . ( $accent ? $accent : '#f4511e' ) . ';}' );
+		if ( 'toplevel_page_khabar' === $hook ) {
+			wp_enqueue_media(); // Media library picker for image settings (sections load via AJAX, so always on the app page).
+		}
 		wp_enqueue_script( 'khabar-admin', KHABAR_URL . 'assets/js/admin.js', array( 'jquery', 'wp-color-picker' ), KHABAR_VERSION, true );
 	}
 
@@ -1097,6 +1100,23 @@ class Khabar_Admin {
 					printf( '<option value="%s" %s>%s</option>', esc_attr( $opt ), selected( $value, $opt, false ), esc_html( $label ) );
 				}
 				echo '</select>';
+				break;
+			case 'media':
+				$preview = $value ? Khabar_Push::icon_url( $value, 96 ) : '';
+				printf(
+					'<div class="khabar-media" data-title="%1$s" data-button="%2$s"><span class="khabar-media-preview%3$s" data-empty="%11$s">%4$s</span><div class="khabar-media-main"><input type="text" class="regular-text" dir="ltr" id="%5$s" name="%6$s" value="%7$s" placeholder="https://…"><div class="khabar-media-actions"><button type="button" class="button khabar-media-pick">%8$s</button><button type="button" class="button-link khabar-media-clear"%9$s>%10$s</button></div></div></div>',
+					esc_attr( $field['label'] ),
+					esc_attr__( 'استفاده به‌عنوان آیکون', 'khabar' ),
+					$preview ? '' : ' is-empty',
+					$preview ? '<img src="' . esc_url( $preview ) . '" alt="">' : Khabar_Frontend::icon( 'bell' ), // phpcs:ignore WordPress.Security.EscapeOutput
+					esc_attr( $id ),
+					esc_attr( $name ),
+					esc_attr( $value ),
+					esc_html__( 'انتخاب از کتابخانه رسانه', 'khabar' ),
+					$value ? '' : ' hidden',
+					esc_html__( 'حذف', 'khabar' ),
+					esc_attr( Khabar_Frontend::icon( 'bell' ) )
+				);
 				break;
 			case 'number':
 				$input = sprintf( '<input type="number" min="0" class="small-text" id="%s" name="%s" value="%s">', esc_attr( $id ), esc_attr( $name ), esc_attr( $value ) );

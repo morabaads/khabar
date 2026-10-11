@@ -178,6 +178,42 @@ jQuery(function ($) {
 		try { sessionStorage.setItem(ACC_KEY, JSON.stringify(open)); } catch (err) {}
 	}, true);
 	$(document).on('input change', 'details.khabar-acc :input', function () { accBadge($(this).closest('details.khabar-acc')); });
+	// Image settings: pick or upload from the WordPress media library (any image type WordPress accepts).
+	$(document).on('click', '.khabar-media-pick', function (e) {
+		e.preventDefault();
+		if (!window.wp || !wp.media) { return; }
+		var $box = $(this).closest('.khabar-media');
+		var frame = $box.data('frame');
+		if (!frame) {
+			frame = wp.media({ title: $box.data('title'), button: { text: $box.data('button') }, library: { type: 'image' }, multiple: false });
+			frame.on('select', function () {
+				var a = frame.state().get('selection').first().toJSON();
+				var sizes = a.sizes || {};
+				// Preview with a generated size: originals such as HEIC cannot be shown by browsers.
+				var thumb = (sizes.thumbnail || sizes.medium || sizes.full || {}).url || a.url;
+				$box.find('input[type=text]').val(a.url).trigger('input');
+				$box.find('.khabar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', thumb));
+				$box.find('.khabar-media-clear').prop('hidden', false);
+			});
+			$box.data('frame', frame);
+		}
+		frame.open();
+	});
+	$(document).on('click', '.khabar-media-clear', function (e) {
+		e.preventDefault();
+		var $box = $(this).closest('.khabar-media');
+		$box.find('input[type=text]').val('').trigger('input');
+		$box.find('.khabar-media-preview').addClass('is-empty').html($box.find('.khabar-media-preview').data('empty') || '');
+		$(this).prop('hidden', true);
+	});
+	$(document).on('change', '.khabar-media input[type=text]', function () {
+		var $box = $(this).closest('.khabar-media'), v = $.trim(this.value);
+		$box.find('.khabar-media-clear').prop('hidden', !v);
+		if (v && /^https?:\/\//.test(v)) {
+			$box.find('.khabar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', v));
+		}
+	});
+
 	// Option cards that show another setting's value (e.g. the channel id) follow it live.
 	$(document).on('input', '#khabar-body :input[id^="khabar-"]', function () {
 		var key = this.id.replace(/^khabar-/, ''), v = $.trim(this.value || '');

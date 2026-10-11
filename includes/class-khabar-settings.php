@@ -487,8 +487,9 @@ class Khabar_Settings {
 						'desc'  => __( 'کلیدهای VAPID به‌صورت خودکار ساخته می‌شوند. سایت باید HTTPS باشد.', 'khabar' ),
 					),
 					'push_icon'          => array(
-						'type'  => 'text',
-						'label' => __( 'آدرس آیکون اعلان', 'khabar' ),
+						'type'  => 'media',
+						'label' => __( 'آیکون اعلان', 'khabar' ),
+						'desc'  => __( 'از کتابخانه رسانه انتخاب یا آپلود کنید (همه فرمت‌های تصویری وردپرس). پیشنهاد: تصویر مربع حداقل ۱۹۲×۱۹۲. خالی = آیکون سایت.', 'khabar' ),
 					),
 				),
 			),
@@ -881,6 +882,9 @@ class Khabar_Settings {
 					break;
 				case 'html':
 					$current[ $key ] = wp_kses_post( (string) $raw );
+					break;
+				case 'media':
+					$current[ $key ] = esc_url_raw( trim( (string) $raw ) );
 					break;
 				default:
 					$current[ $key ] = sanitize_text_field( (string) $raw );
