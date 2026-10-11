@@ -331,3 +331,27 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 	.khabar-admin .khabar-fc-filter input[type=number], .khabar-admin .khabar-fc-filter select { width: 100%; }
 	.khabar-admin .khabar-report-filter .button-primary { margin-inline-start: 0; flex: 1 1 100%; }
 }
+
+/* Settings groups (accordion) */
+.khabar-set-card > .khabar-acc:first-of-type { margin-top: 14px; }
+.khabar-acc { margin: 0 0 10px; border: 1px solid var(--ka-line); border-radius: 14px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+.khabar-acc:last-child { margin-bottom: 12px; }
+.khabar-acc[open] { border-color: color-mix(in srgb, var(--ka) 35%, var(--ka-line)); box-shadow: 0 6px 18px rgba(20, 22, 43, .06); }
+.khabar-acc > summary { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; list-style: none; user-select: none; border-radius: 14px; }
+.khabar-acc > summary::-webkit-details-marker { display: none; }
+.khabar-acc > summary:hover { background: var(--ka-soft); }
+.khabar-acc > summary:focus-visible { outline: 2px solid var(--ka); outline-offset: 2px; }
+.khabar-acc-icon { flex: 0 0 38px; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--ka) 12%, #fff); color: var(--ka); }
+.khabar-acc-icon svg { width: 20px; height: 20px; }
+.khabar-acc-title { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.5; }
+.khabar-acc-title b { font-size: 14px; font-weight: 800; color: var(--ka-ink); }
+.khabar-acc-title small { font-size: 12px; color: #6b6f7b; }
+.khabar-acc-badge { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.khabar-acc-badge.is-on { background: #e9f8ef; color: #12733a; }
+.khabar-acc-badge.is-partial { background: #fff4e0; color: #9a5b00; }
+.khabar-acc-badge.is-off { background: #f1f2f5; color: #6b6f7b; }
+.khabar-acc-chev { flex: none; width: 8px; height: 8px; margin: 0 4px; border-right: 2px solid #9a9db0; border-bottom: 2px solid #9a9db0; transform: rotate(135deg); transition: transform .2s; }
+.khabar-acc[open] > summary .khabar-acc-chev { transform: rotate(45deg); margin-top: -4px; }
+.khabar-acc-body { padding: 0 16px 6px; border-top: 1px solid var(--ka-line); }
+.khabar-acc-body .form-table th { width: 230px; }
+@media (max-width: 600px) { .khabar-acc-title small { display: none; } }

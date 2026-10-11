@@ -704,25 +704,48 @@ class Khabar_Admin {
 				<input type="hidden" name="tab" value="<?php echo esc_attr( $tab ); ?>">
 				<?php wp_nonce_field( 'khabar_save_settings' ); ?>
 				<?php
-				$khabar_open = false;
+				// Sections (heading) hold rows; a group inside a section is a collapsible panel.
+				$khabar_sec   = false;
+				$khabar_grp   = false;
+				$khabar_tbl   = false;
+				$khabar_close = function ( $level ) use ( &$khabar_sec, &$khabar_grp, &$khabar_tbl ) {
+					if ( $khabar_tbl ) {
+						echo '</table>';
+						$khabar_tbl = false;
+					}
+					if ( $level >= 1 && $khabar_grp ) {
+						echo '</div></details>';
+						$khabar_grp = false;
+					}
+					if ( $level >= 2 && $khabar_sec ) {
+						echo '</section>';
+						$khabar_sec = false;
+					}
+				};
 				foreach ( $schema[ $tab ]['fields'] as $key => $field ) {
 					if ( 'heading' === $field['type'] ) {
-						if ( $khabar_open ) {
-							echo '</table></section>';
-						}
-						echo '<section class="khabar-set-card"><header><h2>' . esc_html( $field['label'] ) . '</h2>' . ( ! empty( $field['desc'] ) ? '<p class="description">' . esc_html( $field['desc'] ) . '</p>' : '' ) . '</header><table class="form-table" role="presentation">';
-						$khabar_open = true;
+						$khabar_close( 2 );
+						echo '<section class="khabar-set-card"><header><h2>' . esc_html( $field['label'] ) . '</h2>' . ( ! empty( $field['desc'] ) ? '<p class="description">' . esc_html( $field['desc'] ) . '</p>' : '' ) . '</header>';
+						$khabar_sec = true;
 						continue;
 					}
-					if ( ! $khabar_open ) {
-						echo '<section class="khabar-set-card"><table class="form-table" role="presentation">';
-						$khabar_open = true;
+					if ( ! $khabar_sec ) {
+						echo '<section class="khabar-set-card">';
+						$khabar_sec = true;
+					}
+					if ( 'group' === $field['type'] ) {
+						$khabar_close( 1 );
+						self::group_open( $key, $field, $values );
+						$khabar_grp = true;
+						continue;
+					}
+					if ( ! $khabar_tbl ) {
+						echo '<table class="form-table" role="presentation">';
+						$khabar_tbl = true;
 					}
 					self::field( $key, $field, $values[ $key ] ?? '', $defaults[ $key ] ?? '' );
 				}
-				if ( $khabar_open ) {
-					echo '</table></section>';
-				}
+				$khabar_close( 2 );
 				?>
 				<div class="khabar-savebar">
 				<?php submit_button( __( 'ذخیره تنظیمات', 'khabar' ) ); ?>
@@ -887,6 +910,42 @@ class Khabar_Admin {
 			<template class="khabar-pat-tpl"><?php echo $row( '__i__', array( 'event' => 'back_in_stock', 'code' => '', 'vars' => array() ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></template>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Open a collapsible settings group with its status badge (configured / partial / not set).
+	 *
+	 * @param string $key    Group key.
+	 * @param array  $field  Group definition: label, desc, icon, ready (keys that must be filled).
+	 * @param array  $values Current settings.
+	 */
+	private static function group_open( $key, $field, $values ) {
+		$ready  = isset( $field['ready'] ) ? (array) $field['ready'] : array();
+		$filled = count(
+			array_filter(
+				$ready,
+				function ( $k ) use ( $values ) {
+					return isset( $values[ $k ] ) && array() !== $values[ $k ] && '' !== $values[ $k ];
+				}
+			)
+		);
+		$labels = array(
+			'on'      => isset( $field['on_label'] ) ? $field['on_label'] : __( 'تنظیم شده', 'khabar' ),
+			'partial' => __( 'ناقص', 'khabar' ),
+			'off'     => isset( $field['off_label'] ) ? $field['off_label'] : __( 'تنظیم نشده', 'khabar' ),
+		);
+		$state  = ! $ready || ! $filled ? 'off' : ( count( $ready ) === $filled ? 'on' : 'partial' );
+		printf(
+			'<details class="khabar-acc" id="khabar-acc-%1$s" data-ready="%2$s" data-labels="%3$s"><summary><span class="khabar-acc-icon">%4$s</span><span class="khabar-acc-title"><b>%5$s</b>%6$s</span><span class="khabar-acc-badge is-%7$s">%8$s</span><span class="khabar-acc-chev" aria-hidden="true"></span></summary><div class="khabar-acc-body">',
+			esc_attr( trim( $key, '_' ) ),
+			esc_attr( wp_json_encode( $ready ) ),
+			esc_attr( wp_json_encode( $labels ) ),
+			Khabar_Frontend::icon( isset( $field['icon'] ) ? $field['icon'] : 'gear' ), // phpcs:ignore WordPress.Security.EscapeOutput
+			esc_html( $field['label'] ),
+			! empty( $field['desc'] ) ? '<small>' . esc_html( $field['desc'] ) . '</small>' : '',
+			esc_attr( $state ),
+			esc_html( $labels[ $state ] )
+		);
 	}
 
 	/**

@@ -130,9 +130,41 @@ jQuery(function ($) {
 	}
 	$(document).on('change', '#khabar-body select', syncConditional);
 
+	// Settings groups (accordion): remember which panels are open and keep the status badge live.
+	var ACC_KEY = 'khabarAccOpen';
+	function accOpen() {
+		try { return JSON.parse(sessionStorage.getItem(ACC_KEY) || '[]'); } catch (e) { return []; }
+	}
+	function accBadge($d) {
+		var keys = $d.data('ready') || [], labels = $d.data('labels') || {};
+		var filled = keys.filter(function (k) {
+			var $f = $('#khabar-' + k);
+			if ($f.length) { return $.trim($f.val() || '') !== ''; }
+			return $d.find('input[name="khabar[' + k + '][]"]:checked').length > 0;
+		}).length;
+		var state = !keys.length || !filled ? 'off' : (filled === keys.length ? 'on' : 'partial');
+		$d.find('> summary .khabar-acc-badge').attr('class', 'khabar-acc-badge is-' + state).text(labels[state] || '');
+	}
+	function initAcc() {
+		var open = accOpen();
+		$body.find('details.khabar-acc').each(function () {
+			if (open.indexOf(this.id) !== -1) { this.open = true; }
+		});
+	}
+	// "toggle" does not bubble: listen in the capture phase.
+	document.addEventListener('toggle', function (e) {
+		var d = e.target;
+		if (!d.matches || !d.matches('details.khabar-acc') || !d.id) { return; }
+		var open = accOpen().filter(function (id) { return id !== d.id; });
+		if (d.open) { open.push(d.id); }
+		try { sessionStorage.setItem(ACC_KEY, JSON.stringify(open)); } catch (err) {}
+	}, true);
+	$(document).on('input change', 'details.khabar-acc :input', function () { accBadge($(this).closest('details.khabar-acc')); });
+
 	function enhance() {
 		syncConditional();
 		initPatterns();
+		initAcc();
 		if ($.fn.wpColorPicker) { $body.find('.khabar-color').wpColorPicker(); }
 		// Flash notices become a floating toast so saving never moves the page.
 		var $n = $body.find('.khabar-notice');

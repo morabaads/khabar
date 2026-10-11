@@ -360,6 +360,13 @@ class Khabar_Settings {
 						'label' => __( 'پیام‌رسان‌ها (تلگرام، بله، ایتا)', 'khabar' ),
 						'desc'  => __( 'کاربر با یک کلیک ربات را استارت می‌کند و حسابش متصل می‌شود. پس از وارد کردن توکن، دکمه «ثبت وب‌هوک ربات‌ها» را بزنید (سایت باید HTTPS باشد).', 'khabar' ),
 					),
+					'_tg_group'          => array(
+						'type'  => 'group',
+						'label' => __( 'تلگرام', 'khabar' ),
+						'desc'  => __( 'پیام شخصی به مشتری و اعلام در کانال تلگرام', 'khabar' ),
+						'icon'  => 'send',
+						'ready' => array( 'telegram_token', 'telegram_bot' ),
+					),
 					'telegram_token'     => array(
 						'type'  => 'password',
 						'label' => __( 'توکن ربات تلگرام', 'khabar' ),
@@ -375,6 +382,18 @@ class Khabar_Settings {
 						'default' => 'https://api.telegram.org',
 						'desc'    => __( 'اگر سرور شما در ایران است و به تلگرام دسترسی ندارد، آدرس یک پراکسی معکوس Bot API را وارد کنید.', 'khabar' ),
 					),
+					'telegram_channel'   => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال تلگرام', 'khabar' ),
+						'desc'  => __( 'مثل ‎@myshop یا ‎-100123…؛ ربات باید ادمین کانال باشد.', 'khabar' ),
+					),
+					'_bale_group'        => array(
+						'type'  => 'group',
+						'label' => __( 'بله', 'khabar' ),
+						'desc'  => __( 'پیام شخصی به مشتری و اعلام در کانال بله', 'khabar' ),
+						'icon'  => 'chat',
+						'ready' => array( 'bale_token', 'bale_bot' ),
+					),
 					'bale_token'         => array(
 						'type'  => 'password',
 						'label' => __( 'توکن ربات بله', 'khabar' ),
@@ -384,10 +403,34 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'نام کاربری ربات بله (بدون @)', 'khabar' ),
 					),
+					'bale_channel'       => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال بله', 'khabar' ),
+					),
+					'_eitaa_group'       => array(
+						'type'  => 'group',
+						'label' => __( 'ایتا', 'khabar' ),
+						'desc'  => __( 'فقط اعلام در کانال (API ایتایار پیام شخصی ندارد)', 'khabar' ),
+						'icon'  => 'chat',
+						'ready' => array( 'eitaa_token', 'eitaa_channel' ),
+					),
 					'eitaa_token'        => array(
 						'type'  => 'password',
 						'label' => __( 'توکن ایتایار', 'khabar' ),
 						'desc'  => __( 'API ایتایار فقط امکان ارسال به کانال/گروه را دارد؛ ایتا برای اعلام عمومی در کانال استفاده می‌شود.', 'khabar' ),
+					),
+					'eitaa_channel'      => array(
+						'type'  => 'text',
+						'label' => __( 'شناسه کانال ایتا', 'khabar' ),
+					),
+					'_bc_group'          => array(
+						'type'      => 'group',
+						'label'     => __( 'اعلام در کانال فروشگاه', 'khabar' ),
+						'desc'      => __( 'انتشار خودکار موجود شدن کالاهای پرتقاضا در کانال‌ها', 'khabar' ),
+						'icon'      => 'bell',
+						'ready'     => array( 'broadcast_networks' ),
+						'on_label'  => __( 'فعال', 'khabar' ),
+						'off_label' => __( 'غیرفعال', 'khabar' ),
 					),
 					'broadcast_networks' => array(
 						'type'    => 'multicheck',
@@ -398,19 +441,6 @@ class Khabar_Settings {
 							'eitaa'    => __( 'کانال ایتا', 'khabar' ),
 						),
 						'default' => array(),
-					),
-					'telegram_channel'   => array(
-						'type'  => 'text',
-						'label' => __( 'شناسه کانال تلگرام', 'khabar' ),
-						'desc'  => __( 'مثل ‎@myshop یا ‎-100123…؛ ربات باید ادمین کانال باشد.', 'khabar' ),
-					),
-					'bale_channel'       => array(
-						'type'  => 'text',
-						'label' => __( 'شناسه کانال بله', 'khabar' ),
-					),
-					'eitaa_channel'      => array(
-						'type'  => 'text',
-						'label' => __( 'شناسه کانال ایتا', 'khabar' ),
 					),
 					'broadcast_min_waiting' => array(
 						'type'    => 'number',
@@ -727,7 +757,7 @@ class Khabar_Settings {
 		$defaults = array();
 		foreach ( self::schema() as $tab ) {
 			foreach ( $tab['fields'] as $key => $field ) {
-				if ( 'heading' === $field['type'] ) {
+				if ( in_array( $field['type'], array( 'heading', 'group' ), true ) ) {
 					continue;
 				}
 				$defaults[ $key ] = isset( $field['default'] ) ? $field['default'] : ( 'multicheck' === $field['type'] ? array() : '' );
@@ -789,6 +819,7 @@ class Khabar_Settings {
 			$raw = isset( $input[ $key ] ) ? wp_unslash( $input[ $key ] ) : null;
 			switch ( $field['type'] ) {
 				case 'heading':
+				case 'group':
 					continue 2;
 				case 'checkbox':
 					$current[ $key ] = $raw ? 1 : 0;
