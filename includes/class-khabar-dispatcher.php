@@ -47,12 +47,60 @@ class Khabar_Dispatcher {
 	 * @return int Number of subscriptions notified.
 	 */
 	public static function check_product( $product_id ) {
+		$product_id = (int) $product_id;
+		if ( ! self::lock( $product_id ) ) {
+			// Another run is processing this product right now; look again shortly so nothing is missed.
+			Khabar_Utils::queue( 'khabar_check_product', array( $product_id ), 60 );
+			return 0;
+		}
 		Khabar_Reservation::$bypass = true;
 		try {
 			return self::do_check_product( $product_id );
 		} finally {
 			Khabar_Reservation::$bypass = false;
+			self::unlock( $product_id );
 		}
+	}
+
+	/**
+	 * Take the per-product run lock. An admin save runs the check at shutdown while Action
+	 * Scheduler may run an already queued check in parallel; without the lock both send.
+	 * Uses INSERT IGNORE on the options table so the claim is atomic across requests.
+	 *
+	 * @param int $product_id Product id.
+	 * @return bool
+	 */
+	private static function lock( $product_id ) {
+		global $wpdb;
+		$name = 'khabar_lock_' . $product_id;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND CAST(option_value AS UNSIGNED) < %d", $name, time() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return 1 === (int) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $name, (string) ( time() + 5 * MINUTE_IN_SECONDS ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Release the per-product run lock.
+	 *
+	 * @param int $product_id Product id.
+	 */
+	private static function unlock( $product_id ) {
+		global $wpdb;
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s", 'khabar_lock_' . $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Identities of a subscriber (user, email, phone) used to send one message per person.
+	 *
+	 * @param object $sub Subscription.
+	 * @return string[]
+	 */
+	private static function contact_keys( $sub ) {
+		return array_filter(
+			array(
+				$sub->user_id ? 'u:' . $sub->user_id : '',
+				$sub->email ? 'e:' . strtolower( $sub->email ) : '',
+				$sub->phone ? 'p:' . $sub->phone : '',
+			)
+		);
 	}
 
 	/**
@@ -93,6 +141,7 @@ class Khabar_Dispatcher {
 		$sent     = 0;
 		$more     = false;
 		$restocked      = array();
+		$reached        = array(); // event|target|contact => true: one message per person per item.
 		$waiting_before = Khabar_Subscriptions::waiting_count( $product_id, null, true );
 		$now      = time();
 
@@ -132,7 +181,27 @@ class Khabar_Dispatcher {
 				break;
 			}
 
+			// The same person waiting twice for this item (e.g. as guest and as customer) gets one message.
+			$keys = array();
+			foreach ( self::contact_keys( $sub ) as $contact ) {
+				$keys[] = $event . '|' . $match->get_id() . '|' . $contact;
+			}
+			if ( $keys && array_intersect_key( $reached, array_flip( $keys ) ) ) {
+				if ( ! Khabar_Rules::is_recurring( $sub ) ) {
+					Khabar_Subscriptions::update(
+						$sub->id,
+						array(
+							'status'           => 'notified',
+							'last_notified_at' => Khabar_Utils::now(),
+							'notified_target'  => $match->get_id(),
+						)
+					);
+				}
+				continue;
+			}
+
 			if ( self::notify( $sub, $event, $match, $snap, $stock_type ) ) {
+				$reached += array_fill_keys( $keys, true );
 				++$sent;
 				if ( $stock_type ) {
 					$waves->consume( $match );
@@ -208,6 +277,12 @@ class Khabar_Dispatcher {
 	 * @return bool At least one channel succeeded.
 	 */
 	public static function notify( $sub, $event, $target, $snap, $stock_type = false ) {
+		// Claim the subscription first: if another run already took it, do not send again.
+		$recurring = Khabar_Rules::is_recurring( $sub );
+		if ( ! Khabar_Subscriptions::claim( $sub, $recurring ) ) {
+			return false;
+		}
+
 		$exclusive = $stock_type && Khabar_Reservation::open_window( $target );
 		$coupon    = Khabar_Coupons::applies( $sub, $event ) ? Khabar_Coupons::create( $sub, $target ) : '';
 		$vars      = array_merge( self::vars( $sub, $target, $snap, $exclusive ), Khabar_Coupons::vars( $coupon ) );
@@ -232,13 +307,17 @@ class Khabar_Dispatcher {
 		$results              = Khabar_Channels::send_to_subscription( $sub, $event, $message );
 		$ok      = in_array( true, $results, true );
 
+		if ( ! $ok ) {
+			Khabar_Subscriptions::release( $sub, $recurring ); // Nothing went out: keep waiting.
+		}
+
 		if ( $ok ) {
 			$update = array(
 				'notified_count'   => $sub->notified_count + 1,
 				'last_notified_at' => Khabar_Utils::now(),
 				'notified_target'  => $target->get_id(),
 			);
-			if ( Khabar_Rules::is_recurring( $sub ) ) {
+			if ( $recurring ) {
 				$update['base_price'] = $snap['price'];
 			} else {
 				$update['status'] = 'notified';

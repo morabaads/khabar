@@ -258,6 +258,38 @@ class Khabar_Subscriptions {
 	}
 
 	/**
+	 * Atomically claim an active subscription for sending, so concurrent runs cannot both send.
+	 * One-time alerts move to "notified"; recurring ones (any price change) stamp last_notified_at.
+	 *
+	 * @param object $sub       Subscription as read before sending.
+	 * @param bool   $recurring Recurring subscription.
+	 * @return bool Claimed by this run.
+	 */
+	public static function claim( $sub, $recurring ) {
+		global $wpdb;
+		$table = Khabar_Install::table( 'subscriptions' );
+		$now   = Khabar_Utils::now();
+		if ( $recurring ) {
+			$sql = $sub->last_notified_at
+				? $wpdb->prepare( "UPDATE {$table} SET last_notified_at = %s, updated_at = %s WHERE id = %d AND status = 'active' AND last_notified_at = %s", $now, $now, $sub->id, $sub->last_notified_at ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				: $wpdb->prepare( "UPDATE {$table} SET last_notified_at = %s, updated_at = %s WHERE id = %d AND status = 'active' AND last_notified_at IS NULL", $now, $now, $sub->id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		} else {
+			$sql = $wpdb->prepare( "UPDATE {$table} SET status = 'notified', updated_at = %s WHERE id = %d AND status = 'active'", $now, $sub->id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		}
+		return 1 === (int) $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+	}
+
+	/**
+	 * Undo a claim when nothing could be sent.
+	 *
+	 * @param object $sub       Subscription as read before sending.
+	 * @param bool   $recurring Recurring subscription.
+	 */
+	public static function release( $sub, $recurring ) {
+		self::update( $sub->id, $recurring ? array( 'last_notified_at' => $sub->last_notified_at ) : array( 'status' => 'active' ) );
+	}
+
+	/**
 	 * Delete rows.
 	 *
 	 * @param int|int[] $ids IDs.

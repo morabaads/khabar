@@ -654,6 +654,33 @@ t( isset( $by[ $fc_vars[41] ] ) && 0.5 === (float) $by[ $fc_vars[41] ]['waiting'
 t( ! isset( $by[ $fc_vars[42] ] ), 'in-stock size 42 not in purchase list' );
 t( $by[ $fc_vars[40] ]['calc']['order'] >= 1, 'suggested order for size 40: ' . $by[ $fc_vars[40] ]['calc']['order'] );
 
+echo "\n== No duplicate sends ==\n";
+settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'coupon_enabled' => 0, 'waves_enabled' => 0, 'exclusive_enabled' => 0 ) );
+$dup_pid = simple_product( 'دسته بازی MR-55', 500000, 0 );
+// Same person twice: a guest row and a row from their account with the same email.
+$dup_a = Khabar_Subscriptions::create( array( 'product_id' => $dup_pid, 'in_stock' => 1, 'email' => 'dup@example.com', 'owner_key' => 'g:dupguest' ) );
+$dup_b = Khabar_Subscriptions::create( array( 'product_id' => $dup_pid, 'in_stock' => 1, 'email' => 'dup@example.com', 'user_id' => 1 ) );
+$dup_p = wc_get_product( $dup_pid );
+$dup_p->set_stock_quantity( 5 );
+$dup_p->set_stock_status( 'instock' );
+$dup_p->save();
+reset_capture();
+Khabar_Dispatcher::check_product( $dup_pid );
+t( 1 === count( $GLOBALS['khabar_mail'] ), 'same email waiting twice gets one email (' . count( $GLOBALS['khabar_mail'] ) . ')' );
+t( 'notified' === sub_status( $dup_a ) && 'notified' === sub_status( $dup_b ), 'both rows marked notified' );
+// A second (overlapping) run must not send again.
+Khabar_Dispatcher::check_product( $dup_pid );
+t( 1 === count( $GLOBALS['khabar_mail'] ), 'second run sends nothing' );
+// A stale copy of an already claimed subscription cannot be sent twice.
+$stale = Khabar_Subscriptions::get( $dup_a );
+$stale->status = 'active';
+t( ! Khabar_Subscriptions::claim( $stale, false ), 'claim refuses an already notified subscription' );
+// While another run holds the product lock, a run sends nothing.
+$GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "INSERT IGNORE INTO {$GLOBALS['wpdb']->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", 'khabar_lock_' . $dup_pid, (string) ( time() + 300 ) ) );
+Khabar_Subscriptions::update( $dup_a, array( 'status' => 'active' ) );
+t( 0 === Khabar_Dispatcher::check_product( $dup_pid ), 'locked product is skipped (re-queued)' );
+$GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "DELETE FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s", 'khabar_lock_' . $dup_pid ) );
+
 echo "\n== Elementor ==\n";
 if ( class_exists( '\\Elementor\\Plugin' ) ) {
 	$types = \Elementor\Plugin::instance()->widgets_manager->get_widget_types();

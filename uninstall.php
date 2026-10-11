@@ -24,4 +24,5 @@ foreach ( array( 'khabar_settings', 'khabar_db_version', 'khabar_vapid', 'khabar
 	delete_option( $khabar_option );
 }
 $wpdb->query( "DELETE FROM {$wpdb->postmeta} WHERE meta_key IN ('_khabar_wave','_khabar_exclusive_until','_khabar_last_price','_khabar_broadcast_at')" ); // phpcs:ignore
+$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE 'khabar\\_lock\\_%'" ); // phpcs:ignore
 wp_clear_scheduled_hook( 'khabar_daily' );
