@@ -238,6 +238,13 @@ class Khabar_Settings {
 						'type'  => 'heading',
 						'label' => __( 'پیامک', 'khabar' ),
 					),
+					'_sms_conn_group'    => array(
+						'type'  => 'group',
+						'label' => __( 'سامانه و اتصال', 'khabar' ),
+						'desc'  => __( 'سامانه پیامک، اطلاعات ورود و شماره خط ارسال', 'khabar' ),
+						'icon'  => 'phone',
+						'ready' => array( 'sms_api_key', 'sms_username', 'sms_password', 'sms_sender' ),
+					),
 					'sms_gateway'        => array(
 						'type'    => 'select',
 						'label'   => __( 'سامانه پیامک', 'khabar' ),
@@ -283,6 +290,13 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'شماره فرستنده (خط)', 'khabar' ),
 					),
+					'_sms_mode_group'    => array(
+						'type'   => 'group',
+						'label'  => __( 'نوع ارسال و پترن‌ها', 'khabar' ),
+						'desc'   => __( 'ارسال متنی از قالب پیام یا خدماتی با کد پترن', 'khabar' ),
+						'icon'   => 'list',
+						'status' => 'sms_mode',
+					),
 					'sms_mode'           => array(
 						'show_if' => array( 'sms_gateway' => Khabar_Sms_Providers::keys_for( Khabar_Sms_Providers::PATTERN_DRIVERS, true ) ),
 						'type'    => 'select',
@@ -297,6 +311,13 @@ class Khabar_Settings {
 						'type'    => 'sms_patterns',
 						'label'   => __( 'پترن‌های پیامک', 'khabar' ),
 						'default' => array(),
+					),
+					'_sms_hook_group'    => array(
+						'type'  => 'group',
+						'label' => __( 'وب‌سرویس سفارشی', 'khabar' ),
+						'desc'  => __( 'آدرس و بدنه درخواست HTTP برای سامانه دلخواه', 'khabar' ),
+						'icon'  => 'gear',
+						'ready' => array( 'sms_webhook_url' ),
 					),
 					'sms_webhook_url'    => array(
 						'show_if' => array( array( 'sms_gateway' => array( 'webhook' ) ), array( 'sms_gateway' => Khabar_Sms_Providers::keys_for( array(), true ), 'sms_platform' => array( 'webhook' ) ) ),
@@ -313,6 +334,13 @@ class Khabar_Settings {
 					'_wa_heading'        => array(
 						'type'  => 'heading',
 						'label' => __( 'واتساپ', 'khabar' ),
+					),
+					'_wa_conn_group'     => array(
+						'type'  => 'group',
+						'label' => __( 'سرویس‌دهنده و اتصال', 'khabar' ),
+						'desc'  => __( 'WhatsApp Cloud API یا وب‌سرویس سفارشی', 'khabar' ),
+						'icon'  => 'chat',
+						'ready' => array( 'whatsapp_token', 'whatsapp_phone_id', 'whatsapp_webhook_url' ),
 					),
 					'whatsapp_provider'  => array(
 						'type'    => 'select',
@@ -333,6 +361,26 @@ class Khabar_Settings {
 						'type'  => 'text',
 						'label' => __( 'Phone Number ID', 'khabar' ),
 					),
+					'whatsapp_country'   => array(
+						'type'    => 'text',
+						'label'   => __( 'پیش‌شماره کشور', 'khabar' ),
+						'default' => '98',
+					),
+					'whatsapp_webhook_url' => array(
+						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
+						'type'  => 'text',
+						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
+					),
+					'_wa_tpl_group'      => array(
+						'type'      => 'group',
+						'label'     => __( 'قالب پیام (Template)', 'khabar' ),
+						'desc'      => __( 'برای پیام به مشتریانی که در ۲۴ ساعت اخیر پیام نداده‌اند لازم است', 'khabar' ),
+						'icon'      => 'chat',
+						'ready'     => array( 'whatsapp_template' ),
+						'on_label'  => __( 'تمپلیت فعال', 'khabar' ),
+						'off_label' => __( 'متن ساده', 'khabar' ),
+						'show_if'   => array( 'whatsapp_provider' => array( 'cloud' ) ),
+					),
 					'whatsapp_template'  => array(
 						'show_if' => array( 'whatsapp_provider' => array( 'cloud' ) ),
 						'type'  => 'text',
@@ -344,16 +392,6 @@ class Khabar_Settings {
 						'type'    => 'text',
 						'label'   => __( 'زبان Template', 'khabar' ),
 						'default' => 'fa',
-					),
-					'whatsapp_country'   => array(
-						'type'    => 'text',
-						'label'   => __( 'پیش‌شماره کشور', 'khabar' ),
-						'default' => '98',
-					),
-					'whatsapp_webhook_url' => array(
-						'show_if' => array( 'whatsapp_provider' => array( 'webhook' ) ),
-						'type'  => 'text',
-						'label' => __( 'آدرس وب‌سرویس سفارشی واتساپ', 'khabar' ),
 					),
 					'_msg_heading'       => array(
 						'type'  => 'heading',

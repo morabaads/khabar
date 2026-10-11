@@ -350,6 +350,8 @@ body.toplevel_page_khabar #wpcontent { background: radial-gradient(1200px 500px 
 .khabar-acc-badge.is-on { background: #e9f8ef; color: #12733a; }
 .khabar-acc-badge.is-partial { background: #fff4e0; color: #9a5b00; }
 .khabar-acc-badge.is-off { background: #f1f2f5; color: #6b6f7b; }
+.khabar-acc-badge.is-info { background: #eef2ff; color: #3b44a8; }
+.khabar-acc-badge.is-none { display: none; }
 .khabar-acc-chev { flex: none; width: 8px; height: 8px; margin: 0 4px; border-right: 2px solid #9a9db0; border-bottom: 2px solid #9a9db0; transform: rotate(135deg); transition: transform .2s; }
 .khabar-acc[open] > summary .khabar-acc-chev { transform: rotate(45deg); margin-top: -4px; }
 .khabar-acc-body { padding: 0 16px 6px; border-top: 1px solid var(--ka-line); }

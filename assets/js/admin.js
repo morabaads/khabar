@@ -111,20 +111,26 @@ jQuery(function ($) {
 	});
 
 	// Rows that only apply to one gateway / provider (data-show-if='{"sms_gateway":["kavenegar"]}').
-	function syncConditional() {
-		$body.find('tr[data-show-if]').each(function () {
-			// A rule set is {field: [values]} (all must match); a list of rule sets matches if any does.
-			var rules = $(this).data('showIf') || {};
-			var sets = $.isArray(rules) ? rules : [rules];
-			var ok = sets.some(function (set) {
-				var all = true;
-				$.each(set, function (key, values) {
-					var $f = $('#khabar-' + key);
-					if ($f.length && (values.indexOf($f.val()) === -1 || $f.closest('tr').css('display') === 'none')) { all = false; }
-				});
-				return all;
+	function rulesOk(el) {
+		// A rule set is {field: [values]} (all must match); a list of rule sets matches if any does.
+		var rules = $(el).data('showIf') || {};
+		var sets = $.isArray(rules) ? rules : [rules];
+		return sets.some(function (set) {
+			var all = true;
+			$.each(set, function (key, values) {
+				var $f = $('#khabar-' + key);
+				if ($f.length && (values.indexOf($f.val()) === -1 || $f.closest('tr').css('display') === 'none')) { all = false; }
 			});
-			$(this).toggle(ok);
+			return all;
+		});
+	}
+	function syncConditional() {
+		$body.find('tr[data-show-if]').each(function () { $(this).toggle(rulesOk(this)); });
+		// A settings group is shown when its own rule passes and at least one of its rows is.
+		$body.find('details.khabar-acc').each(function () {
+			var rows = $(this).find('tr').filter(function () { return this.style.display !== 'none'; }).length;
+			$(this).toggle(rows > 0 && (!this.hasAttribute('data-show-if') || rulesOk(this)));
+			accBadge($(this));
 		});
 		$('.khabar-pat').each(function () { syncPatterns($(this)); });
 	}
@@ -136,14 +142,26 @@ jQuery(function ($) {
 		try { return JSON.parse(sessionStorage.getItem(ACC_KEY) || '[]'); } catch (e) { return []; }
 	}
 	function accBadge($d) {
-		var keys = $d.data('ready') || [], labels = $d.data('labels') || {};
+		var $badge = $d.find('> summary .khabar-acc-badge');
+		var status = $d.data('status');
+		if (status) {
+			$badge.attr('class', 'khabar-acc-badge is-info').text($('#khabar-' + status + ' option:selected').text());
+			return;
+		}
+		var labels = $d.data('labels') || {};
+		// Only fields shown for the current gateway / provider count.
+		var keys = ($d.data('ready') || []).filter(function (k) {
+			var $f = $('#khabar-' + k);
+			return !$f.length || $f.closest('tr').css('display') !== 'none';
+		});
 		var filled = keys.filter(function (k) {
 			var $f = $('#khabar-' + k);
 			if ($f.length) { return $.trim($f.val() || '') !== ''; }
 			return $d.find('input[name="khabar[' + k + '][]"]:checked').length > 0;
 		}).length;
-		var state = !keys.length || !filled ? 'off' : (filled === keys.length ? 'on' : 'partial');
-		$d.find('> summary .khabar-acc-badge').attr('class', 'khabar-acc-badge is-' + state).text(labels[state] || '');
+		// No required field applies to the chosen gateway/provider: show no badge rather than a wrong one.
+		var state = !keys.length ? 'none' : (!filled ? 'off' : (filled === keys.length ? 'on' : 'partial'));
+		$badge.attr('class', 'khabar-acc-badge is-' + state).text(labels[state] || '');
 	}
 	function initAcc() {
 		var open = accOpen();

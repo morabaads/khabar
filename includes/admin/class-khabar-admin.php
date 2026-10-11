@@ -735,7 +735,7 @@ class Khabar_Admin {
 					}
 					if ( 'group' === $field['type'] ) {
 						$khabar_close( 1 );
-						self::group_open( $key, $field, $values );
+						self::group_open( $key, $field, $values, $schema[ $tab ]['fields'] );
 						$khabar_grp = true;
 						continue;
 					}
@@ -913,38 +913,116 @@ class Khabar_Admin {
 	}
 
 	/**
-	 * Open a collapsible settings group with its status badge (configured / partial / not set).
+	 * Is a settings row shown for the current values (its show_if rules, and those of the fields they depend on)?
+	 *
+	 * @param string $key    Field key.
+	 * @param array  $fields Fields of the tab.
+	 * @param array  $values Current settings.
+	 * @param int    $depth  Recursion guard.
+	 * @return bool
+	 */
+	private static function field_visible( $key, $fields, $values, $depth = 0 ) {
+		if ( empty( $fields[ $key ]['show_if'] ) || $depth > 5 ) {
+			return true;
+		}
+		$rules = $fields[ $key ]['show_if'];
+		$sets  = isset( $rules[0] ) ? $rules : array( $rules );
+		foreach ( $sets as $set ) {
+			$ok = true;
+			foreach ( $set as $dep => $allowed ) {
+				$value = isset( $values[ $dep ] ) ? (string) $values[ $dep ] : '';
+				if ( isset( $fields[ $dep ] ) && ( ! in_array( $value, (array) $allowed, true ) || ! self::field_visible( $dep, $fields, $values, $depth + 1 ) ) ) {
+					$ok = false;
+					break;
+				}
+			}
+			if ( $ok ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Open a collapsible settings group with its status badge.
+	 *
+	 * Group keys: label, desc, icon, show_if, and either ready (fields that must be filled; only rows
+	 * shown for the current gateway/provider count) with on_label/off_label, or status (a select whose
+	 * chosen option is shown as the badge).
 	 *
 	 * @param string $key    Group key.
-	 * @param array  $field  Group definition: label, desc, icon, ready (keys that must be filled).
+	 * @param array  $field  Group definition.
 	 * @param array  $values Current settings.
+	 * @param array  $fields All fields of the tab.
 	 */
-	private static function group_open( $key, $field, $values ) {
-		$ready  = isset( $field['ready'] ) ? (array) $field['ready'] : array();
-		$filled = count(
-			array_filter(
-				$ready,
-				function ( $k ) use ( $values ) {
-					return isset( $values[ $k ] ) && array() !== $values[ $k ] && '' !== $values[ $k ];
-				}
-			)
+	private static function group_open( $key, $field, $values, $fields ) {
+		// Rows of this group: everything up to the next group or heading.
+		$members = array();
+		$inside  = false;
+		foreach ( $fields as $k => $f ) {
+			if ( $k === $key ) {
+				$inside = true;
+				continue;
+			}
+			if ( $inside && in_array( $f['type'], array( 'group', 'heading' ), true ) ) {
+				break;
+			}
+			if ( $inside ) {
+				$members[] = $k;
+			}
+		}
+		$shown = self::field_visible( $key, array( $key => $field ) + $fields, $values );
+		$shown = $shown && array_filter(
+			$members,
+			function ( $k ) use ( $fields, $values ) {
+				return self::field_visible( $k, $fields, $values );
+			}
 		);
+
 		$labels = array(
 			'on'      => isset( $field['on_label'] ) ? $field['on_label'] : __( 'تنظیم شده', 'khabar' ),
 			'partial' => __( 'ناقص', 'khabar' ),
 			'off'     => isset( $field['off_label'] ) ? $field['off_label'] : __( 'تنظیم نشده', 'khabar' ),
 		);
-		$state  = ! $ready || ! $filled ? 'off' : ( count( $ready ) === $filled ? 'on' : 'partial' );
+		if ( ! empty( $field['status'] ) ) {
+			$sel   = $fields[ $field['status'] ];
+			$val   = isset( $values[ $field['status'] ] ) ? $values[ $field['status'] ] : '';
+			$state = 'info';
+			$text  = isset( $sel['options'][ $val ] ) ? $sel['options'][ $val ] : '';
+		} else {
+			$ready = array_values(
+				array_filter(
+					isset( $field['ready'] ) ? (array) $field['ready'] : array(),
+					function ( $k ) use ( $fields, $values ) {
+						return self::field_visible( $k, $fields, $values );
+					}
+				)
+			);
+			$filled = count(
+				array_filter(
+					$ready,
+					function ( $k ) use ( $values ) {
+						return isset( $values[ $k ] ) && array() !== $values[ $k ] && '' !== $values[ $k ];
+					}
+				)
+			);
+			// No required field applies to the chosen gateway/provider: show no badge rather than a wrong one.
+			$state = ! $ready ? 'none' : ( ! $filled ? 'off' : ( count( $ready ) === $filled ? 'on' : 'partial' ) );
+			$text  = isset( $labels[ $state ] ) ? $labels[ $state ] : '';
+		}
 		printf(
-			'<details class="khabar-acc" id="khabar-acc-%1$s" data-ready="%2$s" data-labels="%3$s"><summary><span class="khabar-acc-icon">%4$s</span><span class="khabar-acc-title"><b>%5$s</b>%6$s</span><span class="khabar-acc-badge is-%7$s">%8$s</span><span class="khabar-acc-chev" aria-hidden="true"></span></summary><div class="khabar-acc-body">',
+			'<details class="khabar-acc" id="khabar-acc-%1$s" data-ready="%2$s" data-labels="%3$s" data-status="%4$s"%5$s%6$s><summary><span class="khabar-acc-icon">%7$s</span><span class="khabar-acc-title"><b>%8$s</b>%9$s</span><span class="khabar-acc-badge is-%10$s">%11$s</span><span class="khabar-acc-chev" aria-hidden="true"></span></summary><div class="khabar-acc-body">',
 			esc_attr( trim( $key, '_' ) ),
-			esc_attr( wp_json_encode( $ready ) ),
+			esc_attr( wp_json_encode( isset( $field['ready'] ) ? (array) $field['ready'] : array() ) ),
 			esc_attr( wp_json_encode( $labels ) ),
+			esc_attr( isset( $field['status'] ) ? $field['status'] : '' ),
+			! empty( $field['show_if'] ) ? ' data-show-if="' . esc_attr( wp_json_encode( $field['show_if'] ) ) . '"' : '',
+			$shown ? '' : ' style="display:none"',
 			Khabar_Frontend::icon( isset( $field['icon'] ) ? $field['icon'] : 'gear' ), // phpcs:ignore WordPress.Security.EscapeOutput
 			esc_html( $field['label'] ),
 			! empty( $field['desc'] ) ? '<small>' . esc_html( $field['desc'] ) . '</small>' : '',
 			esc_attr( $state ),
-			esc_html( $labels[ $state ] )
+			esc_html( $text )
 		);
 	}
 
