@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\PushSubscriptionRepository;
 use YadamBiar\Contracts\NotificationChannel;
 
 /**
@@ -35,7 +36,7 @@ final class PushDelivery implements NotificationChannel {
 	 */
 	public function can_reach( $sub ) {
 		$owner = ChannelManager::owner_of( $sub );
-		return '' !== $owner && PushChannel::has_subscription( $owner );
+		return '' !== $owner && PushSubscriptionRepository::has_subscription( $owner );
 	}
 
 	/**

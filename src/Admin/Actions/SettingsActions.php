@@ -10,7 +10,7 @@ namespace YadamBiar\Admin\Actions;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminUrl;
-use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Settings\Schema;
 use YadamBiar\Settings\Settings;
 
@@ -37,7 +37,7 @@ final class SettingsActions extends ActionGroup {
 		$raw = isset( $_POST['yadambiar'] ) && is_array( $_POST['yadambiar'] ) ? $_POST['yadambiar'] : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput,WordPress.Security.NonceVerification -- sanitized per field in Settings::save().
 		Settings::save( $raw, $tab );
 		if ( Settings::has( 'channels_enabled', 'push' ) ) {
-			PushChannel::keys(); // Make sure the VAPID key pair exists.
+			VapidKeys::keys(); // Make sure the VAPID key pair exists.
 		}
 		$this->done( AdminUrl::settings( $tab ), __( 'تنظیمات ذخیره شد.', 'yadambiar' ) );
 	}

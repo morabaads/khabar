@@ -10,6 +10,7 @@ namespace YadamBiar\Http\Controllers;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\PushSubscriptionRepository;
 use YadamBiar\Contracts\RestRoutes;
 use YadamBiar\Http\RateLimiter;
 use YadamBiar\Http\RestRouter;
@@ -71,7 +72,7 @@ final class PushController implements RestRoutes {
 		if ( ! PushChannel::enabled() || ! RateLimiter::allow( 'push', self::SUBSCRIBE_PER_HOUR ) ) {
 			return RestRouter::error( __( 'پوش فعال نیست.', 'yadambiar' ) );
 		}
-		$ok = PushChannel::save_subscription( Visitor::owner_key( true ), (array) $req->get_param( 'subscription' ) );
+		$ok = PushSubscriptionRepository::save_subscription( Visitor::owner_key( true ), (array) $req->get_param( 'subscription' ) );
 		return $ok ? rest_ensure_response( array( 'success' => true ) ) : RestRouter::error( __( 'اشتراک نامعتبر است.', 'yadambiar' ) );
 	}
 

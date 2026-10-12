@@ -16,7 +16,7 @@ use YadamBiar\Admin\Actions\SettingsActions;
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Admin\ProductMetabox;
-use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\ServiceWorker;
 use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\Coupons;
 use YadamBiar\Commerce\PriceHistory;
@@ -77,7 +77,7 @@ final class Plugin {
 			ProductWidget::class,
 			Account::class,
 			Tracking::class,
-			PushChannel::class,
+			ServiceWorker::class,
 			Privacy::class,
 			Cron::class,
 			Coupons::class,

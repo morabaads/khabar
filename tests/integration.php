@@ -379,9 +379,9 @@ t( 200 === $code && 'active' === sub_status( $pending_id ), 'correct code activa
 settings( array( 'verify_contact' => 'none' ) );
 
 echo "\n== Push (VAPID) ==\n";
-$keys = \YadamBiar\Channels\PushChannel::keys();
+$keys = \YadamBiar\Channels\Push\VapidKeys::keys();
 t( $keys && 87 === strlen( $keys['public'] ), 'VAPID key generated (65-byte uncompressed point)' );
-$jwt   = \YadamBiar\Channels\PushChannel::jwt( 'https://fcm.googleapis.com/fcm/send/abc', $keys );
+$jwt   = \YadamBiar\Channels\Push\VapidKeys::jwt( 'https://fcm.googleapis.com/fcm/send/abc', $keys );
 $parts = explode( '.', $jwt );
 $raw   = base64_decode( strtr( $parts[2], '-_', '+/' ) . str_repeat( '=', ( 4 - strlen( $parts[2] ) % 4 ) % 4 ) );
 $int   = function ( $b ) { $b = ltrim( $b, "\0" ); if ( ord( $b[0] ) > 0x7f ) { $b = "\0" . $b; } return "\x02" . chr( strlen( $b ) ) . $b; };
@@ -389,7 +389,7 @@ $der   = $int( substr( $raw, 0, 32 ) ) . $int( substr( $raw, 32 ) );
 $der   = "\x30" . chr( strlen( $der ) ) . $der;
 $pub   = openssl_pkey_get_details( openssl_pkey_get_private( $keys['pem'] ) )['key'];
 t( 1 === openssl_verify( $parts[0] . '.' . $parts[1], $der, $pub, OPENSSL_ALGO_SHA256 ), 'ES256 JWT signature verifies' );
-t( \YadamBiar\Channels\PushChannel::save_subscription( 'g:testowner', array( 'endpoint' => 'https://fcm.googleapis.com/fcm/send/xyz', 'keys' => array( 'p256dh' => 'a', 'auth' => 'b' ) ) ), 'browser subscription saved' );
+t( \YadamBiar\Channels\Push\PushSubscriptionRepository::save_subscription( 'g:testowner', array( 'endpoint' => 'https://fcm.googleapis.com/fcm/send/xyz', 'keys' => array( 'p256dh' => 'a', 'auth' => 'b' ) ) ), 'browser subscription saved' );
 \YadamBiar\Channels\OnsiteChannel::create( 'g:testowner', 0, 'عنوان', 'متن', 'https://example.com' );
 t( true === \YadamBiar\Channels\PushChannel::notify_owner( 'g:testowner' ), 'push ping sent (HTTP mocked)' );
 $latest = \YadamBiar\Channels\PushChannel::latest_for_endpoint( 'https://fcm.googleapis.com/fcm/send/xyz' );

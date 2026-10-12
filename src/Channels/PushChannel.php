@@ -10,21 +10,12 @@ namespace YadamBiar\Channels;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Contracts\Module;
-use YadamBiar\Core\Installer;
+use YadamBiar\Channels\Push\PushSubscriptionRepository;
+use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Clock;
+use YadamBiar\Support\Media;
 
-class PushChannel implements Module {
-
-	const OPTION = 'yadambiar_vapid';
-
-	/**
-	 * Hooks.
-	 */
-	public function register() {
-		add_action( 'init', array( __CLASS__, 'serve_worker' ), 1 );
-	}
+final class PushChannel {
 
 	/**
 	 * Is push enabled.
@@ -32,168 +23,7 @@ class PushChannel implements Module {
 	 * @return bool
 	 */
 	public static function enabled() {
-		return Settings::has( 'channels_enabled', 'push' ) && self::keys();
-	}
-
-	/**
-	 * Base64url helpers.
-	 *
-	 * @param string $data Data.
-	 * @return string
-	 */
-	public static function b64u( $data ) {
-		return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions
-	}
-
-	/**
-	 * Get or generate VAPID keys.
-	 *
-	 * @return array|null public (base64url raw point), pem (private key)
-	 */
-	public static function keys() {
-		$keys = get_option( self::OPTION );
-		if ( is_array( $keys ) && ! empty( $keys['public'] ) && ! empty( $keys['pem'] ) ) {
-			return $keys;
-		}
-		if ( ! function_exists( 'openssl_pkey_new' ) ) {
-			return null;
-		}
-		$key = openssl_pkey_new(
-			array(
-				'curve_name'       => 'prime256v1',
-				'private_key_type' => OPENSSL_KEYTYPE_EC,
-			)
-		);
-		if ( ! $key ) {
-			return null;
-		}
-		$details = openssl_pkey_get_details( $key );
-		openssl_pkey_export( $key, $pem );
-		$x    = str_pad( $details['ec']['x'], 32, "\0", STR_PAD_LEFT );
-		$y    = str_pad( $details['ec']['y'], 32, "\0", STR_PAD_LEFT );
-		$keys = array(
-			'public' => self::b64u( "\x04" . $x . $y ),
-			'pem'    => $pem,
-		);
-		update_option( self::OPTION, $keys, false );
-		return $keys;
-	}
-
-	/**
-	 * Convert a DER ECDSA signature to raw r||s (64 bytes).
-	 *
-	 * @param string $der DER.
-	 * @return string
-	 */
-	public static function der_to_raw( $der ) {
-		$offset = 2;
-		if ( ord( $der[1] ) & 0x80 ) {
-			$offset += ord( $der[1] ) & 0x7f;
-		}
-		$parts = array();
-		for ( $i = 0; $i < 2; $i++ ) {
-			$len     = ord( $der[ $offset + 1 ] );
-			$int     = substr( $der, $offset + 2, $len );
-			$int     = ltrim( $int, "\0" );
-			$parts[] = str_pad( $int, 32, "\0", STR_PAD_LEFT );
-			$offset += 2 + $len;
-		}
-		return $parts[0] . $parts[1];
-	}
-
-	/**
-	 * VAPID JWT for an endpoint.
-	 *
-	 * @param string $endpoint Endpoint.
-	 * @param array  $keys     Keys.
-	 * @return string|null
-	 */
-	public static function jwt( $endpoint, $keys ) {
-		$parts    = wp_parse_url( $endpoint );
-		$audience = $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
-		$header   = self::b64u( wp_json_encode( array( 'typ' => 'JWT', 'alg' => 'ES256' ) ) );
-		$claims   = self::b64u(
-			wp_json_encode(
-				array(
-					'aud' => $audience,
-					'exp' => time() + 12 * HOUR_IN_SECONDS,
-					'sub' => 'mailto:' . get_option( 'admin_email' ),
-				)
-			)
-		);
-		$input = $header . '.' . $claims;
-		if ( ! openssl_sign( $input, $der, $keys['pem'], OPENSSL_ALGO_SHA256 ) ) {
-			return null;
-		}
-		return $input . '.' . self::b64u( self::der_to_raw( $der ) );
-	}
-
-	/**
-	 * Is the endpoint a known push service (prevents using the server as an SSRF proxy)?
-	 *
-	 * @param string $endpoint Endpoint URL.
-	 * @return bool
-	 */
-	public static function endpoint_allowed( $endpoint ) {
-		$parts = wp_parse_url( $endpoint );
-		if ( empty( $parts['host'] ) || 'https' !== ( isset( $parts['scheme'] ) ? $parts['scheme'] : '' ) || ! empty( $parts['user'] ) || ( ! empty( $parts['port'] ) && 443 !== (int) $parts['port'] ) ) {
-			return false;
-		}
-		$host    = strtolower( $parts['host'] );
-		$allowed = apply_filters(
-			'yadambiar_push_hosts',
-			array( 'fcm.googleapis.com', 'android.googleapis.com', 'push.services.mozilla.com', 'push.apple.com', 'notify.windows.com' )
-		);
-		foreach ( $allowed as $domain ) {
-			if ( $host === $domain || substr( $host, -strlen( '.' . $domain ) ) === '.' . $domain ) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Store a browser subscription.
-	 *
-	 * @param string $owner_key Owner.
-	 * @param array  $sub       endpoint, keys.p256dh, keys.auth.
-	 * @return bool
-	 */
-	public static function save_subscription( $owner_key, $sub ) {
-		global $wpdb;
-		$endpoint = isset( $sub['endpoint'] ) ? esc_url_raw( $sub['endpoint'] ) : '';
-		if ( ! $owner_key || ! $endpoint || ! self::endpoint_allowed( $endpoint ) ) {
-			return false;
-		}
-		$table = Installer::table( 'push' );
-		$hash  = hash( 'sha256', $endpoint );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE endpoint_hash = %s", $hash ) ); // phpcs:ignore
-		return (bool) $wpdb->insert( // phpcs:ignore
-			$table,
-			array(
-				'owner_key'     => $owner_key,
-				'endpoint'      => $endpoint,
-				'endpoint_hash' => $hash,
-				'p256dh'        => isset( $sub['keys']['p256dh'] ) ? sanitize_text_field( $sub['keys']['p256dh'] ) : '',
-				'auth'          => isset( $sub['keys']['auth'] ) ? sanitize_text_field( $sub['keys']['auth'] ) : '',
-				'created_at'    => Clock::now(),
-			)
-		);
-	}
-
-	/**
-	 * Does the owner have at least one browser subscription.
-	 *
-	 * @param string $owner_key Owner.
-	 * @return bool
-	 */
-	public static function has_subscription( $owner_key ) {
-		global $wpdb;
-		if ( ! $owner_key ) {
-			return false;
-		}
-		$table = Installer::table( 'push' );
-		return (bool) $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE owner_key = %s LIMIT 1", $owner_key ) ); // phpcs:ignore
+		return Settings::has( 'channels_enabled', 'push' ) && VapidKeys::keys();
 	}
 
 	/**
@@ -203,19 +33,17 @@ class PushChannel implements Module {
 	 * @return true|WP_Error
 	 */
 	public static function notify_owner( $owner_key ) {
-		global $wpdb;
-		$keys = self::keys();
+		$keys = VapidKeys::keys();
 		if ( ! $keys ) {
 			return new \WP_Error( 'yadambiar_push', __( 'کلید VAPID موجود نیست (OpenSSL).', 'yadambiar' ) );
 		}
-		$table = Installer::table( 'push' );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, endpoint FROM {$table} WHERE owner_key = %s", $owner_key ) ); // phpcs:ignore
+		$rows = PushSubscriptionRepository::endpoints( $owner_key );
 		if ( ! $rows ) {
 			return new \WP_Error( 'yadambiar_push', __( 'کاربر اجازه پوش نداده است.', 'yadambiar' ) );
 		}
 		$ok = false;
 		foreach ( $rows as $row ) {
-			$jwt = self::jwt( $row->endpoint, $keys );
+			$jwt = VapidKeys::jwt( $row->endpoint, $keys );
 			if ( ! $jwt ) {
 				continue;
 			}
@@ -234,7 +62,7 @@ class PushChannel implements Module {
 			);
 			$code = is_wp_error( $res ) ? 0 : wp_remote_retrieve_response_code( $res );
 			if ( in_array( $code, array( 404, 410 ), true ) ) {
-				$wpdb->delete( $table, array( 'id' => $row->id ) ); // phpcs:ignore
+				PushSubscriptionRepository::delete( $row->id ); // Expired / unsubscribed browser.
 			}
 			if ( $code >= 200 && $code < 300 ) {
 				$ok = true;
@@ -244,77 +72,23 @@ class PushChannel implements Module {
 	}
 
 	/**
-	 * Owner of a stored endpoint.
-	 *
-	 * @param string $endpoint Endpoint.
-	 * @return string
-	 */
-	public static function owner_of_endpoint( $endpoint ) {
-		global $wpdb;
-		$table = Installer::table( 'push' );
-		return (string) $wpdb->get_var( $wpdb->prepare( "SELECT owner_key FROM {$table} WHERE endpoint_hash = %s", hash( 'sha256', (string) $endpoint ) ) ); // phpcs:ignore
-	}
-
-	/**
 	 * Latest not-yet-pushed notification for a device.
 	 *
 	 * @param string $endpoint Endpoint.
 	 * @return array|null
 	 */
 	public static function latest_for_endpoint( $endpoint ) {
-		global $wpdb;
-		$owner = self::owner_of_endpoint( $endpoint );
-		if ( ! $owner ) {
-			return null;
-		}
-		$table = Installer::table( 'notifications' );
-		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE owner_key = %s AND created_at > %s ORDER BY pushed ASC, id DESC LIMIT 1", $owner, Clock::now( -DAY_IN_SECONDS ) ) ); // phpcs:ignore
+		$owner = PushSubscriptionRepository::owner_of_endpoint( $endpoint );
+		$row   = $owner ? OnsiteChannel::next_for_push( $owner ) : null;
 		if ( ! $row ) {
 			return null;
 		}
-		$wpdb->update( $table, array( 'pushed' => 1 ), array( 'id' => $row->id ) ); // phpcs:ignore
 		return array(
 			'title' => $row->title,
 			'body'  => $row->message,
 			'url'   => $row->url,
-			'icon'  => Settings::get( 'push_icon' ) ? self::icon_url( Settings::get( 'push_icon' ) ) : get_site_icon_url( 192 ),
+			'icon'  => Settings::get( 'push_icon' ) ? Media::sized_url( Settings::get( 'push_icon' ) ) : get_site_icon_url( 192 ),
 		);
 	}
 
-	/**
-	 * Notification icon URL. A media-library image is served at the requested size, so formats that
-	 * browsers cannot show (e.g. HEIC) or very large originals go out as WordPress's generated size.
-	 *
-	 * @param string $url  Configured URL.
-	 * @param int    $size Edge in pixels.
-	 * @return string
-	 */
-	public static function icon_url( $url, $size = 192 ) {
-		$key = 'yadambiar_icon_' . md5( $url . '|' . $size );
-		$out = get_transient( $key );
-		if ( false === $out ) {
-			$id  = attachment_url_to_postid( $url );
-			$img = $id ? wp_get_attachment_image_url( $id, array( $size, $size ) ) : '';
-			$out = $img ? $img : $url;
-			set_transient( $key, $out, DAY_IN_SECONDS );
-		}
-		return $out;
-	}
-
-	/**
-	 * Serve the service worker from the site root so its scope covers the whole site.
-	 */
-	public static function serve_worker() {
-		if ( empty( $_GET['yadambiar_sw'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			return;
-		}
-		header( 'Content-Type: application/javascript; charset=utf-8' );
-		header( 'Service-Worker-Allowed: /' );
-		header( 'Cache-Control: no-cache' );
-		$latest = esc_url_raw( rest_url( 'yadambiar/v1/push/latest' ) );
-		echo "/* Yadam Biar service worker */\n";
-		echo 'var YADAMBIAR_LATEST = ' . wp_json_encode( $latest ) . ";\n";
-		echo file_get_contents( YADAMBIAR_DIR . 'assets/js/sw.js' ); // phpcs:ignore
-		exit;
-	}
 }

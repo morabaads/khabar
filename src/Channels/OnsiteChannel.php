@@ -85,4 +85,21 @@ class OnsiteChannel {
 			$wpdb->update( Installer::table( 'notifications' ), array( 'is_read' => 1 ), array( 'owner_key' => $owner_key ) ); // phpcs:ignore
 		}
 	}
+
+	/**
+	 * The item a push ping shows: the owner's newest not-yet-pushed item of the last day
+	 * (marked as pushed).
+	 *
+	 * @param string $owner_key Owner.
+	 * @return object|null
+	 */
+	public static function next_for_push( $owner_key ) {
+		global $wpdb;
+		$table = Installer::table( 'notifications' );
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE owner_key = %s AND created_at > %s ORDER BY pushed ASC, id DESC LIMIT 1", $owner_key, Clock::now( -DAY_IN_SECONDS ) ) ); // phpcs:ignore WordPress.DB
+		if ( $row ) {
+			$wpdb->update( $table, array( 'pushed' => 1 ), array( 'id' => $row->id ) ); // phpcs:ignore WordPress.DB
+		}
+		return $row;
+	}
 }

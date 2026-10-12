@@ -9,10 +9,10 @@ namespace YadamBiar\Admin\SettingsForm;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\PushChannel;
 use YadamBiar\Channels\Sms\PatternRepository;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Icon;
+use YadamBiar\Support\Media;
 
 /**
  * Settings row renderer.
@@ -58,7 +58,7 @@ final class FieldRenderer {
 				echo '</select>';
 				break;
 			case 'media':
-				$preview = $value ? PushChannel::icon_url( $value, 96 ) : '';
+				$preview = $value ? Media::sized_url( $value, 96 ) : '';
 				printf(
 					'<div class="yadambiar-media" data-title="%1$s" data-button="%2$s"><span class="yadambiar-media-preview%3$s" data-empty="%11$s">%4$s</span><div class="yadambiar-media-main"><input type="text" class="regular-text" dir="ltr" id="%5$s" name="%6$s" value="%7$s" placeholder="https://…"><div class="yadambiar-media-actions"><button type="button" class="button yadambiar-media-pick">%8$s</button><button type="button" class="button-link yadambiar-media-clear"%9$s>%10$s</button></div></div></div>',
 					esc_attr( $field['label'] ),

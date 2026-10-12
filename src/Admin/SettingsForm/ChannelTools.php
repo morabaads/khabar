@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\Ui\Form;
 use YadamBiar\Admin\UserState;
-use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
 
@@ -43,7 +43,7 @@ final class ChannelTools {
 				<?php submit_button( __( 'ارسال تست', 'yadambiar' ), 'secondary', '', false ); ?>
 			<?php Form::close(); ?>
 			<?php $this->sms_diagnostics(); ?>
-			<?php $keys = PushChannel::keys(); ?>
+			<?php $keys = VapidKeys::keys(); ?>
 			<div class="yadambiar-bots">
 				<div class="yadambiar-bots-head">
 					<div>

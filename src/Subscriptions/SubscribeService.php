@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\PushSubscriptionRepository;
 use YadamBiar\Http\RateLimiter;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
@@ -246,7 +247,7 @@ final class SubscribeService {
 		// Optional push subscription sent together with the form.
 		$push = $this->param( 'push' );
 		if ( is_array( $push ) && PushChannel::enabled() ) {
-			PushChannel::save_subscription( $base['owner_key'], $push );
+			PushSubscriptionRepository::save_subscription( $base['owner_key'], $push );
 		}
 
 		if ( $needs ) {

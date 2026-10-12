@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Channels\PushChannel;
+use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\PriceHistory;
 use YadamBiar\Commerce\Reservation;
@@ -60,7 +61,7 @@ class ProductWidget implements Module {
 		wp_register_style( 'yadambiar', YADAMBIAR_URL . 'assets/css/frontend.css', array(), YADAMBIAR_VERSION );
 		wp_add_inline_style( 'yadambiar', ':root{' . Appearance::css_vars() . '}' );
 		wp_register_script( 'yadambiar', YADAMBIAR_URL . 'assets/js/frontend.js', array( 'jquery' ), YADAMBIAR_VERSION, true );
-		$keys = PushChannel::enabled() ? PushChannel::keys() : null;
+		$keys = PushChannel::enabled() ? VapidKeys::keys() : null;
 		wp_localize_script(
 			'yadambiar',
 			'YadamBiarData',
