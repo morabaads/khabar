@@ -1,5 +1,5 @@
-=== Khabar – خبرم کن ===
-Contributors: khabar
+=== Yadam Biar – یادم بیار ===
+Contributors: yadambiar
 Tags: woocommerce, back in stock, price alert, waitlist, sms
 Requires at least: 6.0
 Tested up to: 6.8

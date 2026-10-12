@@ -1,0 +1,182 @@
+<?php
+/**
+ * Customer panel: "یادآوری‌های من" (Flow 4) – My Account endpoint + shortcode for guests.
+ *
+ * @package YadamBiar
+ */
+
+namespace YadamBiar\Frontend;
+
+defined( 'ABSPATH' ) || exit;
+
+use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\OnsiteChannel;
+use YadamBiar\Core\Installer;
+use YadamBiar\Settings\Settings;
+use YadamBiar\Subscriptions\SubscriptionRepository;
+use YadamBiar\Support\Utils;
+
+class Account {
+
+	const ENDPOINT = 'yadambiar-alerts';
+
+	/**
+	 * Hooks.
+	 */
+	public static function init() {
+		add_action( 'init', array( __CLASS__, 'add_endpoint' ) );
+		add_filter( 'woocommerce_get_query_vars', array( __CLASS__, 'query_vars' ) );
+		add_filter( 'woocommerce_account_menu_items', array( __CLASS__, 'menu' ) );
+		add_filter( 'woocommerce_endpoint_' . self::ENDPOINT . '_title', array( __CLASS__, 'title' ) );
+		add_action( 'woocommerce_account_' . self::ENDPOINT . '_endpoint', array( __CLASS__, 'render_endpoint' ) );
+		add_shortcode( 'yadambiar_my_alerts', array( __CLASS__, 'shortcode' ) );
+		add_action( 'wp_login', array( __CLASS__, 'claim_guest' ), 10, 2 );
+	}
+
+	/**
+	 * Endpoint.
+	 */
+	public static function add_endpoint() {
+		add_rewrite_endpoint( self::ENDPOINT, EP_ROOT | EP_PAGES );
+		if ( get_option( 'yadambiar_flush_rewrite' ) ) {
+			delete_option( 'yadambiar_flush_rewrite' );
+			flush_rewrite_rules();
+		}
+	}
+
+	/**
+	 * WC query vars.
+	 *
+	 * @param array $vars Vars.
+	 * @return array
+	 */
+	public static function query_vars( $vars ) {
+		$vars[ self::ENDPOINT ] = self::ENDPOINT;
+		return $vars;
+	}
+
+	/**
+	 * Menu item.
+	 *
+	 * @param array $items Items.
+	 * @return array
+	 */
+	public static function menu( $items ) {
+		$new = array();
+		foreach ( $items as $key => $label ) {
+			if ( 'customer-logout' === $key ) {
+				$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadam-biar' );
+			}
+			$new[ $key ] = $label;
+		}
+		if ( ! isset( $new[ self::ENDPOINT ] ) ) {
+			$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadam-biar' );
+		}
+		return $new;
+	}
+
+	/**
+	 * Endpoint title.
+	 *
+	 * @return string
+	 */
+	public static function title() {
+		return __( 'یادآوری‌های من', 'yadam-biar' );
+	}
+
+	/**
+	 * Management URL for a subscription (used in messages).
+	 *
+	 * @param object $sub Subscription.
+	 * @return string
+	 */
+	public static function manage_url( $sub ) {
+		$page = (int) get_option( 'yadambiar_manage_page_id' );
+		$base = $page ? get_permalink( $page ) : home_url( '/' );
+		return add_query_arg( 'yadambiar_token', $sub->token, $base );
+	}
+
+	/**
+	 * Resolve the current owner (logged in user, management token, or guest cookie).
+	 *
+	 * @param string $token Optional management token.
+	 * @return array
+	 */
+	public static function current_owner( $token = '' ) {
+		$owner = array();
+		if ( $token ) {
+			$sub = SubscriptionRepository::get_by_token( $token );
+			if ( $sub ) {
+				// A management link grants access to that single request only.
+				$owner['sub_id'] = $sub->id;
+			}
+		}
+		$uid = get_current_user_id();
+		if ( $uid ) {
+			$owner['user_id']   = $uid;
+			$owner['email']     = wp_get_current_user()->user_email;
+			$owner['owner_key'] = 'u:' . $uid;
+		} else {
+			$key = Utils::owner_key();
+			if ( $key ) {
+				$owner['owner_key'] = $key;
+			}
+		}
+		return array_filter( $owner );
+	}
+
+	/**
+	 * When a guest logs in, attach the subscriptions made from this browser.
+	 *
+	 * @param string  $login Login.
+	 * @param WP_User $user  User.
+	 */
+	public static function claim_guest( $login, $user ) {
+		global $wpdb;
+		if ( empty( $_COOKIE[ Utils::GUEST_COOKIE ] ) ) {
+			return;
+		}
+		$key = 'g:' . preg_replace( '/[^a-zA-Z0-9]/', '', wp_unslash( $_COOKIE[ Utils::GUEST_COOKIE ] ) );
+		$wpdb->update( Installer::table( 'subscriptions' ), array( 'user_id' => $user->ID ), array( 'owner_key' => $key, 'user_id' => 0 ) ); // phpcs:ignore
+		$wpdb->update( Installer::table( 'notifications' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
+		$wpdb->update( Installer::table( 'push' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
+		MessengerChannel::move_owner( $key, 'u:' . $user->ID );
+	}
+
+	/**
+	 * My Account endpoint.
+	 */
+	public static function render_endpoint() {
+		echo self::shortcode(); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * Shortcode output.
+	 *
+	 * @return string
+	 */
+	public static function shortcode() {
+		$token = isset( $_GET['yadambiar_token'] ) ? sanitize_text_field( wp_unslash( $_GET['yadambiar_token'] ) ) : ''; // phpcs:ignore
+		$owner = self::current_owner( $token );
+		ProductWidget::enqueue();
+
+		ob_start();
+		if ( ! $owner ) {
+			echo '<div class="yadambiar-panel"><p>' . esc_html__( 'برای مشاهده درخواست‌ها وارد حساب کاربری شوید یا از لینک ارسال‌شده در پیام استفاده کنید.', 'yadam-biar' ) . '</p></div>';
+			return ob_get_clean();
+		}
+		$subs     = SubscriptionRepository::for_owner( $owner );
+		$notes    = OnsiteChannel::latest( isset( $owner['owner_key'] ) ? $owner['owner_key'] : '', 10 );
+		$channels = array_intersect_key( Settings::channels(), array_flip( (array) Settings::get( 'channels_enabled' ) ) );
+		$messengers = array();
+		foreach ( array( 'telegram', 'bale' ) as $network ) {
+			if ( ! MessengerChannel::available( $network ) ) {
+				unset( $channels[ $network ] );
+			} elseif ( MessengerChannel::needs_link( $network ) ) {
+				$messengers[] = $network;
+			}
+		}
+		include Utils::template( 'my-alerts.php' );
+		return ob_get_clean();
+	}
+}

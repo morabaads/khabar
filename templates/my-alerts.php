@@ -1,74 +1,74 @@
 <?php
 /**
- * "خبرم کن‌های من" panel.
+ * "یادآوری‌های من" panel.
  *
  * Available: $subs, $notes, $channels, $messengers, $token.
  *
- * @package Khabar
+ * @package YadamBiar
  */
 
 defined( 'ABSPATH' ) || exit;
 ?>
-<div class="khabar-panel" data-token="<?php echo esc_attr( $token ); ?>">
-	<h3><?php esc_html_e( 'محصولاتی که منتظرشان هستم', 'khabar' ); ?></h3>
+<div class="yadambiar-panel" data-token="<?php echo esc_attr( $token ); ?>">
+	<h3><?php esc_html_e( 'محصولاتی که منتظرشان هستم', 'yadam-biar' ); ?></h3>
 	<?php if ( ! empty( $messengers ) ) : ?>
-		<div class="khabar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
+		<div class="yadambiar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
 	<?php endif; ?>
 	<?php if ( ! $subs ) : ?>
-		<p class="khabar-empty"><?php esc_html_e( 'هنوز درخواستی ثبت نکرده‌اید.', 'khabar' ); ?></p>
+		<p class="yadambiar-empty"><?php esc_html_e( 'هنوز درخواستی ثبت نکرده‌اید.', 'yadam-biar' ); ?></p>
 	<?php else : ?>
-		<ul class="khabar-sub-list">
+		<ul class="yadambiar-sub-list">
 			<?php
-			foreach ( $subs as $khabar_sub ) :
-				$khabar_p    = wc_get_product( $khabar_sub->variation_id ? $khabar_sub->variation_id : $khabar_sub->product_id );
-				$khabar_name = $khabar_p ? $khabar_p->get_name() : __( 'محصول حذف شده', 'khabar' );
-				$khabar_st   = Khabar_Subscriptions::statuses();
+			foreach ( $subs as $yadambiar_sub ) :
+				$yadambiar_p    = wc_get_product( $yadambiar_sub->variation_id ? $yadambiar_sub->variation_id : $yadambiar_sub->product_id );
+				$yadambiar_name = $yadambiar_p ? $yadambiar_p->get_name() : __( 'محصول حذف شده', 'yadam-biar' );
+				$yadambiar_st   = \YadamBiar\Subscriptions\SubscriptionRepository::statuses();
 				?>
-				<li class="khabar-sub khabar-status-<?php echo esc_attr( $khabar_sub->status ); ?>" data-id="<?php echo esc_attr( $khabar_sub->id ); ?>">
-					<div class="khabar-sub-main">
-						<?php echo $khabar_p ? wp_kses_post( $khabar_p->get_image( array( 56, 56 ) ) ) : ''; ?>
+				<li class="yadambiar-sub yadambiar-status-<?php echo esc_attr( $yadambiar_sub->status ); ?>" data-id="<?php echo esc_attr( $yadambiar_sub->id ); ?>">
+					<div class="yadambiar-sub-main">
+						<?php echo $yadambiar_p ? wp_kses_post( $yadambiar_p->get_image( array( 56, 56 ) ) ) : ''; ?>
 						<div>
-							<a class="khabar-sub-title" href="<?php echo esc_url( $khabar_p ? $khabar_p->get_permalink() : '#' ); ?>"><?php echo esc_html( $khabar_name ); ?></a>
-							<?php if ( $khabar_sub->attributes ) : ?>
-								<div class="khabar-sub-attrs"><?php echo esc_html( Khabar_Utils::attributes_label( $khabar_sub->attributes ) ); ?></div>
+							<a class="yadambiar-sub-title" href="<?php echo esc_url( $yadambiar_p ? $yadambiar_p->get_permalink() : '#' ); ?>"><?php echo esc_html( $yadambiar_name ); ?></a>
+							<?php if ( $yadambiar_sub->attributes ) : ?>
+								<div class="yadambiar-sub-attrs"><?php echo esc_html( \YadamBiar\Support\Utils::attributes_label( $yadambiar_sub->attributes ) ); ?></div>
 							<?php endif; ?>
-							<div class="khabar-sub-cond"><?php echo esc_html( Khabar_Subscriptions::conditions_label( $khabar_sub ) ); ?></div>
-							<?php if ( $khabar_p ) : ?>
-								<div class="khabar-sub-now">
+							<div class="yadambiar-sub-cond"><?php echo esc_html( \YadamBiar\Subscriptions\SubscriptionRepository::conditions_label( $yadambiar_sub ) ); ?></div>
+							<?php if ( $yadambiar_p ) : ?>
+								<div class="yadambiar-sub-now">
 									<?php
 									/* translators: 1: price 2: stock */
-									printf( esc_html__( 'الان: %1$s — %2$s', 'khabar' ), esc_html( Khabar_Utils::price_text( $khabar_p->get_price() ) ), $khabar_p->is_in_stock() ? esc_html__( 'موجود', 'khabar' ) : esc_html__( 'ناموجود', 'khabar' ) );
+									printf( esc_html__( 'الان: %1$s — %2$s', 'yadam-biar' ), esc_html( \YadamBiar\Support\Utils::price_text( $yadambiar_p->get_price() ) ), $yadambiar_p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) );
 									?>
 								</div>
 							<?php endif; ?>
 						</div>
-						<span class="khabar-badge"><?php echo esc_html( isset( $khabar_st[ $khabar_sub->status ] ) ? $khabar_st[ $khabar_sub->status ] : $khabar_sub->status ); ?></span>
+						<span class="yadambiar-badge"><?php echo esc_html( isset( $yadambiar_st[ $yadambiar_sub->status ] ) ? $yadambiar_st[ $yadambiar_sub->status ] : $yadambiar_sub->status ); ?></span>
 					</div>
-					<div class="khabar-sub-actions">
-						<button type="button" class="khabar-link khabar-edit"><?php esc_html_e( 'ویرایش', 'khabar' ); ?></button>
-						<button type="button" class="khabar-link khabar-delete"><?php esc_html_e( 'حذف', 'khabar' ); ?></button>
+					<div class="yadambiar-sub-actions">
+						<button type="button" class="yadambiar-link yadambiar-edit"><?php esc_html_e( 'ویرایش', 'yadam-biar' ); ?></button>
+						<button type="button" class="yadambiar-link yadambiar-delete"><?php esc_html_e( 'حذف', 'yadam-biar' ); ?></button>
 					</div>
-					<form class="khabar-edit-form" hidden>
-						<?php if ( null !== $khabar_sub->price_below ) : ?>
-							<label><span><?php esc_html_e( 'قیمت هدف (کمتر از)', 'khabar' ); ?></span><input type="text" inputmode="numeric" name="price_below" value="<?php echo esc_attr( wc_format_decimal( $khabar_sub->price_below, wc_get_price_decimals() ) ); ?>"></label>
+					<form class="yadambiar-edit-form" hidden>
+						<?php if ( null !== $yadambiar_sub->price_below ) : ?>
+							<label><span><?php esc_html_e( 'قیمت هدف (کمتر از)', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="price_below" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_below, wc_get_price_decimals() ) ); ?>"></label>
 						<?php endif; ?>
-						<?php if ( null !== $khabar_sub->price_above ) : ?>
-							<label><span><?php esc_html_e( 'قیمت (بیشتر از)', 'khabar' ); ?></span><input type="text" inputmode="numeric" name="price_above" value="<?php echo esc_attr( wc_format_decimal( $khabar_sub->price_above, wc_get_price_decimals() ) ); ?>"></label>
+						<?php if ( null !== $yadambiar_sub->price_above ) : ?>
+							<label><span><?php esc_html_e( 'قیمت (بیشتر از)', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="price_above" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_above, wc_get_price_decimals() ) ); ?>"></label>
 						<?php endif; ?>
-						<?php if ( $khabar_sub->min_qty ) : ?>
-							<label><span><?php esc_html_e( 'حداقل موجودی', 'khabar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" value="<?php echo esc_attr( $khabar_sub->min_qty ); ?>"></label>
+						<?php if ( $yadambiar_sub->min_qty ) : ?>
+							<label><span><?php esc_html_e( 'حداقل موجودی', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" value="<?php echo esc_attr( $yadambiar_sub->min_qty ); ?>"></label>
 						<?php endif; ?>
-						<label><span><?php esc_html_e( 'موبایل', 'khabar' ); ?></span><input type="tel" dir="ltr" name="phone" value="<?php echo esc_attr( $khabar_sub->phone ); ?>"></label>
-						<label><span><?php esc_html_e( 'ایمیل', 'khabar' ); ?></span><input type="email" dir="ltr" name="email" value="<?php echo esc_attr( $khabar_sub->email ); ?>"></label>
-						<?php if ( Khabar_Settings::get( 'user_selects_channel' ) && count( $channels ) > 1 ) : ?>
-							<div class="khabar-channels">
-								<?php foreach ( $channels as $khabar_ch => $khabar_label ) : ?>
-									<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $khabar_ch ); ?>" <?php checked( ! $khabar_sub->channel_list || in_array( $khabar_ch, $khabar_sub->channel_list, true ) ); ?>> <?php echo esc_html( $khabar_label ); ?></label>
+						<label><span><?php esc_html_e( 'موبایل', 'yadam-biar' ); ?></span><input type="tel" dir="ltr" name="phone" value="<?php echo esc_attr( $yadambiar_sub->phone ); ?>"></label>
+						<label><span><?php esc_html_e( 'ایمیل', 'yadam-biar' ); ?></span><input type="email" dir="ltr" name="email" value="<?php echo esc_attr( $yadambiar_sub->email ); ?>"></label>
+						<?php if ( \YadamBiar\Settings\Settings::get( 'user_selects_channel' ) && count( $channels ) > 1 ) : ?>
+							<div class="yadambiar-channels">
+								<?php foreach ( $channels as $yadambiar_ch => $yadambiar_label ) : ?>
+									<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $yadambiar_ch ); ?>" <?php checked( ! $yadambiar_sub->channel_list || in_array( $yadambiar_ch, $yadambiar_sub->channel_list, true ) ); ?>> <?php echo esc_html( $yadambiar_label ); ?></label>
 								<?php endforeach; ?>
 							</div>
 						<?php endif; ?>
-						<p class="khabar-msg" hidden></p>
-						<button type="submit" class="button"><?php esc_html_e( 'ذخیره تغییرات', 'khabar' ); ?></button>
+						<p class="yadambiar-msg" hidden></p>
+						<button type="submit" class="button"><?php esc_html_e( 'ذخیره تغییرات', 'yadam-biar' ); ?></button>
 					</form>
 				</li>
 			<?php endforeach; ?>
@@ -76,12 +76,12 @@ defined( 'ABSPATH' ) || exit;
 	<?php endif; ?>
 
 	<?php if ( $notes ) : ?>
-		<h3><?php esc_html_e( 'اعلان‌های اخیر', 'khabar' ); ?></h3>
-		<ul class="khabar-notes">
-			<?php foreach ( $notes as $khabar_note ) : ?>
-				<li class="<?php echo $khabar_note->is_read ? '' : 'khabar-unread'; ?>">
-					<a href="<?php echo esc_url( $khabar_note->url ); ?>"><strong><?php echo esc_html( $khabar_note->title ); ?></strong></a>
-					<span><?php /* translators: %s time */ printf( esc_html__( '%s پیش', 'khabar' ), esc_html( human_time_diff( strtotime( $khabar_note->created_at . ' UTC' ) ) ) ); ?></span>
+		<h3><?php esc_html_e( 'اعلان‌های اخیر', 'yadam-biar' ); ?></h3>
+		<ul class="yadambiar-notes">
+			<?php foreach ( $notes as $yadambiar_note ) : ?>
+				<li class="<?php echo $yadambiar_note->is_read ? '' : 'yadambiar-unread'; ?>">
+					<a href="<?php echo esc_url( $yadambiar_note->url ); ?>"><strong><?php echo esc_html( $yadambiar_note->title ); ?></strong></a>
+					<span><?php /* translators: %s time */ printf( esc_html__( '%s پیش', 'yadam-biar' ), esc_html( human_time_diff( strtotime( $yadambiar_note->created_at . ' UTC' ) ) ) ); ?></span>
 				</li>
 			<?php endforeach; ?>
 		</ul>

@@ -1,23 +1,23 @@
 /* global jQuery */
 /**
- * Khabar admin: single-page navigation. Every link / form inside #khabar-app is fetched with a
+ * Yadam Biar admin: single-page navigation. Every link / form inside #yadambiar-app is fetched with a
  * custom header; the server answers with just the section markup (no WordPress chrome) and the
  * body is swapped in place. Anything unexpected falls back to a normal page load.
  */
 jQuery(function ($) {
-	var $app = $('#khabar-app');
-	var $body = $('#khabar-body');
+	var $app = $('#yadambiar-app');
+	var $body = $('#yadambiar-body');
 	var ctl = null;
 
-	$(document).on('click', '.khabar-reset', function () {
+	$(document).on('click', '.yadambiar-reset', function () {
 		$('#' + $(this).data('target')).val($(this).data('default'));
 	});
 
 	/* ---- SMS pattern repeater ---- */
 	function driverOf($root) {
-		var gw = $('#khabar-sms_gateway').val();
+		var gw = $('#yadambiar-sms_gateway').val();
 		var d = ($root.data('drivers') || {})[gw] || gw;
-		return d === 'compat' ? ($('#khabar-sms_platform').val() || 'payamak_panel') : d;
+		return d === 'compat' ? ($('#yadambiar-sms_platform').val() || 'payamak_panel') : d;
 	}
 	var starters = {
 		ghasedak: [['name', '{product_name}'], ['price', '{price}'], ['link', '{link}']],
@@ -33,74 +33,74 @@ jQuery(function ($) {
 
 	function varRow(base, name, value) {
 		var k = ++uid;
-		var $r = $('<div class="khabar-pat-var">');
-		$('<input type="text" dir="ltr" class="khabar-pat-vname" placeholder="token">').attr('name', base + '[vars][' + k + '][name]').val(name || '').appendTo($r);
-		$('<span class="khabar-pat-arrow">\u2190</span>').appendTo($r);
-		$('<input type="text" dir="auto" class="khabar-pat-vval" placeholder="{product_name}">').attr('name', base + '[vars][' + k + '][value]').val(value || '').appendTo($r);
-		$('<button type="button" class="khabar-pat-vdel" aria-label="\u062d\u0630\u0641">\u00d7</button>').appendTo($r);
+		var $r = $('<div class="yadambiar-pat-var">');
+		$('<input type="text" dir="ltr" class="yadambiar-pat-vname" placeholder="token">').attr('name', base + '[vars][' + k + '][name]').val(name || '').appendTo($r);
+		$('<span class="yadambiar-pat-arrow">\u2190</span>').appendTo($r);
+		$('<input type="text" dir="auto" class="yadambiar-pat-vval" placeholder="{product_name}">').attr('name', base + '[vars][' + k + '][value]').val(value || '').appendTo($r);
+		$('<button type="button" class="yadambiar-pat-vdel" aria-label="\u062d\u0630\u0641">\u00d7</button>').appendTo($r);
 		return $r;
 	}
 
 	function syncPatterns($root) {
 		var gw = driverOf($root);
 		var hints = $root.data('hints') || {};
-		$root.find('.khabar-pat-gw').text(hints[gw] || '').prop('hidden', !hints[gw]);
+		$root.find('.yadambiar-pat-gw').text(hints[gw] || '').prop('hidden', !hints[gw]);
 		var used = {};
-		$root.find('.khabar-pat-event').each(function () { used[this.value] = (used[this.value] || 0) + 1; });
-		$root.find('.khabar-pat-event').each(function () {
+		$root.find('.yadambiar-pat-event').each(function () { used[this.value] = (used[this.value] || 0) + 1; });
+		$root.find('.yadambiar-pat-event').each(function () {
 			var self = this;
 			$(this).find('option').each(function () {
 				$(this).prop('disabled', this.value !== self.value && !!used[this.value]);
 			});
 		});
-		$root.find('.khabar-pat-empty').prop('hidden', !!$root.find('.khabar-pat-row').length);
+		$root.find('.yadambiar-pat-empty').prop('hidden', !!$root.find('.yadambiar-pat-row').length);
 		// Pattern UI only matters in pattern mode.
-		var pattern = $('#khabar-sms_mode').val() === 'pattern' && ($root.data('patternDrivers') || []).indexOf(gw) !== -1 && $('#khabar-sms_mode').closest('tr').css('display') !== 'none';
+		var pattern = $('#yadambiar-sms_mode').val() === 'pattern' && ($root.data('patternDrivers') || []).indexOf(gw) !== -1 && $('#yadambiar-sms_mode').closest('tr').css('display') !== 'none';
 		$root.closest('tr').toggle(pattern);
 	}
 
 	function initPatterns() {
-		$body.find('.khabar-pat').each(function () { syncPatterns($(this)); });
+		$body.find('.yadambiar-pat').each(function () { syncPatterns($(this)); });
 	}
-	$(document).on('change', '#khabar-sms_gateway, #khabar-sms_mode, .khabar-pat-event', function () {
-		$('.khabar-pat').each(function () { syncPatterns($(this)); });
+	$(document).on('change', '#yadambiar-sms_gateway, #yadambiar-sms_mode, .yadambiar-pat-event', function () {
+		$('.yadambiar-pat').each(function () { syncPatterns($(this)); });
 	});
-	$(document).on('click', '.khabar-pat-add', function () {
-		var $root = $(this).closest('.khabar-pat');
+	$(document).on('click', '.yadambiar-pat-add', function () {
+		var $root = $(this).closest('.yadambiar-pat');
 		var n = ++uid;
-		var html = $root.find('.khabar-pat-tpl').html().replace(/__i__/g, n);
-		var $row = $($.parseHTML(html.trim())).filter('.khabar-pat-row');
+		var html = $root.find('.yadambiar-pat-tpl').html().replace(/__i__/g, n);
+		var $row = $($.parseHTML(html.trim())).filter('.yadambiar-pat-row');
 		// First free event.
 		var used = {};
-		$root.find('.khabar-pat-event').each(function () { used[this.value] = 1; });
-		var $sel = $row.find('.khabar-pat-event');
+		$root.find('.yadambiar-pat-event').each(function () { used[this.value] = 1; });
+		var $sel = $row.find('.yadambiar-pat-event');
 		var free = $sel.find('option').filter(function () { return !used[this.value]; }).first().val();
 		if (free) { $sel.val(free); }
 		var gw = driverOf($root);
 		var list = (free === 'otp' ? otpStarter[gw] : starters[gw]) || [];
-		var base = $row.find('.khabar-pat-vars').data('base');
-		$.each(list, function (_, v) { $row.find('.khabar-pat-vlist').append(varRow(base, v[0], v[1])); });
-		$root.find('.khabar-pat-list').append($row);
+		var base = $row.find('.yadambiar-pat-vars').data('base');
+		$.each(list, function (_, v) { $row.find('.yadambiar-pat-vlist').append(varRow(base, v[0], v[1])); });
+		$root.find('.yadambiar-pat-list').append($row);
 		syncPatterns($root);
-		$row.find('.khabar-pat-code input').trigger('focus');
+		$row.find('.yadambiar-pat-code input').trigger('focus');
 	});
-	$(document).on('click', '.khabar-pat-del', function () {
-		var $root = $(this).closest('.khabar-pat');
-		$(this).closest('.khabar-pat-row').remove();
+	$(document).on('click', '.yadambiar-pat-del', function () {
+		var $root = $(this).closest('.yadambiar-pat');
+		$(this).closest('.yadambiar-pat-row').remove();
 		syncPatterns($root);
 	});
-	$(document).on('click', '.khabar-pat-addvar', function () {
-		var $vars = $(this).closest('.khabar-pat-vars');
+	$(document).on('click', '.yadambiar-pat-addvar', function () {
+		var $vars = $(this).closest('.yadambiar-pat-vars');
 		var $r = varRow($vars.data('base'), '', '');
-		$vars.find('.khabar-pat-vlist').append($r);
-		$r.find('.khabar-pat-vname').trigger('focus');
+		$vars.find('.yadambiar-pat-vlist').append($r);
+		$r.find('.yadambiar-pat-vname').trigger('focus');
 	});
-	$(document).on('click', '.khabar-pat-vdel', function () { $(this).closest('.khabar-pat-var').remove(); });
-	$(document).on('focusin', '.khabar-pat-vval', function () { $(this).closest('.khabar-pat-vars').data('last', this); });
-	$(document).on('click', '.khabar-chip', function () {
-		var $vars = $(this).closest('.khabar-pat-vars');
+	$(document).on('click', '.yadambiar-pat-vdel', function () { $(this).closest('.yadambiar-pat-var').remove(); });
+	$(document).on('focusin', '.yadambiar-pat-vval', function () { $(this).closest('.yadambiar-pat-vars').data('last', this); });
+	$(document).on('click', '.yadambiar-chip', function () {
+		var $vars = $(this).closest('.yadambiar-pat-vars');
 		var el = $vars.data('last');
-		if (!el || !document.body.contains(el)) { el = $vars.find('.khabar-pat-vval').filter(function () { return !this.value; }).first()[0] || $vars.find('.khabar-pat-vval').last()[0]; }
+		if (!el || !document.body.contains(el)) { el = $vars.find('.yadambiar-pat-vval').filter(function () { return !this.value; }).first()[0] || $vars.find('.yadambiar-pat-vval').last()[0]; }
 		if (!el) { return; }
 		var t = $(this).data('token');
 		var s = el.selectionStart == null ? el.value.length : el.selectionStart;
@@ -118,7 +118,7 @@ jQuery(function ($) {
 		return sets.some(function (set) {
 			var all = true;
 			$.each(set, function (key, values) {
-				var $f = $('#khabar-' + key);
+				var $f = $('#yadambiar-' + key);
 				if ($f.length && (values.indexOf($f.val()) === -1 || $f.closest('tr').css('display') === 'none')) { all = false; }
 			});
 			return all;
@@ -127,69 +127,69 @@ jQuery(function ($) {
 	function syncConditional() {
 		$body.find('tr[data-show-if]').each(function () { $(this).toggle(rulesOk(this)); });
 		// A settings group is shown when its own rule passes and at least one of its rows is.
-		$body.find('details.khabar-acc').each(function () {
+		$body.find('details.yadambiar-acc').each(function () {
 			if (!$(this).find('tr').length) { return; } // Not a settings panel (e.g. help cards).
 			var rows = $(this).find('tr').filter(function () { return this.style.display !== 'none'; }).length;
 			$(this).toggle(rows > 0 && (!this.hasAttribute('data-show-if') || rulesOk(this)));
 			accBadge($(this));
 		});
-		$('.khabar-pat').each(function () { syncPatterns($(this)); });
+		$('.yadambiar-pat').each(function () { syncPatterns($(this)); });
 		// Hints that depend on another setting (e.g. the chosen provider).
 		$body.find('[data-desc-by]').each(function () {
 			var by = $(this).data('descBy') || {}, text = $(this).data('descDefault') || '';
-			$.each(by, function (key, map) { var v = $('#khabar-' + key).val(); if (map[v]) { text = map[v]; } });
+			$.each(by, function (key, map) { var v = $('#yadambiar-' + key).val(); if (map[v]) { text = map[v]; } });
 			$(this).text(text).prop('hidden', !text);
 		});
 	}
-	$(document).on('change', '#khabar-body select', syncConditional);
+	$(document).on('change', '#yadambiar-body select', syncConditional);
 
 	// Settings groups (accordion): remember which panels are open and keep the status badge live.
-	var ACC_KEY = 'khabarAccOpen';
+	var ACC_KEY = 'yadambiarAccOpen';
 	function accOpen() {
 		try { return JSON.parse(sessionStorage.getItem(ACC_KEY) || '[]'); } catch (e) { return []; }
 	}
 	function accBadge($d) {
-		var $badge = $d.find('> summary .khabar-acc-badge');
+		var $badge = $d.find('> summary .yadambiar-acc-badge');
 		var status = $d.data('status');
 		if (status) {
-			$badge.attr('class', 'khabar-acc-badge is-info').text($('#khabar-' + status + ' option:selected').text());
+			$badge.attr('class', 'yadambiar-acc-badge is-info').text($('#yadambiar-' + status + ' option:selected').text());
 			return;
 		}
 		var labels = $d.data('labels') || {};
 		// Only fields shown for the current gateway / provider count.
 		var keys = ($d.data('ready') || []).filter(function (k) {
-			var $f = $('#khabar-' + k);
+			var $f = $('#yadambiar-' + k);
 			return !$f.length || $f.closest('tr').css('display') !== 'none';
 		});
 		var filled = keys.filter(function (k) {
-			var $f = $('#khabar-' + k);
+			var $f = $('#yadambiar-' + k);
 			if ($f.length) { return $.trim($f.val() || '') !== ''; }
-			return $d.find('input[name="khabar[' + k + '][]"]:checked').length > 0;
+			return $d.find('input[name="yadambiar[' + k + '][]"]:checked').length > 0;
 		}).length;
 		// No required field applies to the chosen gateway/provider: show no badge rather than a wrong one.
 		var state = !keys.length ? 'none' : (!filled ? 'off' : (filled === keys.length ? 'on' : 'partial'));
-		$badge.attr('class', 'khabar-acc-badge is-' + state).text(labels[state] || '');
+		$badge.attr('class', 'yadambiar-acc-badge is-' + state).text(labels[state] || '');
 	}
 	function initAcc() {
 		var open = accOpen();
-		$body.find('details.khabar-acc').each(function () {
+		$body.find('details.yadambiar-acc').each(function () {
 			if (open.indexOf(this.id) !== -1) { this.open = true; }
 		});
 	}
 	// "toggle" does not bubble: listen in the capture phase.
 	document.addEventListener('toggle', function (e) {
 		var d = e.target;
-		if (!d.matches || !d.matches('details.khabar-acc') || !d.id) { return; }
+		if (!d.matches || !d.matches('details.yadambiar-acc') || !d.id) { return; }
 		var open = accOpen().filter(function (id) { return id !== d.id; });
 		if (d.open) { open.push(d.id); }
 		try { sessionStorage.setItem(ACC_KEY, JSON.stringify(open)); } catch (err) {}
 	}, true);
-	$(document).on('input change', 'details.khabar-acc :input', function () { accBadge($(this).closest('details.khabar-acc')); });
+	$(document).on('input change', 'details.yadambiar-acc :input', function () { accBadge($(this).closest('details.yadambiar-acc')); });
 	// Image settings: pick or upload from the WordPress media library (any image type WordPress accepts).
-	$(document).on('click', '.khabar-media-pick', function (e) {
+	$(document).on('click', '.yadambiar-media-pick', function (e) {
 		e.preventDefault();
 		if (!window.wp || !wp.media) { return; }
-		var $box = $(this).closest('.khabar-media');
+		var $box = $(this).closest('.yadambiar-media');
 		var frame = $box.data('frame');
 		if (!frame) {
 			frame = wp.media({ title: $box.data('title'), button: { text: $box.data('button') }, library: { type: 'image' }, multiple: false });
@@ -199,29 +199,29 @@ jQuery(function ($) {
 				// Preview with a generated size: originals such as HEIC cannot be shown by browsers.
 				var thumb = (sizes.thumbnail || sizes.medium || sizes.full || {}).url || a.url;
 				$box.find('input[type=text]').val(a.url).trigger('input');
-				$box.find('.khabar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', thumb));
-				$box.find('.khabar-media-clear').prop('hidden', false);
+				$box.find('.yadambiar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', thumb));
+				$box.find('.yadambiar-media-clear').prop('hidden', false);
 			});
 			$box.data('frame', frame);
 		}
 		frame.open();
 	});
-	$(document).on('click', '.khabar-media-clear', function (e) {
+	$(document).on('click', '.yadambiar-media-clear', function (e) {
 		e.preventDefault();
-		var $box = $(this).closest('.khabar-media');
+		var $box = $(this).closest('.yadambiar-media');
 		$box.find('input[type=text]').val('').trigger('input');
-		$box.find('.khabar-media-preview').addClass('is-empty').html($box.find('.khabar-media-preview').data('empty') || '');
+		$box.find('.yadambiar-media-preview').addClass('is-empty').html($box.find('.yadambiar-media-preview').data('empty') || '');
 		$(this).prop('hidden', true);
 	});
-	$(document).on('change', '.khabar-media input[type=text]', function () {
-		var $box = $(this).closest('.khabar-media'), v = $.trim(this.value);
-		$box.find('.khabar-media-clear').prop('hidden', !v);
+	$(document).on('change', '.yadambiar-media input[type=text]', function () {
+		var $box = $(this).closest('.yadambiar-media'), v = $.trim(this.value);
+		$box.find('.yadambiar-media-clear').prop('hidden', !v);
 		if (v && /^https?:\/\//.test(v)) {
-			$box.find('.khabar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', v));
+			$box.find('.yadambiar-media-preview').removeClass('is-empty').empty().append($('<img alt="">').attr('src', v));
 		}
 	});
 
-	$(document).on('click', '.khabar-copy', function () {
+	$(document).on('click', '.yadambiar-copy', function () {
 		var $b = $(this), text = $b.data('copy'), label = $b.text();
 		var done = function () { $b.text($b.data('done')); setTimeout(function () { $b.text(label); }, 1500); };
 		if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(done); return; }
@@ -230,8 +230,8 @@ jQuery(function ($) {
 	});
 
 	// Option cards that show another setting's value (e.g. the channel id) follow it live.
-	$(document).on('input', '#khabar-body :input[id^="khabar-"]', function () {
-		var key = this.id.replace(/^khabar-/, ''), v = $.trim(this.value || '');
+	$(document).on('input', '#yadambiar-body :input[id^="yadambiar-"]', function () {
+		var key = this.id.replace(/^yadambiar-/, ''), v = $.trim(this.value || '');
 		$body.find('[data-hint-from="' + key + '"]').each(function () {
 			$(this).text(v || $(this).data('empty')).toggleClass('is-missing', !v);
 		});
@@ -241,15 +241,15 @@ jQuery(function ($) {
 		syncConditional();
 		initPatterns();
 		initAcc();
-		if ($.fn.wpColorPicker) { $body.find('.khabar-color').wpColorPicker(); }
+		if ($.fn.wpColorPicker) { $body.find('.yadambiar-color').wpColorPicker(); }
 		// Flash notices become a floating toast so saving never moves the page.
-		var $n = $body.find('.khabar-notice');
+		var $n = $body.find('.yadambiar-notice');
 		if ($n.length) {
-			var $wrap = $('#khabar-toasts');
-			if (!$wrap.length) { $wrap = $('<div id="khabar-toasts" class="khabar-admin" aria-live="polite">').appendTo(document.body); }
+			var $wrap = $('#yadambiar-toasts');
+			if (!$wrap.length) { $wrap = $('<div id="yadambiar-toasts" class="yadambiar-admin" aria-live="polite">').appendTo(document.body); }
 			$n.each(function () {
-				var $t = $(this).detach().addClass('khabar-toast').appendTo($wrap);
-				$('<button type="button" class="khabar-toast-x" aria-label="بستن">×</button>').appendTo($t).on('click', function () { $t.remove(); });
+				var $t = $(this).detach().addClass('yadambiar-toast').appendTo($wrap);
+				$('<button type="button" class="yadambiar-toast-x" aria-label="بستن">×</button>').appendTo($t).on('click', function () { $t.remove(); });
 				setTimeout(function () { $t.addClass('is-out'); setTimeout(function () { $t.remove(); }, 350); }, 4500);
 			});
 		}
@@ -263,10 +263,10 @@ jQuery(function ($) {
 		var u;
 		try { u = new URL(href, location.href); } catch (e) { return false; }
 		if (u.origin !== location.origin) { return false; }
-		if (/\/admin\.php$/.test(u.pathname)) { return u.searchParams.get('page') === 'khabar'; }
+		if (/\/admin\.php$/.test(u.pathname)) { return u.searchParams.get('page') === 'yadam-biar'; }
 		if (/\/admin-post\.php$/.test(u.pathname)) {
 			var a = u.searchParams.get('action') || '';
-			return /^khabar_/.test(a) && !NATIVE.test(a);
+			return /^yadambiar_/.test(a) && !NATIVE.test(a);
 		}
 		return false;
 	}
@@ -275,7 +275,7 @@ jQuery(function ($) {
 		var view = 'dashboard';
 		try { view = new URL(url, location.href).searchParams.get('view') || 'dashboard'; } catch (e) {}
 		// Keep the sidebar shortcut in sync.
-		$('#toplevel_page_khabar .wp-submenu li').each(function () {
+		$('#toplevel_page_yadambiar .wp-submenu li').each(function () {
 			var $a = $(this).children('a');
 			if (!$a.length) { return; }
 			var v = 'dashboard';
@@ -284,7 +284,7 @@ jQuery(function ($) {
 			$a.toggleClass('current', v === view).attr('aria-current', v === view ? 'page' : null);
 		});
 		var label = '';
-		$app.find('.khabar-nav .nav-tab').each(function () {
+		$app.find('.yadambiar-nav .nav-tab').each(function () {
 			var on = $(this).data('view') === view;
 			$(this).toggleClass('nav-tab-active', on);
 			if (on) { label = $(this).text(); }
@@ -296,17 +296,17 @@ jQuery(function ($) {
 		if (ctl) { ctl.abort(); }
 		ctl = new AbortController();
 		init = init || {};
-		init.headers = { 'X-Khabar-Ajax': '1' };
+		init.headers = { 'X-YadamBiar-Ajax': '1' };
 		init.credentials = 'same-origin';
 		init.signal = ctl.signal;
 		$app.addClass('is-loading');
 		return fetch(url, init).then(function (r) {
-			if (r.headers.get('X-Khabar-Fragment') !== '1') { location.href = r.url || url; return null; }
+			if (r.headers.get('X-YadamBiar-Fragment') !== '1') { location.href = r.url || url; return null; }
 			return r.text().then(function (html) { return { html: html, url: r.url || url }; });
 		}).then(function (res) {
 			if (!res) { return; }
 			$body.html(res.html);
-			if (push !== false) { history.pushState({ khabar: 1 }, '', res.url); }
+			if (push !== false) { history.pushState({ yadambiar: 1 }, '', res.url); }
 			setActive(res.url);
 			enhance();
 			if (scroll) {
@@ -320,7 +320,7 @@ jQuery(function ($) {
 	}
 
 	// Sidebar shortcuts also switch sections in place while the app is open.
-	$('#toplevel_page_khabar .wp-submenu').on('click', 'a[href]', function (e) {
+	$('#toplevel_page_yadambiar .wp-submenu').on('click', 'a[href]', function (e) {
 		if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !isAppUrl(this.href)) { return; }
 		e.preventDefault();
 		go(this.href, {}, true, true);

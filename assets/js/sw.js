@@ -5,17 +5,17 @@ self.addEventListener('push', function (event) {
 	event.waitUntil(
 		self.registration.pushManager.getSubscription().then(function (sub) {
 			if (!sub) { return null; }
-			var sep = KHABAR_LATEST.indexOf('?') === -1 ? '?' : '&';
-			return fetch(KHABAR_LATEST + sep + 'endpoint=' + encodeURIComponent(sub.endpoint), { credentials: 'omit' })
+			var sep = YADAMBIAR_LATEST.indexOf('?') === -1 ? '?' : '&';
+			return fetch(YADAMBIAR_LATEST + sep + 'endpoint=' + encodeURIComponent(sub.endpoint), { credentials: 'omit' })
 				.then(function (r) { return r.json(); });
 		}).then(function (data) {
 			data = data || {};
-			return self.registration.showNotification(data.title || 'خبرم کن', {
+			return self.registration.showNotification(data.title || 'یادم بیار', {
 				body: data.body || '',
 				icon: data.icon || undefined,
 				dir: 'rtl',
 				lang: 'fa',
-				tag: 'khabar',
+				tag: 'yadam-biar',
 				renotify: true,
 				data: { url: data.url || '/' }
 			});

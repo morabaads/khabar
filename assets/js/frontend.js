@@ -1,8 +1,8 @@
-/* global jQuery, KhabarData */
+/* global jQuery, YadamBiarData */
 (function ($) {
 	'use strict';
 
-	var D = window.KhabarData || {};
+	var D = window.YadamBiarData || {};
 
 	function faToEn(s) {
 		return String(s || '').replace(/[۰-۹]/g, function (d) { return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d); })
@@ -28,7 +28,7 @@
 	}
 
 	function showMsg($el, text, ok) {
-		$el.text(text).prop('hidden', !text).toggleClass('khabar-ok', !!ok).toggleClass('khabar-err', !ok);
+		$el.text(text).prop('hidden', !text).toggleClass('yadambiar-ok', !!ok).toggleClass('yadambiar-err', !ok);
 	}
 
 	function b64ToUint8(base64) {
@@ -86,12 +86,12 @@
 				var $opt = $(this);
 				var value = $opt.val();
 				if (!value) { return; }
-				if ($opt.data('khabarOrig') === undefined) { $opt.data('khabarOrig', $opt.text()); }
+				if ($opt.data('yadambiarOrig') === undefined) { $opt.data('yadambiarOrig', $opt.text()); }
 				var test = $.extend({}, selection);
 				test[name] = value;
 				var matches = variations.filter(function (v) { return variationMatches(v, test); });
 				var oos = matches.length && matches.every(function (v) { return !v.is_in_stock; });
-				$opt.text(oos ? $opt.data('khabarOrig') + ' — ' + D.i18n.outOfStock : $opt.data('khabarOrig'));
+				$opt.text(oos ? $opt.data('yadambiarOrig') + ' — ' + D.i18n.outOfStock : $opt.data('yadambiarOrig'));
 			});
 		});
 	}
@@ -100,10 +100,10 @@
 
 	function Widget($root) {
 		this.$root = $root;
-		this.$modal = $root.find('.khabar-modal');
-		this.$form = $root.find('.khabar-form');
-		this.$otp = $root.find('.khabar-otp');
-		this.$done = $root.find('.khabar-done');
+		this.$modal = $root.find('.yadambiar-modal');
+		this.$form = $root.find('.yadambiar-form');
+		this.$otp = $root.find('.yadambiar-otp');
+		this.$done = $root.find('.yadambiar-done');
 		// Re-parent the popup to <body>: ancestors with transform/overflow in themes would otherwise clip a fixed-position modal.
 		this.$modal.appendTo(document.body);
 		this.variable = $root.data('variable') === 1 || $root.data('variable') === '1';
@@ -117,8 +117,8 @@
 		var $vform = this.variable ? $('form.variations_form[data-product_id="' + this.$root.data('product') + '"]') : $();
 		this.$vform = $vform;
 
-		this.$root.on('click', '.khabar-open', function () { self.open($(this).data('mode')); });
-		this.$modal.on('click', '.khabar-close, .khabar-close-done', function () { self.close(); });
+		this.$root.on('click', '.yadambiar-open', function () { self.open($(this).data('mode')); });
+		this.$modal.on('click', '.yadambiar-close, .yadambiar-close-done', function () { self.close(); });
 		this.$modal.on('click', function (e) { if (e.target === self.$modal[0]) { self.close(); } });
 		$(document).on('keydown', function (e) { if (e.key === 'Escape') { self.close(); } });
 
@@ -129,9 +129,9 @@
 			self.updateMode();
 		});
 		this.$form.on('change', 'input[type=checkbox]', function () { self.updateMode(); });
-		this.$form.on('change', '.khabar-channels input', function () { self.syncContact(); });
-		this.$form.on('change', '.khabar-attrs select', function () { self.$form.find('[name=variation_id]').val(0); self.updateLabel(); });
-		this.$form.on('input', '.khabar-num', function () {
+		this.$form.on('change', '.yadambiar-channels input', function () { self.syncContact(); });
+		this.$form.on('change', '.yadambiar-attrs select', function () { self.$form.find('[name=variation_id]').val(0); self.updateLabel(); });
+		this.$form.on('input', '.yadambiar-num', function () {
 			var digits = faToEn(this.value).replace(/[^\d]/g, '');
 			this.value = digits ? Number(digits).toLocaleString('en-US') : '';
 		});
@@ -148,14 +148,14 @@
 
 	Widget.prototype.onVariation = function (variation) {
 		this.variation = variation;
-		var $stock = this.$root.find('.khabar-cta-stock');
-		var $price = this.$root.find('.khabar-cta-price');
+		var $stock = this.$root.find('.yadambiar-cta-stock');
+		var $price = this.$root.find('.yadambiar-cta-price');
 		if (variation) {
 			$stock.prop('hidden', !!variation.is_in_stock);
 			$price.prop('hidden', !variation.is_in_stock);
 			var count = (this.waiting[variation.variation_id] || 0);
 			var show = this.$root.data('showCount') && count >= Number(this.$root.data('countMin'));
-			this.$root.find('.khabar-waiting').prop('hidden', !show).find('span').text(Number(count).toLocaleString('fa-IR'));
+			this.$root.find('.yadambiar-waiting').prop('hidden', !show).find('span').text(Number(count).toLocaleString('fa-IR'));
 		} else {
 			var inStock = String(this.$root.data('instock')) === '1';
 			$stock.prop('hidden', inStock);
@@ -165,18 +165,18 @@
 
 	// Show only the contact fields the ticked channels need (SMS/Bale -> mobile, email -> email; name always).
 	Widget.prototype.syncContact = function () {
-		var $ch = this.$form.find('.khabar-channels input:checked');
-		if (!this.$form.find('.khabar-channels').length) { return; }
+		var $ch = this.$form.find('.yadambiar-channels input:checked');
+		if (!this.$form.find('.yadambiar-channels').length) { return; }
 		var on = {};
 		$ch.each(function () { on[this.value] = true; });
 		var needsAny = false;
-		this.$form.find('.khabar-contact label[data-for]').each(function () {
+		this.$form.find('.yadambiar-contact label[data-for]').each(function () {
 			var $l = $(this), need = false;
 			$.each(String($l.data('for')).split(' '), function (_, c) { if (on[c]) { need = true; } });
 			$l.data('need', need);
 			needsAny = needsAny || need;
 		});
-		this.$form.find('.khabar-contact label[data-for]').each(function () {
+		this.$form.find('.yadambiar-contact label[data-for]').each(function () {
 			var $l = $(this);
 			// With only on-site / messenger channels ticked neither contact is needed, so keep both visible but optional.
 			var show = $l.data('need') || !needsAny;
@@ -185,38 +185,38 @@
 	};
 
 	Widget.prototype.updateMode = function () {
-		var n = this.$form.find('.khabar-conditions input[type=checkbox]:checked').length;
-		this.$form.find('.khabar-mode').prop('hidden', n < 2);
+		var n = this.$form.find('.yadambiar-conditions input[type=checkbox]:checked').length;
+		this.$form.find('.yadambiar-mode').prop('hidden', n < 2);
 	};
 
 	Widget.prototype.updateLabel = function () {
 		var parts = [];
-		this.$form.find('.khabar-attrs select').each(function () {
+		this.$form.find('.yadambiar-attrs select').each(function () {
 			if ($(this).val()) { parts.push($(this).closest('label').find('span').text() + ': ' + $(this).find('option:selected').text()); }
 		});
-		this.$modal.find('.khabar-variation-label').text(parts.length ? '(' + parts.join('، ') + ')' : '');
+		this.$modal.find('.yadambiar-variation-label').text(parts.length ? '(' + parts.join('، ') + ')' : '');
 	};
 
 	Widget.prototype.open = function (mode) {
 		var self = this;
 		this.$form.prop('hidden', false)[0].reset();
 		// Start clean (browser form-restore / autofill must not leave conditions ticked): only the first condition is on.
-		this.$form.find('.khabar-conditions input[type=checkbox]').prop('checked', false);
-		this.$form.find('.khabar-conditions input[name=mode][value=all]').prop('checked', true);
-		this.$form.find('.khabar-num').val('').prop('disabled', true);
+		this.$form.find('.yadambiar-conditions input[type=checkbox]').prop('checked', false);
+		this.$form.find('.yadambiar-conditions input[name=mode][value=all]').prop('checked', true);
+		this.$form.find('.yadambiar-num').val('').prop('disabled', true);
 		this.$otp.prop('hidden', true);
 		this.$done.prop('hidden', true);
-		showMsg(this.$form.find('.khabar-msg'), '');
+		showMsg(this.$form.find('.yadambiar-msg'), '');
 
 		// "When back in stock" is meaningless for an item that is already in stock.
 		var inStockNow = this.variation ? !!this.variation.is_in_stock : (!this.variable && String(this.$root.data('instock')) === '1');
-		this.$form.find('[name=in_stock]').closest('.khabar-cond').prop('hidden', inStockNow);
+		this.$form.find('[name=in_stock]').closest('.yadambiar-cond').prop('hidden', inStockNow);
 		// Default: only the first available condition is ticked.
-		this.$form.find('.khabar-cond:not([hidden]) input[type=checkbox]').first().prop('checked', true).trigger('change');
+		this.$form.find('.yadambiar-cond:not([hidden]) input[type=checkbox]').first().prop('checked', true).trigger('change');
 
 		// Pre-select the attributes currently chosen on the product page (Feature 2).
 		var selection = this.$vform.length ? currentSelection(this.$vform) : {};
-		this.$form.find('.khabar-attrs select').each(function () {
+		this.$form.find('.yadambiar-attrs select').each(function () {
 			var key = $(this).data('attr');
 			if (selection[key]) { $(this).val(selection[key]); }
 		});
@@ -226,13 +226,13 @@
 		this.syncContact();
 
 		this.$modal.prop('hidden', false);
-		$('body').addClass('khabar-lock');
+		$('body').addClass('yadambiar-lock');
 		setTimeout(function () { self.$form.find('input:visible:not([type=checkbox]):not(:disabled)').first().trigger('focus'); }, 50);
 	};
 
 	Widget.prototype.close = function () {
 		this.$modal.prop('hidden', true);
-		$('body').removeClass('khabar-lock');
+		$('body').removeClass('yadambiar-lock');
 	};
 
 	Widget.prototype.collect = function () {
@@ -250,10 +250,10 @@
 
 	Widget.prototype.submit = function () {
 		var self = this;
-		var $msg = this.$form.find('.khabar-msg');
-		var $btn = this.$form.find('.khabar-submit');
+		var $msg = this.$form.find('.yadambiar-msg');
+		var $btn = this.$form.find('.yadambiar-submit');
 		var data = this.collect();
-		if (!this.$form.find('.khabar-conditions input[type=checkbox]:checked').length) {
+		if (!this.$form.find('.yadambiar-conditions input[type=checkbox]:checked').length) {
 			showMsg($msg, D.i18n.chooseOne);
 			return;
 		}
@@ -266,7 +266,7 @@
 			if (res.need_code) {
 				self.$form.prop('hidden', true);
 				self.$otp.prop('hidden', false).find('[name=contact]').val(res.contact);
-				self.$otp.find('.khabar-otp-text').text(res.message);
+				self.$otp.find('.yadambiar-otp-text').text(res.message);
 				self.$otp.find('[name=code]').val('').trigger('focus');
 				return;
 			}
@@ -280,7 +280,7 @@
 
 	Widget.prototype.verify = function () {
 		var self = this;
-		var $msg = this.$otp.find('.khabar-msg');
+		var $msg = this.$otp.find('.yadambiar-msg');
 		api('verify', 'POST', {
 			contact: this.$otp.find('[name=contact]').val(),
 			code: faToEn(this.$otp.find('[name=code]').val())
@@ -291,8 +291,8 @@
 	Widget.prototype.success = function (message) {
 		this.$form.prop('hidden', true);
 		this.$otp.prop('hidden', true);
-		this.$done.prop('hidden', false).find('.khabar-done-text').text(message);
-		initConnect(this.$done.find('.khabar-connect'), '');
+		this.$done.prop('hidden', false).find('.yadambiar-done-text').text(message);
+		initConnect(this.$done.find('.yadambiar-connect'), '');
 	};
 
 
@@ -330,7 +330,7 @@
 			new ResizeObserver(function (entries) {
 				var w = Math.round(entries[0].contentRect.width);
 				if (Math.abs(w - last) > 4) { last = w; self.draw(); }
-			}).observe($root.find('.khabar-ph-plot')[0]);
+			}).observe($root.find('.yadambiar-ph-plot')[0]);
 		}
 	}
 
@@ -340,7 +340,7 @@
 		var s = this.cfg.series[id];
 		if (!s) { return; }
 		this.points = s.points;
-		this.$root.find('.khabar-ph-variation').text(s.label ? '— ' + s.label : '');
+		this.$root.find('.yadambiar-ph-variation').text(s.label ? '— ' + s.label : '');
 		this.stats();
 		this.table();
 		this.draw();
@@ -362,11 +362,11 @@
 			['کمترین', this.money(min)],
 			['بیشترین', this.money(max)]
 		];
-		var $stats = this.$root.find('.khabar-ph-stats').empty();
+		var $stats = this.$root.find('.yadambiar-ph-stats').empty();
 		tiles.forEach(function (t) {
-			$stats.append($('<div class="khabar-ph-tile">').append($('<span>').text(t[0])).append($('<strong>').text(t[1])));
+			$stats.append($('<div class="yadambiar-ph-tile">').append($('<span>').text(t[0])).append($('<strong>').text(t[1])));
 		});
-		var $ins = this.$root.find('.khabar-ph-insight').removeClass('is-good is-info');
+		var $ins = this.$root.find('.yadambiar-ph-insight').removeClass('is-good is-info');
 		if (prices.length < 3 && min === max) {
 			$ins.prop('hidden', false).addClass('is-info').text('ℹ️ قیمت در این بازه تغییری نداشته است.');
 		} else if (cur <= min) {
@@ -382,7 +382,7 @@
 
 	PriceHistory.prototype.table = function () {
 		var self = this;
-		var $tb = this.$root.find('.khabar-ph-table tbody').empty();
+		var $tb = this.$root.find('.yadambiar-ph-table tbody').empty();
 		var changes = this.points.filter(function (pt, i, a) { return i === 0 || pt[1] !== a[i - 1][1]; });
 		changes.slice().reverse().forEach(function (pt) {
 			$tb.append($('<tr>').append($('<td>').text(self.fmtDateLong.format(new Date(pt[0])))).append($('<td>').text(self.money(pt[1]))));
@@ -397,7 +397,7 @@
 
 	PriceHistory.prototype.draw = function () {
 		var self = this;
-		var $plot = this.$root.find('.khabar-ph-plot');
+		var $plot = this.$root.find('.yadambiar-ph-plot');
 		var W = Math.max(260, Math.round($plot.width() || 600));
 		var H = W < 480 ? 200 : 240;
 		var m = { l: 56, r: 16, t: 48, b: 28 }; // Top band holds the hover tooltip.
@@ -416,48 +416,48 @@
 		var root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, width: '100%', height: H, role: 'img', 'aria-label': 'نمودار تاریخچه قیمت' });
 
 		// Recessive grid + clean y ticks.
-		var g = svg('g', { 'class': 'khabar-ph-grid' }, root);
+		var g = svg('g', { 'class': 'yadambiar-ph-grid' }, root);
 		for (var v = y0; v <= y1 + step / 2; v += step) {
 			svg('line', { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, g);
-			svg('text', { x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end', 'class': 'khabar-ph-tick' }, g).textContent = this.fmtCompact.format(v);
+			svg('text', { x: m.l - 8, y: Y(v) + 4, 'text-anchor': 'end', 'class': 'yadambiar-ph-tick' }, g).textContent = this.fmtCompact.format(v);
 		}
 		// X ticks: ~4 dates.
 		for (var i = 0; i <= 3; i++) {
 			var tt = t0 + (now - t0) * i / 3;
-			svg('text', { x: X(tt), y: H - 8, 'text-anchor': i === 0 ? 'start' : i === 3 ? 'end' : 'middle', 'class': 'khabar-ph-tick' }, g).textContent = this.fmtDate.format(new Date(tt));
+			svg('text', { x: X(tt), y: H - 8, 'text-anchor': i === 0 ? 'start' : i === 3 ? 'end' : 'middle', 'class': 'yadambiar-ph-tick' }, g).textContent = this.fmtDate.format(new Date(tt));
 		}
 
 		// Step path: the price holds until the next change.
 		var d = 'M' + X(t0) + ',' + Y(p[0][1]);
 		for (var k = 1; k < p.length; k++) { d += 'H' + X(p[k][0]) + 'V' + Y(p[k][1]); }
 		d += 'H' + X(now);
-		svg('path', { d: d + 'V' + Y(y0) + 'H' + X(t0) + 'Z', 'class': 'khabar-ph-area' }, root);
-		svg('path', { d: d, 'class': 'khabar-ph-line' }, root);
+		svg('path', { d: d + 'V' + Y(y0) + 'H' + X(t0) + 'Z', 'class': 'yadambiar-ph-area' }, root);
+		svg('path', { d: d, 'class': 'yadambiar-ph-line' }, root);
 
 		// Lowest point marker (selective label), only when it isn't the current price.
 		var cur = prices[prices.length - 1];
 		if (this.min < cur) {
 			var idx = prices.indexOf(this.min);
 			var tx = X(p[idx][0]);
-			svg('circle', { cx: tx, cy: Y(this.min), r: 4, 'class': 'khabar-ph-dot' }, root);
-			svg('text', { x: Math.min(Math.max(tx, m.l + 30), W - m.r - 30), y: Y(this.min) + 18, 'text-anchor': 'middle', 'class': 'khabar-ph-label-muted' }, root).textContent = 'کمترین';
+			svg('circle', { cx: tx, cy: Y(this.min), r: 4, 'class': 'yadambiar-ph-dot' }, root);
+			svg('text', { x: Math.min(Math.max(tx, m.l + 30), W - m.r - 30), y: Y(this.min) + 18, 'text-anchor': 'middle', 'class': 'yadambiar-ph-label-muted' }, root).textContent = 'کمترین';
 		}
 		// End dot + current value label.
-		svg('circle', { cx: X(now), cy: Y(cur), r: 4, 'class': 'khabar-ph-dot' }, root);
+		svg('circle', { cx: X(now), cy: Y(cur), r: 4, 'class': 'yadambiar-ph-dot' }, root);
 		// Put the label on the side away from the previous step so it never sits on the line.
 		var before = prices.length > 1 ? prices[prices.length - 2] : cur;
 		for (var b = prices.length - 2; b >= 0 && before === cur; b--) { before = prices[b]; }
 		var below = before > cur && Y(cur) + 22 < H - m.b;
 		if (W >= 480) { // On narrow screens the "current price" tile already carries this value.
-			svg('text', { x: X(now) - 8, y: below ? Y(cur) + 20 : Y(cur) - 10, 'text-anchor': 'end', 'class': 'khabar-ph-label' }, root).textContent = this.money(cur);
+			svg('text', { x: X(now) - 8, y: below ? Y(cur) + 20 : Y(cur) - 10, 'text-anchor': 'end', 'class': 'yadambiar-ph-label' }, root).textContent = this.money(cur);
 		}
 
 		// Crosshair + tooltip (snaps to the hovered day).
-		var cross = svg('line', { y1: m.t, y2: H - m.b, 'class': 'khabar-ph-cross', visibility: 'hidden' }, root);
-		var hot = svg('circle', { r: 4, 'class': 'khabar-ph-dot', visibility: 'hidden' }, root);
+		var cross = svg('line', { y1: m.t, y2: H - m.b, 'class': 'yadambiar-ph-cross', visibility: 'hidden' }, root);
+		var hot = svg('circle', { r: 4, 'class': 'yadambiar-ph-dot', visibility: 'hidden' }, root);
 		var hit = svg('rect', { x: m.l, y: 0, width: W - m.l - m.r, height: H, fill: 'transparent', tabindex: 0, 'aria-label': 'برای مشاهده قیمت هر روز، اشاره‌گر را حرکت دهید یا از کلیدهای جهت استفاده کنید' }, root);
 		$plot.append(root);
-		var $tip = $('<div class="khabar-ph-tip" role="status" hidden>').appendTo($plot);
+		var $tip = $('<div class="yadambiar-ph-tip" role="status" hidden>').appendTo($plot);
 		var focusT = now;
 
 		function at(t) {
@@ -501,7 +501,7 @@
 		networks.forEach(function (net) {
 			api('messenger/link' + q, 'POST', { network: net }).then(function (res) {
 				var name = D.i18n.networks[net] || net;
-				var $a = $('<a class="khabar-connect-btn" target="_blank" rel="noopener">').attr('data-network', net);
+				var $a = $('<a class="yadambiar-connect-btn" target="_blank" rel="noopener">').attr('data-network', net);
 				if (res.connected) {
 					$a.addClass('is-connected').text(D.i18n.connected.replace('%s', name));
 				} else if (res.url) {
@@ -510,7 +510,7 @@
 				$box.append($a);
 			}).catch(function () {}).then(function () {
 				if (--pending === 0 && $box.children().length) {
-					if ($box.find('a:not(.is-connected)').length) { $box.append($('<p class="khabar-connect-hint">').text(D.i18n.connectTip)); }
+					if ($box.find('a:not(.is-connected)').length) { $box.append($('<p class="yadambiar-connect-hint">').text(D.i18n.connectTip)); }
 					$box.prop('hidden', false);
 				}
 			});
@@ -522,22 +522,22 @@
 	function initPanel($panel) {
 		var token = $panel.data('token') || '';
 		var q = token ? '?token=' + encodeURIComponent(token) : '';
-		initConnect($panel.find('.khabar-connect'), token);
+		initConnect($panel.find('.yadambiar-connect'), token);
 
-		$panel.on('click', '.khabar-edit', function () {
-			$(this).closest('.khabar-sub').find('.khabar-edit-form').prop('hidden', function (_, v) { return !v; });
+		$panel.on('click', '.yadambiar-edit', function () {
+			$(this).closest('.yadambiar-sub').find('.yadambiar-edit-form').prop('hidden', function (_, v) { return !v; });
 		});
-		$panel.on('click', '.khabar-delete', function () {
-			var $li = $(this).closest('.khabar-sub');
+		$panel.on('click', '.yadambiar-delete', function () {
+			var $li = $(this).closest('.yadambiar-sub');
 			if (!window.confirm(D.i18n.confirmDel)) { return; }
 			api('subscriptions/' + $li.data('id') + q, 'DELETE').then(function () {
 				$li.slideUp(200, function () { $li.remove(); });
 			}).catch(function (err) { window.alert(err.message); });
 		});
-		$panel.on('submit', '.khabar-edit-form', function (e) {
+		$panel.on('submit', '.yadambiar-edit-form', function (e) {
 			e.preventDefault();
 			var $f = $(this);
-			var $li = $f.closest('.khabar-sub');
+			var $li = $f.closest('.yadambiar-sub');
 			var data = { channels: [] };
 			$.each($f.serializeArray(), function (_, f) {
 				if (f.name === 'channels[]') { data.channels.push(f.value); } else { data[f.name] = faToEn(f.value); }
@@ -545,53 +545,53 @@
 			});
 			if (!$f.find('[name="channels[]"]').length) { delete data.channels; }
 			api('subscriptions/' + $li.data('id') + q, 'POST', data).then(function (res) {
-				showMsg($f.find('.khabar-msg'), D.i18n.saved, true);
-				$li.find('.khabar-sub-cond').text(res.subscription.conditions);
-				$li.find('.khabar-badge').text(res.subscription.status_label);
-			}).catch(function (err) { showMsg($f.find('.khabar-msg'), err.message); });
+				showMsg($f.find('.yadambiar-msg'), D.i18n.saved, true);
+				$li.find('.yadambiar-sub-cond').text(res.subscription.conditions);
+				$li.find('.yadambiar-badge').text(res.subscription.status_label);
+			}).catch(function (err) { showMsg($f.find('.yadambiar-msg'), err.message); });
 		});
 	}
 
 	/* ---------- Bell (on-site notifications) ---------- */
 
 	function initBell($bell) {
-		var $list = $bell.find('.khabar-bell-list');
-		$bell.on('click', '.khabar-bell-btn', function () {
+		var $list = $bell.find('.yadambiar-bell-list');
+		$bell.on('click', '.yadambiar-bell-btn', function () {
 			if (!$list.prop('hidden')) { $list.prop('hidden', true); return; }
 			api('notifications').then(function (res) {
 				$list.empty();
 				if (!res.items.length) { $list.append($('<p>').text(D.i18n.noNotes)); }
 				res.items.forEach(function (n) {
-					var $a = $('<a class="khabar-bell-item">').attr('href', n.url || '#').toggleClass('khabar-unread', n.is_read === '0' || n.is_read === 0);
+					var $a = $('<a class="yadambiar-bell-item">').attr('href', n.url || '#').toggleClass('yadambiar-unread', n.is_read === '0' || n.is_read === 0);
 					$a.append($('<strong>').text(n.title)).append($('<span>').text(n.message));
 					$list.append($a);
 				});
 				$list.prop('hidden', false);
 				if (res.unread) {
-					api('notifications/read', 'POST', {}).then(function () { $bell.find('.khabar-bell-count').remove(); });
+					api('notifications/read', 'POST', {}).then(function () { $bell.find('.yadambiar-bell-count').remove(); });
 				}
 			});
 		});
 		$(document).on('click', function (e) { if (!$(e.target).closest($bell).length) { $list.prop('hidden', true); } });
 	}
 
-	// Initialise every Khabar component inside a scope once (also used by the Elementor editor).
+	// Initialise every Yadam Biar component inside a scope once (also used by the Elementor editor).
 	function init($scope) {
 		$scope = $scope && $scope.length ? $scope : $(document);
 		var once = function (sel, fn) {
 			$scope.find(sel).addBack(sel).each(function () {
 				var $el = $(this);
-				if ($el.data('khabarReady')) { return; }
-				$el.data('khabarReady', true);
+				if ($el.data('yadambiarReady')) { return; }
+				$el.data('yadambiarReady', true);
 				fn($el);
 			});
 		};
-		once('.khabar', function ($el) { new Widget($el); });
-		once('.khabar-panel', initPanel);
-		once('[data-khabar-bell]', initBell);
-		once('.khabar-ph', function ($el) { try { new PriceHistory($el); } catch (e) { $el.remove(); } });
+		once('.yadambiar', function ($el) { new Widget($el); });
+		once('.yadambiar-panel', initPanel);
+		once('[data-yadambiar-bell]', initBell);
+		once('.yadambiar-ph', function ($el) { try { new PriceHistory($el); } catch (e) { $el.remove(); } });
 	}
 
-	window.Khabar = { init: init };
+	window.YadamBiar = { init: init };
 	$(function () { init($(document)); });
 }(jQuery));
