@@ -21,6 +21,35 @@ use YadamBiar\Support\Visitor;
  */
 final class SubscriptionRepository {
 
+	const CACHE_GROUP = 'yadambiar';
+
+	/**
+	 * Columns a caller may write through update().
+	 */
+	const UPDATABLE = array( 'variation_id', 'attributes', 'in_stock', 'price_below', 'price_above', 'min_qty', 'price_change', 'user_id', 'owner_key', 'name', 'email', 'phone', 'channels', 'status', 'base_price', 'notified_count', 'last_notified_at', 'notified_target', 'reserved_until', 'clicked_at', 'order_id', 'order_value', 'coupon_code', 'alt_sent_at', 'expires_at' );
+
+	/**
+	 * Cache key inside the current cache generation (any write starts a new generation).
+	 *
+	 * @param string $name Key name.
+	 * @return string
+	 */
+	private static function cache_key( $name ) {
+		$generation = wp_cache_get( 'generation', self::CACHE_GROUP );
+		if ( false === $generation ) {
+			$generation = (string) microtime( true );
+			wp_cache_set( 'generation', $generation, self::CACHE_GROUP );
+		}
+		return $name . ':' . $generation;
+	}
+
+	/**
+	 * Invalidate cached counts after a write.
+	 */
+	public static function flush_cache() {
+		wp_cache_set( 'generation', (string) microtime( true ), self::CACHE_GROUP );
+	}
+
 	/**
 	 * Status labels.
 	 *
@@ -233,6 +262,7 @@ final class SubscriptionRepository {
 
 		if ( $existing ) {
 			$wpdb->update( $table, $row, array( 'id' => $existing->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			self::flush_cache();
 			return (int) $existing->id;
 		}
 
@@ -244,8 +274,7 @@ final class SubscriptionRepository {
 			return new \WP_Error( 'yadambiar_db', __( 'خطا در ذخیره درخواست.', 'yadambiar' ) );
 		}
 		$id = (int) $wpdb->insert_id;
-		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_0', 'yadambiar' );
-		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_' . (int) $data['variation_id'], 'yadambiar' );
+		self::flush_cache();
 		do_action( 'yadambiar_subscription_created', $id, $row );
 		return $id;
 	}
@@ -265,7 +294,9 @@ final class SubscriptionRepository {
 		if ( isset( $data['channels'] ) && is_array( $data['channels'] ) ) {
 			$data['channels'] = implode( ',', $data['channels'] );
 		}
+		$data               = array_intersect_key( $data, array_flip( self::UPDATABLE ) );
 		$data['updated_at'] = Clock::now();
+		self::flush_cache();
 		return false !== $wpdb->update( Installer::table( 'subscriptions' ), $data, array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
@@ -288,6 +319,7 @@ final class SubscriptionRepository {
 		} else {
 			$sql = $wpdb->prepare( "UPDATE {$table} SET status = 'notified', updated_at = %s WHERE id = %d AND status = 'active'", $now, $sub->id ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		}
+		self::flush_cache();
 		return 1 === (int) $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
@@ -313,7 +345,8 @@ final class SubscriptionRepository {
 			return;
 		}
 		$table = Installer::table( 'subscriptions' );
-		$wpdb->query( "DELETE FROM {$table} WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		$wpdb->query( "DELETE FROM {$table} WHERE id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore WordPress.DB -- ids are integers.
+		self::flush_cache();
 	}
 
 	/**
@@ -409,8 +442,8 @@ final class SubscriptionRepository {
 	public static function waiting_count( $product_id, $variation_id = null, $fresh = false ) {
 		global $wpdb;
 		$table = Installer::table( 'subscriptions' );
-		$key   = 'yadambiar_wc_' . $product_id . '_' . (int) $variation_id;
-		$count = $fresh ? false : wp_cache_get( $key, 'yadambiar' );
+		$key   = self::cache_key( 'waiting_' . (int) $product_id . '_' . ( null === $variation_id ? 'all' : (int) $variation_id ) );
+		$count = $fresh ? false : wp_cache_get( $key, self::CACHE_GROUP );
 		if ( false !== $count ) {
 			return (int) $count;
 		}
@@ -419,7 +452,7 @@ final class SubscriptionRepository {
 			$sql .= $wpdb->prepare( ' AND variation_id = %d', $variation_id );
 		}
 		$count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $product_id ) ); // phpcs:ignore
-		wp_cache_set( $key, $count, 'yadambiar', 300 );
+		wp_cache_set( $key, $count, self::CACHE_GROUP, 5 * MINUTE_IN_SECONDS );
 		return $count;
 	}
 
@@ -496,12 +529,52 @@ final class SubscriptionRepository {
 	 */
 	public static function active_count() {
 		global $wpdb;
-		$count = wp_cache_get( 'active_count', 'yadambiar' );
+		$key   = self::cache_key( 'active_count' );
+		$count = wp_cache_get( $key, self::CACHE_GROUP );
 		if ( false === $count ) {
 			$count = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Installer::table( 'subscriptions' ) . " WHERE status = 'active'" ); // phpcs:ignore WordPress.DB
-			wp_cache_set( 'active_count', $count, 'yadambiar', MINUTE_IN_SECONDS );
+			wp_cache_set( $key, $count, self::CACHE_GROUP, MINUTE_IN_SECONDS );
 		}
 		return (int) $count;
+	}
+
+	/**
+	 * Which of the given products have active requests.
+	 *
+	 * @param int[] $product_ids Parent product ids.
+	 * @return int[]
+	 */
+	public static function with_active_requests( array $product_ids ) {
+		global $wpdb;
+		$ids = array_filter( array_map( 'absint', $product_ids ) );
+		if ( ! $ids ) {
+			return array();
+		}
+		$table = Installer::table( 'subscriptions' );
+		return array_map( 'absint', (array) $wpdb->get_col( "SELECT DISTINCT product_id FROM {$table} WHERE status = 'active' AND product_id IN (" . implode( ',', $ids ) . ')' ) ); // phpcs:ignore WordPress.DB -- ids are integers.
+	}
+
+	/**
+	 * Active requests per variation of a product (0 = whole product / any variation).
+	 *
+	 * @param int $product_id Parent product id.
+	 * @return int[] variation id => count
+	 */
+	public static function waiting_by_variation( $product_id ) {
+		global $wpdb;
+		$key = self::cache_key( 'by_variation_' . (int) $product_id );
+		$out = wp_cache_get( $key, self::CACHE_GROUP );
+		if ( is_array( $out ) ) {
+			return $out;
+		}
+		$table = Installer::table( 'subscriptions' );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT variation_id, COUNT(*) AS c FROM {$table} WHERE product_id = %d AND status = 'active' GROUP BY variation_id", $product_id ) ); // phpcs:ignore WordPress.DB
+		$out   = array();
+		foreach ( (array) $rows as $row ) {
+			$out[ (int) $row->variation_id ] = (int) $row->c;
+		}
+		wp_cache_set( $key, $out, self::CACHE_GROUP, 5 * MINUTE_IN_SECONDS );
+		return $out;
 	}
 
 	/**

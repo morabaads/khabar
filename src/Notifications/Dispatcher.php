@@ -157,7 +157,7 @@ final class Dispatcher implements Module {
 			Queue::schedule( 'yadambiar_check_product', array( (int) $product_id ), $waves->deferred() );
 		}
 
-		wp_cache_delete( 'yadambiar_wc_' . $product_id . '_0', 'yadambiar' );
+		SubscriptionRepository::flush_cache();
 		return $sent;
 	}
 

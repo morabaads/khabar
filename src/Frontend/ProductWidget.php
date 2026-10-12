@@ -15,9 +15,9 @@ use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\PriceHistoryChart;
 use YadamBiar\Commerce\Reservation;
 use YadamBiar\Contracts\Module;
-use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
+use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\View;
 
 /**
@@ -127,23 +127,6 @@ final class ProductWidget implements Module {
 	}
 
 	/**
-	 * Waiting count per variation.
-	 *
-	 * @param int $product_id Parent id.
-	 * @return array variation_id => count
-	 */
-	private static function waiting_by_variation( $product_id ) {
-		global $wpdb;
-		$table = Installer::table( 'subscriptions' );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT variation_id, COUNT(*) AS c FROM {$table} WHERE product_id = %d AND status = 'active' GROUP BY variation_id", $product_id ) ); // phpcs:ignore
-		$out   = array();
-		foreach ( (array) $rows as $row ) {
-			$out[ (int) $row->variation_id ] = (int) $row->c;
-		}
-		return $out;
-	}
-
-	/**
 	 * Attribute options for the expectation form.
 	 *
 	 * @param WC_Product_Variable $product Product.
@@ -207,7 +190,7 @@ final class ProductWidget implements Module {
 			$in_stock = $product->is_in_stock();
 		}
 
-		$waiting    = self::waiting_by_variation( $product->get_id() );
+		$waiting    = SubscriptionRepository::waiting_by_variation( $product->get_id() );
 		$total      = array_sum( $waiting );
 		$show_count = $s['show_waiting_count'] && $total >= (int) $s['waiting_count_min'];
 		$user       = wp_get_current_user();

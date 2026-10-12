@@ -10,7 +10,6 @@ namespace YadamBiar\Notifications;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Contracts\Module;
-use YadamBiar\Core\Installer;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Queue;
 
@@ -93,10 +92,7 @@ final class StockWatcher implements Module {
 		if ( ! self::$pending ) {
 			return;
 		}
-		global $wpdb;
-		$ids   = array_map( 'intval', self::$pending );
-		$table = Installer::table( 'subscriptions' );
-		$have  = $wpdb->get_col( "SELECT DISTINCT product_id FROM {$table} WHERE status = 'active' AND product_id IN (" . implode( ',', $ids ) . ')' ); // phpcs:ignore
+		$have = SubscriptionRepository::with_active_requests( array_values( self::$pending ) );
 		// When an admin edits stock/price in the dashboard, notify right away instead of waiting for
 		// WP-Cron / Action Scheduler (which never runs on sites with cron disabled or no traffic).
 		$sync = is_admin() && ! wp_doing_cron() && current_user_can( 'edit_products' ) && apply_filters( 'yadambiar_sync_check_on_save', true );

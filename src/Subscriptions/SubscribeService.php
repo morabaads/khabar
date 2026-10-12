@@ -29,6 +29,7 @@ use YadamBiar\Support\Visitor;
 final class SubscribeService {
 
 	const ARRAY_FIELDS = array( 'attributes', 'channels', 'push' );
+	const MAX_EMAIL    = 190; // Column size.
 
 	/**
 	 * Raw form input.
@@ -158,7 +159,7 @@ final class SubscribeService {
 		if ( '' !== $raw_ph && ! $phone ) {
 			return Failure::of( __( 'شماره موبایل معتبر نیست.', 'yadambiar' ) );
 		}
-		if ( '' !== (string) $this->param( 'email' ) && ! is_email( $email ) ) {
+		if ( '' !== (string) $this->param( 'email' ) && ( ! is_email( $email ) || strlen( $email ) > self::MAX_EMAIL ) ) {
 			return Failure::of( __( 'ایمیل معتبر نیست.', 'yadambiar' ) );
 		}
 		$mode     = $s['contact_mode'];

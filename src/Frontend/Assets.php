@@ -27,52 +27,67 @@ final class Assets implements Module {
 	}
 
 	/**
-	 * Register assets.
+	 * Script settings were attached (once per request).
+	 *
+	 * @var bool
+	 */
+	private static $prepared = false;
+
+	/**
+	 * Register the handles (cheap: runs on every front-end page).
 	 */
 	public static function register_assets() {
 		wp_register_style( 'yadambiar', YADAMBIAR_URL . 'assets/css/frontend.css', array(), YADAMBIAR_VERSION );
-		wp_add_inline_style( 'yadambiar', ':root{' . Appearance::css_vars() . '}' );
 		wp_register_script( 'yadambiar', YADAMBIAR_URL . 'assets/js/frontend.js', array( 'jquery' ), YADAMBIAR_VERSION, true );
-		$keys = PushChannel::enabled() ? VapidKeys::keys() : null;
-		wp_localize_script(
-			'yadambiar',
-			'YadamBiarData',
-			array(
-				'rest'      => esc_url_raw( rest_url( 'yadambiar/v1/' ) ),
-				'nonce'     => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
-				'annotate'  => (bool) Settings::get( 'annotate_variations' ),
-				'pushKey'   => $keys ? $keys['public'] : '',
-				'sw'        => add_query_arg( 'yadambiar_sw', 1, home_url( '/' ) ),
-				'decimals'  => wc_get_price_decimals(),
-				'i18n'      => array(
-					'outOfStock' => __( 'ناموجود 🔔', 'yadambiar' ),
-					'error'      => __( 'خطایی رخ داد. دوباره تلاش کنید.', 'yadambiar' ),
-					'confirmDel' => __( 'این درخواست حذف شود؟', 'yadambiar' ),
-					'saved'      => __( 'ذخیره شد.', 'yadambiar' ),
-					'pushDenied' => __( 'اجازه نمایش اعلان داده نشد.', 'yadambiar' ),
-					'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadambiar' ),
-					'any'        => __( 'هر کدام', 'yadambiar' ),
-					'noNotes'    => __( 'اعلانی ندارید.', 'yadambiar' ),
-					'connect'    => __( 'دریافت در %s', 'yadambiar' ),
-					'connected'  => __( '%s متصل است ✓', 'yadambiar' ),
-					'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadambiar' ),
-					'networks'   => array(
-						'telegram' => __( 'تلگرام', 'yadambiar' ),
-						'bale'     => __( 'بله', 'yadambiar' ),
-					),
-				),
-			)
-		);
 	}
 
 	/**
-	 * Enqueue assets (called when a widget renders).
+	 * Load the assets where a widget renders; colors and script settings are computed only then.
 	 */
 	public static function enqueue() {
 		if ( ! wp_script_is( 'yadambiar', 'registered' ) ) {
 			self::register_assets();
 		}
+		if ( ! self::$prepared ) {
+			self::$prepared = true;
+			wp_add_inline_style( 'yadambiar', ':root{' . Appearance::css_vars() . '}' );
+			wp_localize_script( 'yadambiar', 'YadamBiarData', self::script_data() );
+		}
 		wp_enqueue_style( 'yadambiar' );
 		wp_enqueue_script( 'yadambiar' );
+	}
+
+	/**
+	 * Settings and strings for frontend.js.
+	 *
+	 * @return array
+	 */
+	private static function script_data() {
+		$keys = PushChannel::enabled() ? VapidKeys::keys() : null;
+		return array(
+			'rest'      => esc_url_raw( rest_url( 'yadambiar/v1/' ) ),
+			'nonce'     => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
+			'annotate'  => (bool) Settings::get( 'annotate_variations' ),
+			'pushKey'   => $keys ? $keys['public'] : '',
+			'sw'        => add_query_arg( 'yadambiar_sw', 1, home_url( '/' ) ),
+			'decimals'  => wc_get_price_decimals(),
+			'i18n'      => array(
+				'outOfStock' => __( 'ناموجود 🔔', 'yadambiar' ),
+				'error'      => __( 'خطایی رخ داد. دوباره تلاش کنید.', 'yadambiar' ),
+				'confirmDel' => __( 'این درخواست حذف شود؟', 'yadambiar' ),
+				'saved'      => __( 'ذخیره شد.', 'yadambiar' ),
+				'pushDenied' => __( 'اجازه نمایش اعلان داده نشد.', 'yadambiar' ),
+				'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadambiar' ),
+				'any'        => __( 'هر کدام', 'yadambiar' ),
+				'noNotes'    => __( 'اعلانی ندارید.', 'yadambiar' ),
+				'connect'    => __( 'دریافت در %s', 'yadambiar' ),
+				'connected'  => __( '%s متصل است ✓', 'yadambiar' ),
+				'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadambiar' ),
+				'networks'   => array(
+					'telegram' => __( 'تلگرام', 'yadambiar' ),
+					'bale'     => __( 'بله', 'yadambiar' ),
+				),
+			),
+		);
 	}
 }
