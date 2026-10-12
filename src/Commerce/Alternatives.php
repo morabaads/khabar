@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
-use YadamBiar\Notifications\Dispatcher;
+use YadamBiar\Notifications\Notifier;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
@@ -436,7 +436,7 @@ class Alternatives implements Module {
 	 */
 	public static function send( $sub, $awaited, $alts ) {
 		$snap  = RuleEngine::snapshot( $awaited );
-		$vars  = Dispatcher::vars( $sub, $awaited, $snap );
+		$vars  = Notifier::vars( $sub, $awaited, $snap );
 		$first = $alts[0]['target'];
 		$html  = '<table role="presentation" cellpadding="8" style="width:100%;border-collapse:collapse">';
 		foreach ( $alts as $alt ) {

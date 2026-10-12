@@ -10,8 +10,7 @@ namespace YadamBiar\Admin\Pages;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminUrl;
-use YadamBiar\Core\Installer;
-use YadamBiar\Notifications\Dispatcher;
+use YadamBiar\Notifications\DeliveryDiagnostics;
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\ProductAttributes;
@@ -51,15 +50,13 @@ final class DiagnosePage extends Page {
 	 * Render.
 	 */
 	public function render() {
-		global $wpdb;
 		$pid   = $this->query_int( 'product_id' );
-		$table = Installer::table( 'subscriptions' );
-		$ids   = $wpdb->get_col( "SELECT product_id FROM {$table} WHERE status IN ('active','pending') GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT 100" ); // phpcs:ignore
+		$ids   = SubscriptionRepository::products_with_open_requests();
 		if ( ! $pid && $ids ) {
 			$pid = (int) $ids[0];
 		}
-		$rows    = $pid ? Dispatcher::diagnose( $pid ) : array();
-		$health  = Dispatcher::health( $pid );
+		$rows    = $pid ? DeliveryDiagnostics::diagnose( $pid ) : array();
+		$health  = DeliveryDiagnostics::health( $pid );
 		$product = $pid ? wc_get_product( $pid ) : null;
 		?>
 		<div class="yadambiar-view">

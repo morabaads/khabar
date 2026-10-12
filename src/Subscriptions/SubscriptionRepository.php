@@ -447,6 +447,32 @@ class SubscriptionRepository {
 	}
 
 	/**
+	 * Requests of a product that are waiting (active) or awaiting verification (pending).
+	 *
+	 * @param int $product_id Parent product id.
+	 * @param int $limit      Max rows.
+	 * @return object[]
+	 */
+	public static function open_for_product( $product_id, $limit = 200 ) {
+		global $wpdb;
+		$table = Installer::table( 'subscriptions' );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE product_id = %d AND status IN ('active','pending') ORDER BY id ASC LIMIT %d", $product_id, $limit ) ); // phpcs:ignore WordPress.DB
+		return array_map( array( __CLASS__, 'hydrate' ), (array) $rows );
+	}
+
+	/**
+	 * Products with open requests, most requested first.
+	 *
+	 * @param int $limit Max products.
+	 * @return int[]
+	 */
+	public static function products_with_open_requests( $limit = 100 ) {
+		global $wpdb;
+		$table = Installer::table( 'subscriptions' );
+		return array_map( 'absint', (array) $wpdb->get_col( $wpdb->prepare( "SELECT product_id FROM {$table} WHERE status IN ('active','pending') GROUP BY product_id ORDER BY COUNT(*) DESC LIMIT %d", $limit ) ) ); // phpcs:ignore WordPress.DB
+	}
+
+	/**
 	 * Number of active requests in the whole store (admin menu bubble, header).
 	 *
 	 * @return int
