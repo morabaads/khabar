@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Phone;
 
 class Tracking {
 
@@ -63,7 +64,7 @@ class Tracking {
 		}
 
 		if ( ! $sub->clicked_at ) {
-			SubscriptionRepository::update( $sub->id, array( 'clicked_at' => Utils::now() ) );
+			SubscriptionRepository::update( $sub->id, array( 'clicked_at' => Clock::now() ) );
 		}
 		Reservation::grant( $sub->token );
 		Coupons::remember( $sub );
@@ -104,9 +105,9 @@ class Tracking {
 		$order->save_meta_data();
 
 		$email = strtolower( (string) $order->get_billing_email() );
-		$phone = Utils::normalize_phone( $order->get_billing_phone() );
+		$phone = Phone::normalize_phone( $order->get_billing_phone() );
 		$uid   = (int) $order->get_customer_id();
-		$since = Utils::now( -1 * max( 1, (int) Settings::get( 'conversion_days', 14 ) ) * DAY_IN_SECONDS );
+		$since = Clock::now( -1 * max( 1, (int) Settings::get( 'conversion_days', 14 ) ) * DAY_IN_SECONDS );
 		$table = Installer::table( 'subscriptions' );
 
 		// Exact attribution through the personal coupon.

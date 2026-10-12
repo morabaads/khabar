@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Queue;
 
 class StockWatcher {
 
@@ -101,7 +101,7 @@ class StockWatcher {
 			if ( $sync && $waiting <= 20 ) {
 				Dispatcher::check_product( (int) $pid );
 			} else {
-				Utils::queue( 'yadambiar_check_product', array( (int) $pid ) );
+				Queue::schedule( 'yadambiar_check_product', array( (int) $pid ) );
 			}
 		}
 		self::$pending = array();

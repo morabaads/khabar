@@ -12,7 +12,7 @@ namespace YadamBiar\Notifications;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
 
 class RuleEngine {
 
@@ -158,11 +158,11 @@ class RuleEngine {
 		}
 		if ( null !== $sub->price_below && ( null === $price || $price > (float) $sub->price_below ) ) {
 			/* translators: 1: current 2: target */
-			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز به قیمت هدف (%2$s) نرسیده است', 'yadam-biar' ), Utils::price_text( $price ), Utils::price_text( $sub->price_below ) ) );
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز به قیمت هدف (%2$s) نرسیده است', 'yadam-biar' ), Money::price_text( $price ), Money::price_text( $sub->price_below ) ) );
 		}
 		if ( null !== $sub->price_above && ( null === $price || $price < (float) $sub->price_above ) ) {
 			/* translators: 1: current 2: threshold */
-			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز از %2$s بیشتر نشده است', 'yadam-biar' ), Utils::price_text( $price ), Utils::price_text( $sub->price_above ) ) );
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز از %2$s بیشتر نشده است', 'yadam-biar' ), Money::price_text( $price ), Money::price_text( $sub->price_above ) ) );
 		}
 		if ( $sub->price_change ) {
 			if ( ! $opts['cooldown_ok'] ) {

@@ -10,7 +10,7 @@ namespace YadamBiar\Channels;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
 
 class OnsiteChannel {
 
@@ -37,7 +37,7 @@ class OnsiteChannel {
 				'title'           => mb_substr( $title, 0, 255 ),
 				'message'         => $message,
 				'url'             => $url,
-				'created_at'      => Utils::now(),
+				'created_at'      => Clock::now(),
 			)
 		);
 		return $ok ? (int) $wpdb->insert_id : false;

@@ -17,7 +17,8 @@ use YadamBiar\Commerce\PriceHistory;
 use YadamBiar\Commerce\Reservation;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\View;
+use YadamBiar\Support\Visitor;
 
 class ProductWidget {
 
@@ -98,7 +99,6 @@ class ProductWidget {
 		wp_enqueue_style( 'yadam-biar' );
 		wp_enqueue_script( 'yadam-biar' );
 	}
-
 
 	/**
 	 * Inline stroke icon (24px grid) used by the notify popup.
@@ -319,7 +319,7 @@ class ProductWidget {
 		$yadambiar_vars = ! empty( $args['vars'] ) ? (string) $args['vars'] : '';
 		$yadambiar_uid = ! empty( $args['uid'] ) ? sanitize_html_class( $args['uid'] ) : 'yadambiar-' . $product->get_id();
 		ob_start();
-		include Utils::template( 'product-widget.php' );
+		include View::locate( 'product-widget.php' );
 		$html = ob_get_clean();
 		if ( empty( $args['hide_extras'] ) ) {
 			$html .= Alternatives::render_block( $product );
@@ -340,7 +340,7 @@ class ProductWidget {
 			return '';
 		}
 		self::enqueue();
-		$owner  = Utils::owner_key();
+		$owner  = Visitor::owner_key();
 		$unread = OnsiteChannel::unread( $owner );
 		ob_start();
 		?>
@@ -359,7 +359,7 @@ class ProductWidget {
 		if ( ! Settings::get( 'floating_bell' ) || ! Settings::has( 'channels_enabled', 'onsite' ) ) {
 			return;
 		}
-		$owner = Utils::owner_key();
+		$owner = Visitor::owner_key();
 		if ( ! $owner || ! OnsiteChannel::latest( $owner, 1 ) ) {
 			return;
 		}

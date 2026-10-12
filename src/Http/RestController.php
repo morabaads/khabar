@@ -17,7 +17,13 @@ use YadamBiar\Frontend\Account;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\OutgoingWebhook;
+use YadamBiar\Support\Phone;
+use YadamBiar\Support\ProductAttributes;
+use YadamBiar\Support\Queue;
+use YadamBiar\Support\Text;
+use YadamBiar\Support\Visitor;
 
 class RestController {
 
@@ -74,7 +80,7 @@ class RestController {
 		if ( $limit <= 0 || current_user_can( 'manage_woocommerce' ) ) {
 			return true;
 		}
-		$key   = 'yadambiar_rl_' . $bucket . '_' . md5( Utils::ip() );
+		$key   = 'yadambiar_rl_' . $bucket . '_' . md5( Visitor::ip() );
 		$count = (int) get_transient( $key );
 		if ( $count >= $limit ) {
 			return false;
@@ -148,10 +154,10 @@ class RestController {
 		// Conditions (Feature 4, 5, 6, 15).
 		$types        = (array) $s['enabled_types'];
 		$in_stock     = rest_sanitize_boolean( $req->get_param( 'in_stock' ) ) && in_array( 'stock', $types, true );
-		$price_below  = in_array( 'price_drop', $types, true ) ? Utils::parse_price( $req->get_param( 'price_below' ) ) : null;
-		$price_above  = in_array( 'price_rise', $types, true ) ? Utils::parse_price( $req->get_param( 'price_above' ) ) : null;
+		$price_below  = in_array( 'price_drop', $types, true ) ? Money::parse_price( $req->get_param( 'price_below' ) ) : null;
+		$price_above  = in_array( 'price_rise', $types, true ) ? Money::parse_price( $req->get_param( 'price_above' ) ) : null;
 		$price_change = rest_sanitize_boolean( $req->get_param( 'price_change' ) ) && in_array( 'price_change', $types, true );
-		$min_qty      = in_array( 'min_qty', $types, true ) ? absint( Utils::latin_digits( (string) $req->get_param( 'min_qty' ) ) ) : 0;
+		$min_qty      = in_array( 'min_qty', $types, true ) ? absint( Text::latin_digits( (string) $req->get_param( 'min_qty' ) ) ) : 0;
 		$separate     = 'separate' === $req->get_param( 'mode' );
 
 		if ( ! $in_stock && null === $price_below && null === $price_above && ! $price_change && ! $min_qty ) {
@@ -173,11 +179,11 @@ class RestController {
 		// Contact (Feature 9).
 		$user    = $uid ? wp_get_current_user() : null;
 		$email   = sanitize_email( (string) $req->get_param( 'email' ) );
-		$phone   = Utils::normalize_phone( (string) $req->get_param( 'phone' ) );
+		$phone   = Phone::normalize_phone( (string) $req->get_param( 'phone' ) );
 		$raw_ph  = trim( (string) $req->get_param( 'phone' ) );
 		if ( $user && ! $email && ! $phone ) {
 			$email = $user->user_email;
-			$phone = Utils::normalize_phone( get_user_meta( $uid, 'billing_phone', true ) );
+			$phone = Phone::normalize_phone( get_user_meta( $uid, 'billing_phone', true ) );
 		}
 		if ( '' !== $raw_ph && ! $phone ) {
 			return self::error( __( 'شماره موبایل معتبر نیست.', 'yadam-biar' ) );
@@ -212,10 +218,9 @@ class RestController {
 			return self::error( __( 'تعداد درخواست‌های فعال شما به حداکثر رسیده است.', 'yadam-biar' ) );
 		}
 
-
 		$verify = $s['verify_contact'];
 		$needs  = ( 'all' === $verify ) || ( 'guest' === $verify && ! $uid );
-		if ( $needs && $user && ( ! $phone || $phone === Utils::normalize_phone( get_user_meta( $uid, 'billing_phone', true ) ) ) && ( ! $email || $email === $user->user_email ) ) {
+		if ( $needs && $user && ( ! $phone || $phone === Phone::normalize_phone( get_user_meta( $uid, 'billing_phone', true ) ) ) && ( ! $email || $email === $user->user_email ) ) {
 			$needs = false; // Account contact info is trusted.
 		}
 
@@ -224,7 +229,7 @@ class RestController {
 			'variation_id' => $variation_id,
 			'attributes'   => $attributes,
 			'user_id'      => $uid,
-			'owner_key'    => Utils::owner_key( true ),
+			'owner_key'    => Visitor::owner_key( true ),
 			'name'         => sanitize_text_field( (string) $req->get_param( 'name' ) ),
 			'email'        => $email,
 			'phone'        => $phone,
@@ -287,16 +292,16 @@ class RestController {
 					'need_code' => true,
 					'contact'   => $contact,
 					/* translators: %s masked contact */
-					'message'   => sprintf( __( 'کد تایید به %s ارسال شد.', 'yadam-biar' ), Utils::mask( $contact ) ),
+					'message'   => sprintf( __( 'کد تایید به %s ارسال شد.', 'yadam-biar' ), Text::mask( $contact ) ),
 				)
 			);
 		}
 
 		foreach ( $ids as $id ) {
-			Utils::webhook( 'subscribed', array( 'subscription' => self::export( SubscriptionRepository::get( $id ) ) ) );
+			OutgoingWebhook::send( 'subscribed', array( 'subscription' => self::export( SubscriptionRepository::get( $id ) ) ) );
 		}
 		// Conditions may already be satisfied (e.g. price already below target) – check soon.
-		Utils::queue( 'yadambiar_check_product', array( (int) $product->get_id() ), 10 );
+		Queue::schedule( 'yadambiar_check_product', array( (int) $product->get_id() ), 10 );
 
 		return rest_ensure_response(
 			array(
@@ -381,8 +386,8 @@ class RestController {
 	 */
 	public static function verify( \WP_REST_Request $req ) {
 		$contact = (string) $req->get_param( 'contact' );
-		$contact = is_email( $contact ) ? sanitize_email( $contact ) : Utils::normalize_phone( $contact );
-		$code    = preg_replace( '/\D/', '', Utils::latin_digits( (string) $req->get_param( 'code' ) ) );
+		$contact = is_email( $contact ) ? sanitize_email( $contact ) : Phone::normalize_phone( $contact );
+		$code    = preg_replace( '/\D/', '', Text::latin_digits( (string) $req->get_param( 'code' ) ) );
 		$key     = 'yadambiar_otp_' . md5( strtolower( $contact ) );
 		$state   = get_transient( $key );
 		if ( ! $contact || ! is_array( $state ) ) {
@@ -402,12 +407,12 @@ class RestController {
 			$sub = SubscriptionRepository::get( $id );
 			if ( $sub && 'pending' === $sub->status ) {
 				SubscriptionRepository::update( $id, array( 'status' => 'active' ) );
-				Utils::webhook( 'subscribed', array( 'subscription' => self::export( $sub ) ) );
+				OutgoingWebhook::send( 'subscribed', array( 'subscription' => self::export( $sub ) ) );
 				$pid = $sub->product_id;
 			}
 		}
 		if ( $pid ) {
-			Utils::queue( 'yadambiar_check_product', array( (int) $pid ), 10 );
+			Queue::schedule( 'yadambiar_check_product', array( (int) $pid ), 10 );
 		}
 		return rest_ensure_response(
 			array(
@@ -445,7 +450,7 @@ class RestController {
 			'variation_id' => $sub->variation_id,
 			'product'      => $product ? $product->get_name() : '',
 			'url'          => $product ? $product->get_permalink() : '',
-			'attributes'   => Utils::attributes_label( $sub->attributes ),
+			'attributes'   => ProductAttributes::attributes_label( $sub->attributes ),
 			'type'         => $sub->type,
 			'conditions'   => SubscriptionRepository::conditions_label( $sub ),
 			'price_below'  => $sub->price_below,
@@ -489,7 +494,7 @@ class RestController {
 		$data = array();
 		foreach ( array( 'price_below', 'price_above' ) as $field ) {
 			if ( null !== $req->get_param( $field ) && null !== $sub->$field ) {
-				$value = Utils::parse_price( $req->get_param( $field ) );
+				$value = Money::parse_price( $req->get_param( $field ) );
 				if ( ! $value ) {
 					return self::error( __( 'قیمت معتبر نیست.', 'yadam-biar' ) );
 				}
@@ -497,11 +502,11 @@ class RestController {
 			}
 		}
 		if ( null !== $req->get_param( 'min_qty' ) && $sub->min_qty ) {
-			$data['min_qty'] = max( 1, absint( Utils::latin_digits( (string) $req->get_param( 'min_qty' ) ) ) );
+			$data['min_qty'] = max( 1, absint( Text::latin_digits( (string) $req->get_param( 'min_qty' ) ) ) );
 		}
 		if ( null !== $req->get_param( 'phone' ) ) {
 			$raw   = trim( (string) $req->get_param( 'phone' ) );
-			$phone = Utils::normalize_phone( $raw );
+			$phone = Phone::normalize_phone( $raw );
 			if ( '' !== $raw && ! $phone ) {
 				return self::error( __( 'شماره موبایل معتبر نیست.', 'yadam-biar' ) );
 			}
@@ -529,7 +534,7 @@ class RestController {
 		}
 		if ( $data ) {
 			SubscriptionRepository::update( $sub->id, $data );
-			Utils::queue( 'yadambiar_check_product', array( (int) $sub->product_id ), 10 );
+			Queue::schedule( 'yadambiar_check_product', array( (int) $sub->product_id ), 10 );
 		}
 		return rest_ensure_response( array( 'success' => true, 'subscription' => self::export( SubscriptionRepository::get( $sub->id ) ) ) );
 	}
@@ -555,7 +560,7 @@ class RestController {
 	 * @return WP_REST_Response
 	 */
 	public static function notifications() {
-		$owner = Utils::owner_key();
+		$owner = Visitor::owner_key();
 		return rest_ensure_response(
 			array(
 				'unread' => OnsiteChannel::unread( $owner ),
@@ -570,7 +575,7 @@ class RestController {
 	 * @return WP_REST_Response
 	 */
 	public static function notifications_read() {
-		OnsiteChannel::mark_read( Utils::owner_key() );
+		OnsiteChannel::mark_read( Visitor::owner_key() );
 		return rest_ensure_response( array( 'success' => true ) );
 	}
 
@@ -584,7 +589,7 @@ class RestController {
 		if ( ! PushChannel::enabled() || ! self::rate_ok( 'push', 20 ) ) {
 			return self::error( __( 'پوش فعال نیست.', 'yadam-biar' ) );
 		}
-		$ok = PushChannel::save_subscription( Utils::owner_key( true ), (array) $req->get_param( 'subscription' ) );
+		$ok = PushChannel::save_subscription( Visitor::owner_key( true ), (array) $req->get_param( 'subscription' ) );
 		return $ok ? rest_ensure_response( array( 'success' => true ) ) : self::error( __( 'اشتراک نامعتبر است.', 'yadam-biar' ) );
 	}
 

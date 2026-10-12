@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
 
 class Coupons {
 
@@ -112,7 +112,7 @@ class Coupons {
 		$hours  = max( 1, (int) Settings::get( 'coupon_hours', 48 ) );
 		$amount = 'percent' === Settings::get( 'coupon_type' )
 			? number_format_i18n( min( 100, (float) Settings::get( 'coupon_amount' ) ) ) . '٪'
-			: Utils::price_text( Settings::get( 'coupon_amount' ) );
+			: Money::price_text( Settings::get( 'coupon_amount' ) );
 		/* translators: %d hours */
 		$expiry = sprintf( _n( '%d ساعت', '%d ساعت', $hours, 'yadam-biar' ), $hours );
 		return array(

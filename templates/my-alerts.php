@@ -30,14 +30,14 @@ defined( 'ABSPATH' ) || exit;
 						<div>
 							<a class="yadambiar-sub-title" href="<?php echo esc_url( $yadambiar_p ? $yadambiar_p->get_permalink() : '#' ); ?>"><?php echo esc_html( $yadambiar_name ); ?></a>
 							<?php if ( $yadambiar_sub->attributes ) : ?>
-								<div class="yadambiar-sub-attrs"><?php echo esc_html( \YadamBiar\Support\Utils::attributes_label( $yadambiar_sub->attributes ) ); ?></div>
+								<div class="yadambiar-sub-attrs"><?php echo esc_html( \YadamBiar\Support\ProductAttributes::attributes_label( $yadambiar_sub->attributes ) ); ?></div>
 							<?php endif; ?>
 							<div class="yadambiar-sub-cond"><?php echo esc_html( \YadamBiar\Subscriptions\SubscriptionRepository::conditions_label( $yadambiar_sub ) ); ?></div>
 							<?php if ( $yadambiar_p ) : ?>
 								<div class="yadambiar-sub-now">
 									<?php
 									/* translators: 1: price 2: stock */
-									printf( esc_html__( 'الان: %1$s — %2$s', 'yadam-biar' ), esc_html( \YadamBiar\Support\Utils::price_text( $yadambiar_p->get_price() ) ), $yadambiar_p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) );
+									printf( esc_html__( 'الان: %1$s — %2$s', 'yadam-biar' ), esc_html( \YadamBiar\Support\Money::price_text( $yadambiar_p->get_price() ) ), $yadambiar_p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) );
 									?>
 								</div>
 							<?php endif; ?>

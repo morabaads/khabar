@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Visitor;
 
 class Reservation {
 
@@ -77,7 +78,7 @@ class Reservation {
 	public static function has_access( $product_id ) {
 		global $wpdb;
 		$table = Installer::table( 'subscriptions' );
-		$now   = Utils::now();
+		$now   = Clock::now();
 
 		// Token cookie set when the visitor opened the link from the notification.
 		$tokens = self::access_tokens();
@@ -102,10 +103,10 @@ class Reservation {
 	 * @return string[]
 	 */
 	public static function access_tokens() {
-		if ( empty( $_COOKIE[ Utils::ACCESS_COOKIE ] ) ) {
+		if ( empty( $_COOKIE[ Visitor::ACCESS_COOKIE ] ) ) {
 			return array();
 		}
-		$raw = explode( '.', sanitize_text_field( wp_unslash( $_COOKIE[ Utils::ACCESS_COOKIE ] ) ) );
+		$raw = explode( '.', sanitize_text_field( wp_unslash( $_COOKIE[ Visitor::ACCESS_COOKIE ] ) ) );
 		return array_slice( array_filter( array_map( 'sanitize_key', $raw ) ), 0, 10 );
 	}
 
@@ -118,8 +119,8 @@ class Reservation {
 		$tokens   = self::access_tokens();
 		$tokens[] = strtolower( $token );
 		$tokens   = array_slice( array_unique( $tokens ), -10 );
-		Utils::set_cookie( Utils::ACCESS_COOKIE, implode( '.', $tokens ), DAY_IN_SECONDS );
-		$_COOKIE[ Utils::ACCESS_COOKIE ] = implode( '.', $tokens );
+		Visitor::set_cookie( Visitor::ACCESS_COOKIE, implode( '.', $tokens ), DAY_IN_SECONDS );
+		$_COOKIE[ Visitor::ACCESS_COOKIE ] = implode( '.', $tokens );
 	}
 
 	/**

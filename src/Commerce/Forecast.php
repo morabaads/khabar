@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Core\Installer;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
 
 class Forecast {
 
@@ -145,7 +145,7 @@ class Forecast {
 		$subs     = $wpdb->get_results( "SELECT product_id, variation_id, attributes, created_at FROM {$table} WHERE status = 'active' AND in_stock = 1 LIMIT 50000" ); // phpcs:ignore
 		$children = array();
 		$items    = array();
-		$recent   = Utils::now( -14 * DAY_IN_SECONDS );
+		$recent   = Clock::now( -14 * DAY_IN_SECONDS );
 		foreach ( (array) $subs as $row ) {
 			$pid = (int) $row->product_id;
 			if ( $row->variation_id ) {

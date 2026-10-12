@@ -20,7 +20,10 @@ use YadamBiar\Notifications\Dispatcher;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\Queue;
+use YadamBiar\Support\Text;
 
 class Alternatives {
 
@@ -37,7 +40,7 @@ class Alternatives {
 	 */
 	public static function schedule() {
 		if ( Settings::get( 'alt_enabled' ) ) {
-			Utils::queue( 'yadambiar_send_alternatives', array(), 120 );
+			Queue::schedule( 'yadambiar_send_alternatives', array(), 120 );
 		}
 	}
 
@@ -99,7 +102,7 @@ class Alternatives {
 	 * @return string[]
 	 */
 	private static function title_tokens( $title ) {
-		$title = mb_strtolower( Utils::latin_digits( wp_strip_all_tags( (string) $title ) ) );
+		$title = mb_strtolower( Text::latin_digits( wp_strip_all_tags( (string) $title ) ) );
 		$title = preg_replace( '/[^\p{L}\p{N}\s]+/u', ' ', $title );
 		$stop  = array( 'مدل', 'با', 'و', 'برای', 'از', 'در', 'به', 'تا', 'کیفیت', 'the', 'for', 'and', 'with', 'of', 'new', 'جدید', 'اصل', 'اورجینال', 'اصلی' );
 		$words = array();
@@ -390,7 +393,7 @@ class Alternatives {
 			return 0;
 		}
 		$table  = Installer::table( 'subscriptions' );
-		$before = Utils::now( -max( 1, (int) Settings::get( 'alt_after_days', 14 ) ) * DAY_IN_SECONDS );
+		$before = Clock::now( -max( 1, (int) Settings::get( 'alt_after_days', 14 ) ) * DAY_IN_SECONDS );
 		$rows   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE status = 'active' AND in_stock = 1 AND alt_sent_at IS NULL AND created_at <= %s ORDER BY updated_at ASC LIMIT %d", $before, $limit ) ); // phpcs:ignore
 		$sent   = 0;
 		$count  = max( 1, (int) Settings::get( 'alt_count', 3 ) );
@@ -414,7 +417,7 @@ class Alternatives {
 			}
 			if ( self::send( $sub, $awaited, $alts ) ) {
 				++$sent;
-				SubscriptionRepository::update( $sub->id, array( 'alt_sent_at' => Utils::now() ) );
+				SubscriptionRepository::update( $sub->id, array( 'alt_sent_at' => Clock::now() ) );
 			} else {
 				SubscriptionRepository::update( $sub->id, array() ); // Retry on a later run.
 			}
@@ -440,12 +443,12 @@ class Alternatives {
 			$img   = wp_get_attachment_image_url( $alt['target']->get_image_id() ? $alt['target']->get_image_id() : $alt['product']->get_image_id(), 'thumbnail' );
 			$html .= '<tr style="border-bottom:1px solid #eee">'
 				. '<td style="width:72px">' . ( $img ? '<img src="' . esc_url( $img ) . '" width="64" height="64" style="border-radius:8px;object-fit:cover" alt="">' : '' ) . '</td>'
-				. '<td><a href="' . esc_url( $link ) . '" style="font-weight:bold">' . esc_html( $alt['target']->get_name() ) . '</a><br>' . esc_html( Utils::price_text( $alt['target']->get_price() ) ) . '</td></tr>';
+				. '<td><a href="' . esc_url( $link ) . '" style="font-weight:bold">' . esc_html( $alt['target']->get_name() ) . '</a><br>' . esc_html( Money::price_text( $alt['target']->get_price() ) ) . '</td></tr>';
 		}
 		$html .= '</table>';
 
 		$vars['alt_name']          = $first->get_name();
-		$vars['alt_price']         = Utils::price_text( $first->get_price() );
+		$vars['alt_price']         = Money::price_text( $first->get_price() );
 		$vars['alt_link']          = Tracking::link( $sub, $first->get_id(), 'alt' );
 		$vars['alternatives_html'] = $html;
 		$vars['link']              = $vars['alt_link'];

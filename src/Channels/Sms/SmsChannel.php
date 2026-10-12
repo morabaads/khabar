@@ -10,7 +10,8 @@ namespace YadamBiar\Channels\Sms;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Phone;
+use YadamBiar\Support\Text;
 
 class SmsChannel {
 
@@ -33,7 +34,7 @@ class SmsChannel {
 	 */
 	public static function send( $to, $text, $event = 'text', $vars = array(), $force_pattern = false ) {
 		self::$last_response = null;
-		$to = Utils::normalize_phone( $to );
+		$to = Phone::normalize_phone( $to );
 		if ( ! $to ) {
 			return new \WP_Error( 'yadambiar_sms', __( 'شماره موبایل نامعتبر', 'yadam-biar' ) );
 		}
@@ -53,7 +54,7 @@ class SmsChannel {
 			if ( $item ) {
 				$pattern = (string) $item['code'];
 				foreach ( (array) $item['vars'] as $var ) {
-					$value = trim( wp_strip_all_tags( Utils::render( $var['value'], $vars ) ) );
+					$value = trim( wp_strip_all_tags( Text::render( $var['value'], $vars ) ) );
 					if ( '' !== $value ) {
 						$params[ $var['name'] ] = $value;
 					}
@@ -360,7 +361,7 @@ class SmsChannel {
 			);
 		} else {
 			// SMS.ir wants the line as a JSON number (e.g. 30007732000000), not a string.
-			$line = preg_replace( '/\D/', '', Utils::latin_digits( (string) Settings::get( 'sms_sender' ) ) );
+			$line = preg_replace( '/\D/', '', Text::latin_digits( (string) Settings::get( 'sms_sender' ) ) );
 			if ( '' === $line ) {
 				return new \WP_Error( 'yadambiar_sms', __( 'SMS.ir: «شماره فرستنده (خط)» را در تنظیمات پیامک وارد کنید (مثلاً 30007732000000).', 'yadam-biar' ) );
 			}

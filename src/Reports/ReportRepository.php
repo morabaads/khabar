@@ -10,7 +10,7 @@ namespace YadamBiar\Reports;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
 
 class ReportRepository {
 
@@ -24,7 +24,7 @@ class ReportRepository {
 		global $wpdb;
 		$subs  = Installer::table( 'subscriptions' );
 		$log   = Installer::table( 'log' );
-		$since = Utils::now( -$days * DAY_IN_SECONDS );
+		$since = Clock::now( -$days * DAY_IN_SECONDS );
 
 		$notified = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$subs} WHERE last_notified_at >= %s", $since ) ); // phpcs:ignore
 		$clicked  = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$subs} WHERE clicked_at >= %s", $since ) ); // phpcs:ignore
@@ -126,7 +126,7 @@ class ReportRepository {
 	public static function channel_stats( $days = 30 ) {
 		global $wpdb;
 		$log  = Installer::table( 'log' );
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT channel, status, COUNT(*) AS c FROM {$log} WHERE created_at >= %s GROUP BY channel, status", Utils::now( -$days * DAY_IN_SECONDS ) ) ); // phpcs:ignore
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT channel, status, COUNT(*) AS c FROM {$log} WHERE created_at >= %s GROUP BY channel, status", Clock::now( -$days * DAY_IN_SECONDS ) ) ); // phpcs:ignore
 		$out  = array();
 		foreach ( (array) $rows as $r ) {
 			if ( ! isset( $out[ $r->channel ] ) ) {

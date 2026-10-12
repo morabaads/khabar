@@ -13,7 +13,8 @@ use YadamBiar\Channels\Messenger\MessengerChannel;
 use YadamBiar\Channels\Sms\SmsChannel;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Text;
 
 class ChannelManager {
 
@@ -28,9 +29,9 @@ class ChannelManager {
 		$text_vars                   = $vars;
 		$text_vars['exclusive_note'] = '';
 		return array(
-			'text'    => trim( Utils::render( Settings::get( 'tpl_' . $event . '_sms', '' ), $text_vars ) ),
-			'subject' => wp_strip_all_tags( Utils::render( Settings::get( 'tpl_' . $event . '_subject', '' ), $text_vars ) ),
-			'html'    => Utils::render( Settings::get( 'tpl_' . $event . '_body', '' ), $vars ),
+			'text'    => trim( Text::render( Settings::get( 'tpl_' . $event . '_sms', '' ), $text_vars ) ),
+			'subject' => wp_strip_all_tags( Text::render( Settings::get( 'tpl_' . $event . '_subject', '' ), $text_vars ) ),
+			'html'    => Text::render( Settings::get( 'tpl_' . $event . '_body', '' ), $vars ),
 			'url'     => isset( $vars['link'] ) ? $vars['link'] : '',
 			'vars'    => $vars,
 		);
@@ -155,7 +156,7 @@ class ChannelManager {
 				'status'          => true === $result ? 'sent' : ( 'skipped' === $result ? 'skipped' : 'failed' ),
 				'message'         => $text,
 				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : ( 'skipped' === $result ? __( 'تکراری: همین اعلان اخیراً برای این شخص ارسال شده بود', 'yadam-biar' ) : 'failed' ) ),
-				'created_at'      => Utils::now(),
+				'created_at'      => Clock::now(),
 			)
 		);
 	}

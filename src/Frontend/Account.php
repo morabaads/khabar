@@ -14,7 +14,8 @@ use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\View;
+use YadamBiar\Support\Visitor;
 
 class Account {
 
@@ -117,7 +118,7 @@ class Account {
 			$owner['email']     = wp_get_current_user()->user_email;
 			$owner['owner_key'] = 'u:' . $uid;
 		} else {
-			$key = Utils::owner_key();
+			$key = Visitor::owner_key();
 			if ( $key ) {
 				$owner['owner_key'] = $key;
 			}
@@ -133,10 +134,10 @@ class Account {
 	 */
 	public static function claim_guest( $login, $user ) {
 		global $wpdb;
-		if ( empty( $_COOKIE[ Utils::GUEST_COOKIE ] ) ) {
+		if ( empty( $_COOKIE[ Visitor::GUEST_COOKIE ] ) ) {
 			return;
 		}
-		$key = 'g:' . preg_replace( '/[^a-zA-Z0-9]/', '', wp_unslash( $_COOKIE[ Utils::GUEST_COOKIE ] ) );
+		$key = 'g:' . preg_replace( '/[^a-zA-Z0-9]/', '', wp_unslash( $_COOKIE[ Visitor::GUEST_COOKIE ] ) );
 		$wpdb->update( Installer::table( 'subscriptions' ), array( 'user_id' => $user->ID ), array( 'owner_key' => $key, 'user_id' => 0 ) ); // phpcs:ignore
 		$wpdb->update( Installer::table( 'notifications' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
 		$wpdb->update( Installer::table( 'push' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
@@ -176,7 +177,7 @@ class Account {
 				$messengers[] = $network;
 			}
 		}
-		include Utils::template( 'my-alerts.php' );
+		include View::locate( 'my-alerts.php' );
 		return ob_get_clean();
 	}
 }

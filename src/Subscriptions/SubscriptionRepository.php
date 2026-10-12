@@ -11,7 +11,9 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\Visitor;
 
 class SubscriptionRepository {
 
@@ -82,11 +84,11 @@ class SubscriptionRepository {
 		}
 		if ( null !== $sub->price_below ) {
 			/* translators: %s price */
-			$parts[] = sprintf( __( 'قیمت ≤ %s', 'yadam-biar' ), Utils::price_text( $sub->price_below ) );
+			$parts[] = sprintf( __( 'قیمت ≤ %s', 'yadam-biar' ), Money::price_text( $sub->price_below ) );
 		}
 		if ( null !== $sub->price_above ) {
 			/* translators: %s price */
-			$parts[] = sprintf( __( 'قیمت ≥ %s', 'yadam-biar' ), Utils::price_text( $sub->price_above ) );
+			$parts[] = sprintf( __( 'قیمت ≥ %s', 'yadam-biar' ), Money::price_text( $sub->price_above ) );
 		}
 		if ( $sub->price_change ) {
 			$parts[] = __( 'هر تغییر قیمت', 'yadam-biar' );
@@ -221,8 +223,8 @@ class SubscriptionRepository {
 			'channels'     => implode( ',', (array) $data['channels'] ),
 			'status'       => $data['status'],
 			'base_price'   => $data['base_price'],
-			'updated_at'   => Utils::now(),
-			'expires_at'   => $days ? Utils::now( $days * DAY_IN_SECONDS ) : null,
+			'updated_at'   => Clock::now(),
+			'expires_at'   => $days ? Clock::now( $days * DAY_IN_SECONDS ) : null,
 		);
 
 		if ( $existing ) {
@@ -231,8 +233,8 @@ class SubscriptionRepository {
 		}
 
 		$row['token']      = strtolower( wp_generate_password( 40, false, false ) );
-		$row['ip']         = Utils::ip();
-		$row['created_at'] = Utils::now();
+		$row['ip']         = Visitor::ip();
+		$row['created_at'] = Clock::now();
 
 		if ( false === $wpdb->insert( $table, $row ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 			return new \WP_Error( 'yadambiar_db', __( 'خطا در ذخیره درخواست.', 'yadam-biar' ) );
@@ -259,7 +261,7 @@ class SubscriptionRepository {
 		if ( isset( $data['channels'] ) && is_array( $data['channels'] ) ) {
 			$data['channels'] = implode( ',', $data['channels'] );
 		}
-		$data['updated_at'] = Utils::now();
+		$data['updated_at'] = Clock::now();
 		return false !== $wpdb->update( Installer::table( 'subscriptions' ), $data, array( 'id' => (int) $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
@@ -274,7 +276,7 @@ class SubscriptionRepository {
 	public static function claim( $sub, $recurring ) {
 		global $wpdb;
 		$table = Installer::table( 'subscriptions' );
-		$now   = Utils::now();
+		$now   = Clock::now();
 		if ( $recurring ) {
 			$sql = $sub->last_notified_at
 				? $wpdb->prepare( "UPDATE {$table} SET last_notified_at = %s, updated_at = %s WHERE id = %d AND status = 'active' AND last_notified_at = %s", $now, $now, $sub->id, $sub->last_notified_at ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

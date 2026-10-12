@@ -321,11 +321,11 @@ wc_update_product_stock( wc_get_product( $eid ), 3, 'set' );
 \YadamBiar\Notifications\Dispatcher::check_product( $eid );
 t( \YadamBiar\Commerce\Reservation::remaining( $eid ) > 1700, 'exclusive window opened (~30 min)' );
 t( false !== strpos( $GLOBALS['yadambiar_sms'][0]['text'] ?? '', '30 دقیقه' ), 'message mentions 30-minute exclusive window' );
-unset( $_COOKIE[ \YadamBiar\Support\Utils::ACCESS_COOKIE ] );
+unset( $_COOKIE[ \YadamBiar\Support\Visitor::ACCESS_COOKIE ] );
 t( false === wc_get_product( $eid )->is_purchasable(), 'public cannot buy during exclusive window' );
-$_COOKIE[ \YadamBiar\Support\Utils::ACCESS_COOKIE ] = $sub_ex->token;
+$_COOKIE[ \YadamBiar\Support\Visitor::ACCESS_COOKIE ] = $sub_ex->token;
 t( true === wc_get_product( $eid )->is_purchasable(), 'notified subscriber (token cookie) can buy' );
-unset( $_COOKIE[ \YadamBiar\Support\Utils::ACCESS_COOKIE ] );
+unset( $_COOKIE[ \YadamBiar\Support\Visitor::ACCESS_COOKIE ] );
 settings( array( 'exclusive_enabled' => 0 ) );
 t( true === wc_get_product( $eid )->is_purchasable(), 'disabled → purchasable again' );
 
@@ -344,12 +344,12 @@ t( (float) $s->order_value > 0, 'order value recorded: ' . $s->order_value );
 echo "\n== Flow 4: customer panel via token ==\n";
 list( $code, $list ) = rest( 'GET', 'subscriptions', array( 'token' => \YadamBiar\Subscriptions\SubscriptionRepository::get( $sub_any42 )->token ) );
 t( 200 === $code && 1 <= count( $list ), 'list subscriptions by token' );
-unset( $_COOKIE[ \YadamBiar\Support\Utils::GUEST_COOKIE ] );
+unset( $_COOKIE[ \YadamBiar\Support\Visitor::GUEST_COOKIE ] );
 list( $code, ) = rest( 'GET', 'subscriptions', array( 'token' => 'bogus' ) );
 t( 401 === $code, 'invalid token refused' );
 list( , $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $hid, 'price_below' => 9000000, 'email' => 'edit@example.com' ) );
 \YadamBiar\Subscriptions\SubscriptionRepository::update( $d['ids'][0], array( 'owner_key' => 'g:someoneelse' ) );
-unset( $_COOKIE[ \YadamBiar\Support\Utils::GUEST_COOKIE ] );
+unset( $_COOKIE[ \YadamBiar\Support\Visitor::GUEST_COOKIE ] );
 $sub_edit = \YadamBiar\Subscriptions\SubscriptionRepository::get( $d['ids'][0] );
 list( $code, $d ) = rest( 'POST', 'subscriptions/' . $sub_edit->id, array( 'token' => $sub_edit->token, 'price_below' => '8,500,000', 'phone' => '09121112233' ) );
 $e2 = \YadamBiar\Subscriptions\SubscriptionRepository::get( $sub_edit->id );
@@ -475,11 +475,11 @@ settings( array(
 	'broadcast_networks' => array(), 'coupon_enabled' => 0, 'alt_enabled' => 0,
 ) );
 t( \YadamBiar\Channels\Messenger\MessengerChannel::personal_ready( 'telegram' ) && \YadamBiar\Channels\Messenger\MessengerChannel::personal_ready( 'bale' ), 'telegram and bale personal messaging ready' );
-unset( $_COOKIE[ \YadamBiar\Support\Utils::GUEST_COOKIE ] );
+unset( $_COOKIE[ \YadamBiar\Support\Visitor::GUEST_COOKIE ] );
 list( $code, $d ) = rest( 'POST', 'messenger/link', array( 'network' => 'telegram' ) );
 t( 200 === $code && 0 === strpos( $d['url'], 'https://t.me/yadambiar_bot?start=' ), 'deep link: ' . ( $d['url'] ?? '' ) );
 $start_code = substr( $d['url'], strpos( $d['url'], 'start=' ) + 6 );
-$guest_owner = \YadamBiar\Support\Utils::owner_key();
+$guest_owner = \YadamBiar\Support\Visitor::owner_key();
 
 $wh = function ( $network, $text, $secret, $chat = 555 ) {
 	$req = new WP_REST_Request( 'POST', '/yadam-biar/v1/bot/' . $network );
@@ -599,7 +599,7 @@ settings( array( 'alt_enabled' => 1, 'alt_after_days' => 14 ) );
 list( , $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $aw_pid, 'variation_id' => $aw_vars[42], 'in_stock' => 1, 'phone' => '09136660000', 'email' => 'alt@example.com' ) );
 $alt_sub = $d['ids'][0];
 t( 0 === \YadamBiar\Commerce\Alternatives::run(), 'fresh request (< 14 days) gets nothing yet' );
-$wpdb->update( \YadamBiar\Core\Installer::table( 'subscriptions' ), array( 'created_at' => \YadamBiar\Support\Utils::now( -20 * DAY_IN_SECONDS ) ), array( 'id' => $alt_sub ) );
+$wpdb->update( \YadamBiar\Core\Installer::table( 'subscriptions' ), array( 'created_at' => \YadamBiar\Support\Clock::now( -20 * DAY_IN_SECONDS ) ), array( 'id' => $alt_sub ) );
 reset_capture();
 $sent = \YadamBiar\Commerce\Alternatives::run();
 t( $sent >= 1 && null !== \YadamBiar\Subscriptions\SubscriptionRepository::get( $alt_sub )->alt_sent_at, 'long-waiting customer received suggestions' );
@@ -625,7 +625,7 @@ t( array( 1000000.0, 900000.0, 800000.0 ) === array_map( 'floatval', $rows ), 'r
 $series = \YadamBiar\Commerce\PriceHistory::series( wc_get_product( $ph_pid ), 90 );
 t( 800000.0 === end( $series )[1] && 4 === count( $series ), 'series ends at the current price' );
 t( 800000.0 === \YadamBiar\Commerce\PriceHistory::lowest( wc_get_product( $ph_pid ) ), 'lowest price in 90 days' );
-$wpdb->insert( \YadamBiar\Core\Installer::table( 'price_history' ), array( 'product_id' => $ph_pid, 'price' => 1200000, 'recorded_at' => \YadamBiar\Support\Utils::now( -200 * DAY_IN_SECONDS ) ) );
+$wpdb->insert( \YadamBiar\Core\Installer::table( 'price_history' ), array( 'product_id' => $ph_pid, 'price' => 1200000, 'recorded_at' => \YadamBiar\Support\Clock::now( -200 * DAY_IN_SECONDS ) ) );
 $series = \YadamBiar\Commerce\PriceHistory::series( wc_get_product( $ph_pid ), 90 );
 t( 5 === count( $series ) && 1200000.0 === $series[0][1] && $series[0][0] >= ( time() - 90 * DAY_IN_SECONDS - 5 ) * 1000, 'older rows only provide the price in effect at the window start' );
 $html = \YadamBiar\Commerce\PriceHistory::render( wc_get_product( $ph_pid ) );

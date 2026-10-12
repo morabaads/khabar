@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
 
 class PushChannel {
 
@@ -175,7 +175,7 @@ class PushChannel {
 				'endpoint_hash' => $hash,
 				'p256dh'        => isset( $sub['keys']['p256dh'] ) ? sanitize_text_field( $sub['keys']['p256dh'] ) : '',
 				'auth'          => isset( $sub['keys']['auth'] ) ? sanitize_text_field( $sub['keys']['auth'] ) : '',
-				'created_at'    => Utils::now(),
+				'created_at'    => Clock::now(),
 			)
 		);
 	}
@@ -267,7 +267,7 @@ class PushChannel {
 			return null;
 		}
 		$table = Installer::table( 'notifications' );
-		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE owner_key = %s AND created_at > %s ORDER BY pushed ASC, id DESC LIMIT 1", $owner, Utils::now( -DAY_IN_SECONDS ) ) ); // phpcs:ignore
+		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE owner_key = %s AND created_at > %s ORDER BY pushed ASC, id DESC LIMIT 1", $owner, Clock::now( -DAY_IN_SECONDS ) ) ); // phpcs:ignore
 		if ( ! $row ) {
 			return null;
 		}

@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Core\Installer;
 use YadamBiar\Frontend\ProductWidget;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
 
 class PriceHistory {
 
@@ -107,7 +107,7 @@ class PriceHistory {
 				'product_id'    => $product->get_id(),
 				'price'         => $price,
 				'regular_price' => '' === $regular ? null : (float) $regular,
-				'recorded_at'   => Utils::now(),
+				'recorded_at'   => Clock::now(),
 			)
 		);
 		update_post_meta( $product->get_id(), self::LAST_META, $price );
@@ -126,7 +126,7 @@ class PriceHistory {
 		global $wpdb;
 		$table = Installer::table( 'price_history' );
 		$id    = $product->get_id();
-		$start = Utils::now( -$days * DAY_IN_SECONDS );
+		$start = Clock::now( -$days * DAY_IN_SECONDS );
 
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT price, recorded_at FROM {$table} WHERE product_id = %d AND recorded_at >= %s ORDER BY recorded_at ASC, id ASC LIMIT 1000", $id, $start ) ); // phpcs:ignore
 		$prev = $wpdb->get_var( $wpdb->prepare( "SELECT price FROM {$table} WHERE product_id = %d AND recorded_at < %s ORDER BY recorded_at DESC, id DESC LIMIT 1", $id, $start ) ); // phpcs:ignore
@@ -285,6 +285,6 @@ class PriceHistory {
 	public static function cleanup() {
 		global $wpdb;
 		$table = Installer::table( 'price_history' );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE recorded_at < %s AND id NOT IN (SELECT id FROM (SELECT MAX(id) AS id FROM {$table} GROUP BY product_id) keep)", Utils::now( -400 * DAY_IN_SECONDS ) ) ); // phpcs:ignore
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE recorded_at < %s AND id NOT IN (SELECT id FROM (SELECT MAX(id) AS id FROM {$table} GROUP BY product_id) keep)", Clock::now( -400 * DAY_IN_SECONDS ) ) ); // phpcs:ignore
 	}
 }

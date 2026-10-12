@@ -19,7 +19,11 @@ use YadamBiar\Core\Installer;
 use YadamBiar\Frontend\Account;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\OutgoingWebhook;
+use YadamBiar\Support\ProductAttributes;
+use YadamBiar\Support\Queue;
 
 class Dispatcher {
 
@@ -64,7 +68,7 @@ class Dispatcher {
 		$product_id = (int) $product_id;
 		if ( ! self::lock( $product_id ) ) {
 			// Another run is processing this product right now; look again shortly so nothing is missed.
-			Utils::queue( 'yadambiar_check_product', array( $product_id ), 60 );
+			Queue::schedule( 'yadambiar_check_product', array( $product_id ), 60 );
 			return 0;
 		}
 		Reservation::$bypass = true;
@@ -138,7 +142,7 @@ class Dispatcher {
 		$log  = Installer::table( 'log' );
 		$subs = Installer::table( 'subscriptions' );
 		$sql  = "SELECT l.id FROM {$log} l INNER JOIN {$subs} s ON s.id = l.subscription_id WHERE l.status = 'sent' AND l.subscription_id <> %d AND l.variation_id = %d AND l.created_at >= %s AND l.event IN (" . implode( ',', array_fill( 0, count( $events ), '%s' ) ) . ') AND (' . implode( ' OR ', $who ) . ') LIMIT 1';
-		return (bool) $wpdb->get_var( $wpdb->prepare( $sql, array_merge( array( (int) $sub->id, (int) $target_id, Utils::now( -$hours * HOUR_IN_SECONDS ) ), $events, $args ) ) ); // phpcs:ignore
+		return (bool) $wpdb->get_var( $wpdb->prepare( $sql, array_merge( array( (int) $sub->id, (int) $target_id, Clock::now( -$hours * HOUR_IN_SECONDS ) ), $events, $args ) ) ); // phpcs:ignore
 	}
 
 	/**
@@ -172,7 +176,6 @@ class Dispatcher {
 		if ( ! $product || 'trash' === $product->get_status() ) {
 			return 0;
 		}
-
 
 		$children = array();
 		if ( $product->is_type( 'variable' ) ) {
@@ -254,7 +257,7 @@ class Dispatcher {
 						$sub->id,
 						array(
 							'status'           => 'notified',
-							'last_notified_at' => Utils::now(),
+							'last_notified_at' => Clock::now(),
 							'notified_target'  => $match->get_id(),
 						)
 					);
@@ -280,9 +283,9 @@ class Dispatcher {
 		}
 
 		if ( $more ) {
-			Utils::queue( 'yadambiar_check_product', array( (int) $product_id ), 30 );
+			Queue::schedule( 'yadambiar_check_product', array( (int) $product_id ), 30 );
 		} elseif ( $waves->deferred() ) {
-			Utils::queue( 'yadambiar_check_product', array( (int) $product_id ), $waves->deferred() );
+			Queue::schedule( 'yadambiar_check_product', array( (int) $product_id ), $waves->deferred() );
 		}
 
 		wp_cache_delete( 'yadambiar_wc_' . $product_id . '_0', 'yadam-biar' );
@@ -300,7 +303,7 @@ class Dispatcher {
 	 */
 	public static function vars( $sub, $target, $snap, $exclusive = false ) {
 		$parent    = $target->is_type( 'variation' ) ? wc_get_product( $target->get_parent_id() ) : $target;
-		$variation = $target->is_type( 'variation' ) ? wc_get_formatted_variation( $target, true, false, false ) : Utils::attributes_label( $sub->attributes );
+		$variation = $target->is_type( 'variation' ) ? wc_get_formatted_variation( $target, true, false, false ) : ProductAttributes::attributes_label( $sub->attributes );
 		$minutes   = (int) Settings::get( 'exclusive_minutes', 30 );
 		$target_p  = null !== $sub->price_below ? $sub->price_below : $sub->price_above;
 
@@ -310,10 +313,10 @@ class Dispatcher {
 				'customer_name'  => $sub->name ? $sub->name : __( 'مشتری', 'yadam-biar' ),
 				'product_name'   => $parent ? $parent->get_name() : $target->get_name(),
 				'variation'      => $variation ? '(' . $variation . ')' : '',
-				'price'          => null === $snap['price'] ? __( 'استعلام در سایت', 'yadam-biar' ) : Utils::price_text( $snap['price'] ),
-				'old_price'      => Utils::price_text( $sub->base_price ),
-				'regular_price'  => Utils::price_text( $target->get_regular_price() ),
-				'target_price'   => Utils::price_text( $target_p ),
+				'price'          => null === $snap['price'] ? __( 'استعلام در سایت', 'yadam-biar' ) : Money::price_text( $snap['price'] ),
+				'old_price'      => Money::price_text( $sub->base_price ),
+				'regular_price'  => Money::price_text( $target->get_regular_price() ),
+				'target_price'   => Money::price_text( $target_p ),
 				'stock'          => null !== $snap['qty'] ? $snap['qty'] : __( 'موجود', 'yadam-biar' ),
 				'link'           => Tracking::link( $sub, $target->get_id() ),
 				'site_name'      => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
@@ -376,7 +379,7 @@ class Dispatcher {
 		if ( $ok ) {
 			$update = array(
 				'notified_count'   => $sub->notified_count + 1,
-				'last_notified_at' => Utils::now(),
+				'last_notified_at' => Clock::now(),
 				'notified_target'  => $target->get_id(),
 			);
 			if ( $recurring ) {
@@ -385,11 +388,11 @@ class Dispatcher {
 				$update['status'] = 'notified';
 			}
 			if ( $exclusive ) {
-				$update['reserved_until'] = Utils::now( $vars['minutes'] * MINUTE_IN_SECONDS );
+				$update['reserved_until'] = Clock::now( $vars['minutes'] * MINUTE_IN_SECONDS );
 			}
 			SubscriptionRepository::update( $sub->id, $update );
 
-			Utils::webhook(
+			OutgoingWebhook::send(
 				'notified',
 				array(
 					'subscription_id' => $sub->id,

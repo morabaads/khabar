@@ -24,7 +24,8 @@ use YadamBiar\Notifications\Dispatcher;
 use YadamBiar\Reports\ReportRepository;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\ProductAttributes;
 
 class AdminApp {
 
@@ -328,7 +329,7 @@ class AdminApp {
 					array( __( 'اعلان ارسال شده', 'yadam-biar' ), number_format_i18n( $k['sent'] ), sprintf( /* translators: %s failed */ __( '%s ناموفق — ۳۰ روز اخیر', 'yadam-biar' ), number_format_i18n( $k['failed'] ) ) ),
 					array( __( 'نرخ کلیک', 'yadam-biar' ), number_format_i18n( $k['click_rate'], 1 ) . '٪', sprintf( /* translators: %s clicks */ __( '%s کلیک', 'yadam-biar' ), number_format_i18n( $k['clicked'] ) ) ),
 					array( __( 'خرید از اعلان', 'yadam-biar' ), number_format_i18n( $k['conversions'] ), sprintf( /* translators: %s rate */ __( 'نرخ تبدیل %s٪', 'yadam-biar' ), number_format_i18n( $k['conv_rate'], 1 ) ) ),
-					array( __( 'درآمد از اعلان‌ها', 'yadam-biar' ), Utils::price_text( $k['revenue'] ), __( '۳۰ روز اخیر', 'yadam-biar' ) ),
+					array( __( 'درآمد از اعلان‌ها', 'yadam-biar' ), Money::price_text( $k['revenue'] ), __( '۳۰ روز اخیر', 'yadam-biar' ) ),
 				);
 				foreach ( $cards as $card ) {
 					printf( '<div class="yadambiar-kpi"><span>%s</span><strong>%s</strong><small>%s</small></div>', esc_html( $card[0] ), esc_html( $card[1] ), esc_html( $card[2] ) ); // Icons come from CSS (nth-child).
@@ -377,7 +378,7 @@ class AdminApp {
 						<thead><tr><th><?php esc_html_e( 'کالا', 'yadam-biar' ); ?></th><th><?php esc_html_e( 'منتظر', 'yadam-biar' ); ?></th><th><?php esc_html_e( 'درآمد بالقوه', 'yadam-biar' ); ?></th></tr></thead>
 						<tbody>
 						<?php foreach ( $restock as $r ) : ?>
-							<tr><td><a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( $r['product']->get_name() ); ?></a></td><td><?php echo esc_html( number_format_i18n( $r['count'] ) ); ?></td><td><?php echo esc_html( Utils::price_text( $r['potential'] ) ); ?></td></tr>
+							<tr><td><a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( $r['product']->get_name() ); ?></a></td><td><?php echo esc_html( number_format_i18n( $r['count'] ) ); ?></td><td><?php echo esc_html( Money::price_text( $r['potential'] ) ); ?></td></tr>
 						<?php endforeach; ?>
 						</tbody>
 					</table>
@@ -476,7 +477,7 @@ class AdminApp {
 					$sub->id,
 					$p ? $p->get_name() : $sub->product_id,
 					$sub->variation_id,
-					Utils::attributes_label( $sub->attributes ),
+					ProductAttributes::attributes_label( $sub->attributes ),
 					$sub->type,
 					SubscriptionRepository::conditions_label( $sub ),
 					$sub->name,
@@ -559,7 +560,7 @@ class AdminApp {
 						<?php foreach ( $rows as $r ) : $sub = $r['sub']; ?>
 							<tr>
 								<td><strong><?php echo esc_html( $sub->name ? $sub->name : '#' . $sub->id ); ?></strong><br><small class="yadambiar-muted" dir="ltr"><?php echo esc_html( trim( $sub->phone . ' ' . $sub->email ) ); ?></small></td>
-								<td><?php echo esc_html( SubscriptionRepository::conditions_label( $sub ) ); ?><?php echo $sub->attributes ? '<br><small class="yadambiar-muted">' . esc_html( Utils::attributes_label( $sub->attributes ) ) . '</small>' : ''; ?></td>
+								<td><?php echo esc_html( SubscriptionRepository::conditions_label( $sub ) ); ?><?php echo $sub->attributes ? '<br><small class="yadambiar-muted">' . esc_html( ProductAttributes::attributes_label( $sub->attributes ) ) . '</small>' : ''; ?></td>
 								<td><span class="kf-conf <?php echo $r['ok'] ? 'is-high' : 'is-medium'; ?>"><?php echo esc_html( $r['ok'] ? __( 'آماده ارسال', 'yadam-biar' ) : __( 'ارسال نمی‌شود', 'yadam-biar' ) ); ?></span><br><small><?php echo esc_html( $r['reason'] ); ?></small></td>
 								<td><?php echo $r['channels'] ? esc_html( implode( '، ', array_map( function ( $c ) { $all = Settings::channels(); return isset( $all[ $c ] ) ? $all[ $c ] : $c; }, $r['channels'] ) ) ) : '<span class="kf-dash">—</span>'; ?>
 									<?php foreach ( $r['warnings'] as $w ) : ?><br><small class="yadambiar-warn">⚠ <?php echo esc_html( $w ); ?></small><?php endforeach; ?>
@@ -619,7 +620,7 @@ class AdminApp {
 						<?php
 						foreach ( ReportRepository::variation_demand( $pid ) as $row ) :
 							$v     = $row->variation_id ? wc_get_product( $row->variation_id ) : null;
-							$label = $v ? wc_get_formatted_variation( $v, true, true ) : ( $row->attributes ? Utils::attributes_label( json_decode( $row->attributes, true ) ) : __( 'کل محصول / هر تنوعی', 'yadam-biar' ) );
+							$label = $v ? wc_get_formatted_variation( $v, true, true ) : ( $row->attributes ? ProductAttributes::attributes_label( json_decode( $row->attributes, true ) ) : __( 'کل محصول / هر تنوعی', 'yadam-biar' ) );
 							?>
 							<tr><td><?php echo esc_html( $label ); ?></td><td><?php echo esc_html( number_format_i18n( $row->c ) ); ?></td><td><?php echo $v ? esc_html( $v->is_in_stock() ? ( $v->managing_stock() ? number_format_i18n( $v->get_stock_quantity() ) : __( 'موجود', 'yadam-biar' ) ) : __( 'ناموجود', 'yadam-biar' ) ) : '—'; ?></td></tr>
 						<?php endforeach; ?>

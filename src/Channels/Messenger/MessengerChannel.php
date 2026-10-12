@@ -21,7 +21,11 @@ use YadamBiar\Frontend\Account;
 use YadamBiar\Http\RestController;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Clock;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\Phone;
+use YadamBiar\Support\Text;
+use YadamBiar\Support\Visitor;
 
 class MessengerChannel {
 
@@ -178,7 +182,7 @@ class MessengerChannel {
 		if ( '' === $key || ! $bot_id ) {
 			return new \WP_Error( 'yadambiar_safir', __( 'کلید API یا شناسه بازوی سفیر بله تنظیم نشده است.', 'yadam-biar' ) );
 		}
-		$to = Utils::international_phone( Utils::normalize_phone( $phone ), '98' );
+		$to = Phone::international_phone( Phone::normalize_phone( $phone ), '98' );
 		if ( ! $to ) {
 			return new \WP_Error( 'yadambiar_safir', __( 'شماره موبایل نامعتبر', 'yadam-biar' ) );
 		}
@@ -512,7 +516,7 @@ class MessengerChannel {
 				'network'    => $network,
 				'chat_id'    => (string) $chat_id,
 				'username'   => mb_substr( (string) $username, 0, 100 ),
-				'created_at' => Utils::now(),
+				'created_at' => Clock::now(),
 			)
 		);
 	}
@@ -706,13 +710,13 @@ class MessengerChannel {
 		$vars   = array(
 			'product_name' => $parent ? $parent->get_name() : $target->get_name(),
 			'variation'    => $target->is_type( 'variation' ) ? '(' . wc_get_formatted_variation( $target, true, false, false ) . ')' : '',
-			'price'        => Utils::price_text( $snap['price'] ),
+			'price'        => Money::price_text( $snap['price'] ),
 			'stock'        => null !== $snap['qty'] ? $snap['qty'] : '',
 			'waiting'      => number_format_i18n( $waiting ),
 			'link'         => '',
 			'site_name'    => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 		);
-		$text   = trim( Utils::render( Settings::get( 'tpl_broadcast_sms', '' ), $vars ) );
+		$text   = trim( Text::render( Settings::get( 'tpl_broadcast_sms', '' ), $vars ) );
 		$out    = array();
 		foreach ( $networks as $network ) {
 			$n = self::network( $network );
@@ -766,7 +770,7 @@ class MessengerChannel {
 			return new \WP_Error( 'yadambiar_error', __( 'این پیام‌رسان فعال نیست.', 'yadam-biar' ), array( 'status' => 400 ) );
 		}
 		$owner = Account::current_owner( (string) $req->get_param( 'token' ) );
-		$key   = isset( $owner['user_id'] ) ? 'u:' . $owner['user_id'] : ( isset( $owner['owner_key'] ) ? $owner['owner_key'] : Utils::owner_key( true ) );
+		$key   = isset( $owner['user_id'] ) ? 'u:' . $owner['user_id'] : ( isset( $owner['owner_key'] ) ? $owner['owner_key'] : Visitor::owner_key( true ) );
 		return rest_ensure_response(
 			array(
 				'url'       => self::deep_link( $network, $key ),

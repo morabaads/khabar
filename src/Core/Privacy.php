@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Http\RestController;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Phone;
 
 class Privacy {
 
@@ -73,7 +73,7 @@ class Privacy {
 		$owner = array( 'email' => $email );
 		if ( $user ) {
 			$owner['user_id'] = $user->ID;
-			$phone            = Utils::normalize_phone( get_user_meta( $user->ID, 'billing_phone', true ) );
+			$phone            = Phone::normalize_phone( get_user_meta( $user->ID, 'billing_phone', true ) );
 			if ( $phone ) {
 				$owner['phone'] = $phone;
 			}

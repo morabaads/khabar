@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Reports\ReportRepository;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\ProductAttributes;
 
 class ProductMetabox {
 
@@ -44,7 +44,7 @@ class ProductMetabox {
 			echo '<ul class="yadambiar-box-list">';
 			foreach ( array_slice( $rows, 0, 12 ) as $row ) {
 				$v     = $row->variation_id ? wc_get_product( $row->variation_id ) : null;
-				$label = $v ? wc_get_formatted_variation( $v, true, false ) : ( $row->attributes ? Utils::attributes_label( json_decode( $row->attributes, true ) ) : __( 'کل محصول', 'yadam-biar' ) );
+				$label = $v ? wc_get_formatted_variation( $v, true, false ) : ( $row->attributes ? ProductAttributes::attributes_label( json_decode( $row->attributes, true ) ) : __( 'کل محصول', 'yadam-biar' ) );
 				echo '<li><span>' . esc_html( $label ) . '</span><b>' . esc_html( number_format_i18n( $row->c ) ) . '</b></li>';
 			}
 			echo '</ul>';

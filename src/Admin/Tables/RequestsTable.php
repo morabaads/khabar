@@ -13,7 +13,9 @@ use YadamBiar\Admin\AdminApp;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
+use YadamBiar\Support\Phone;
+use YadamBiar\Support\ProductAttributes;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -54,7 +56,7 @@ class RequestsTable extends \WP_List_Table {
 		}
 		if ( ! empty( $_REQUEST['s'] ) ) {
 			$s       = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
-			$phone   = Utils::normalize_phone( $s );
+			$phone   = Phone::normalize_phone( $s );
 			$like    = '%' . $wpdb->esc_like( $s ) . '%';
 			$where[] = $wpdb->prepare( '(email LIKE %s OR phone LIKE %s OR phone = %s OR name LIKE %s OR product_id = %d)', $like, $like, $phone, $like, absint( $s ) );
 		}
@@ -194,10 +196,10 @@ class RequestsTable extends \WP_List_Table {
 		$name = $p ? $p->get_name() : '#' . $item->product_id;
 		$out  = '<strong><a href="' . esc_url( get_edit_post_link( $item->product_id ) ) . '">' . esc_html( $name ) . '</a></strong>';
 		if ( $item->attributes ) {
-			$out .= '<br><small>' . esc_html( Utils::attributes_label( $item->attributes ) ) . '</small>';
+			$out .= '<br><small>' . esc_html( ProductAttributes::attributes_label( $item->attributes ) ) . '</small>';
 		}
 		if ( $p ) {
-			$out .= '<br><small class="yadambiar-muted">' . esc_html( Utils::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) ) . '</small>';
+			$out .= '<br><small class="yadambiar-muted">' . esc_html( Money::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) ) . '</small>';
 		}
 		$actions = array(
 			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'yadam-biar' ) . '</a>',

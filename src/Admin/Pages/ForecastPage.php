@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Commerce\Forecast;
-use YadamBiar\Support\Utils;
+use YadamBiar\Support\Money;
 
 class ForecastPage {
 
@@ -90,8 +90,8 @@ class ForecastPage {
 			<div class="yadambiar-kpis">
 				<div class="yadambiar-kpi"><span><?php esc_html_e( 'کالاهای نیازمند سفارش', 'yadam-biar' ); ?></span><strong><?php echo esc_html( number_format_i18n( count( array_filter( $rows, function ( $r ) { return $r['calc']['order'] > 0; } ) ) ) ); ?></strong><small><?php esc_html_e( 'دارای منتظر', 'yadam-biar' ); ?></small></div>
 				<div class="yadambiar-kpi"><span><?php esc_html_e( 'تعداد پیشنهادی کل', 'yadam-biar' ); ?></span><strong><?php echo esc_html( number_format_i18n( $units ) ); ?></strong><small><?php esc_html_e( 'واحد', 'yadam-biar' ); ?></small></div>
-				<div class="yadambiar-kpi"><span><?php esc_html_e( 'فروش مورد انتظار', 'yadam-biar' ); ?></span><strong><?php echo esc_html( Utils::price_text( $rev ) ); ?></strong><small><?php esc_html_e( 'ارزش سفارش پیشنهادی', 'yadam-biar' ); ?></small></div>
-				<div class="yadambiar-kpi"><span><?php esc_html_e( 'فروش معطل منتظران', 'yadam-biar' ); ?></span><strong><?php echo esc_html( Utils::price_text( $lost ) ); ?></strong><small><?php esc_html_e( 'با تامین فوری قابل جذب', 'yadam-biar' ); ?></small></div>
+				<div class="yadambiar-kpi"><span><?php esc_html_e( 'فروش مورد انتظار', 'yadam-biar' ); ?></span><strong><?php echo esc_html( Money::price_text( $rev ) ); ?></strong><small><?php esc_html_e( 'ارزش سفارش پیشنهادی', 'yadam-biar' ); ?></small></div>
+				<div class="yadambiar-kpi"><span><?php esc_html_e( 'فروش معطل منتظران', 'yadam-biar' ); ?></span><strong><?php echo esc_html( Money::price_text( $lost ) ); ?></strong><small><?php esc_html_e( 'با تامین فوری قابل جذب', 'yadam-biar' ); ?></small></div>
 				<div class="yadambiar-kpi"><span><?php esc_html_e( 'نرخ تبدیل فروشگاه', 'yadam-biar' ); ?></span><strong><?php echo esc_html( number_format_i18n( $p['store_conv'] * 100, 1 ) ); ?>٪</strong><small><?php esc_html_e( 'منتظر ← خریدار (هموارشده)', 'yadam-biar' ); ?></small></div>
 			</div>
 
@@ -134,7 +134,7 @@ class ForecastPage {
 							<td class="num" title="<?php echo esc_attr( sprintf( /* translators: 1 waitlist 2 new 3 organic */ __( 'منتظران: %1$s + منتظران جدید: %2$s + فروش عادی: %3$s', 'yadam-biar' ), $c['waitlist'], $c['new'], $c['organic'] ) ); ?>"><?php echo esc_html( number_format_i18n( $c['demand'], 1 ) ); ?></td>
 							<td class="num"><?php echo esc_html( number_format_i18n( $c['safety'] ) ); ?></td>
 							<td class="num"><span class="kf-order<?php echo $c['order'] > 0 ? '' : ' is-zero'; ?>"><?php echo esc_html( number_format_i18n( $c['order'] ) ); ?></span></td>
-							<td class="num kf-value"><?php echo esc_html( Utils::price_text( $r['revenue'] ) ); ?></td>
+							<td class="num kf-value"><?php echo esc_html( Money::price_text( $r['revenue'] ) ); ?></td>
 							<td><span class="kf-conf is-<?php echo esc_attr( $r['confidence'] ); ?>"><?php echo esc_html( $conf[ $r['confidence'] ] ); ?></span></td>
 						</tr>
 					<?php endforeach; ?>
