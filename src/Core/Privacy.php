@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Contracts\Module;
-use YadamBiar\Http\RestController;
+use YadamBiar\Subscriptions\SubscriptionPresenter;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Phone;
 
@@ -112,7 +112,7 @@ class Privacy implements Module {
 	public static function export( $email ) {
 		$items = array();
 		foreach ( SubscriptionRepository::for_owner( self::owner( $email ), true ) as $sub ) {
-			$data    = RestController::export( $sub );
+			$data    = SubscriptionPresenter::export( $sub );
 			$items[] = array(
 				'group_id'    => 'yadambiar',
 				'group_label' => __( 'درخواست‌های یادم بیار', 'yadambiar' ),

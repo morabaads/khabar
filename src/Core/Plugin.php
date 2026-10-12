@@ -16,7 +16,6 @@ use YadamBiar\Admin\Actions\SettingsActions;
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Admin\ProductMetabox;
-use YadamBiar\Channels\Messenger\MessengerRestController;
 use YadamBiar\Channels\PushChannel;
 use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\Coupons;
@@ -27,7 +26,7 @@ use YadamBiar\Compat\LegacyShortcodes;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\Account;
 use YadamBiar\Frontend\ProductWidget;
-use YadamBiar\Http\RestController;
+use YadamBiar\Http\RestRouter;
 use YadamBiar\Integrations\Elementor\ElementorIntegration;
 use YadamBiar\Notifications\Dispatcher;
 use YadamBiar\Notifications\StockWatcher;
@@ -74,14 +73,13 @@ final class Plugin {
 			StockWatcher::class,
 			Dispatcher::class,
 			Reservation::class,
-			RestController::class,
+			RestRouter::class,
 			ProductWidget::class,
 			Account::class,
 			Tracking::class,
 			PushChannel::class,
 			Privacy::class,
 			Cron::class,
-			MessengerRestController::class,
 			Coupons::class,
 			Alternatives::class,
 			PriceHistory::class,

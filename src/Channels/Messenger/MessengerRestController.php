@@ -9,35 +9,30 @@ namespace YadamBiar\Channels\Messenger;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Contracts\Module;
+use YadamBiar\Contracts\RestRoutes;
 use YadamBiar\Frontend\Account;
-use YadamBiar\Http\RestController;
+use YadamBiar\Http\RateLimiter;
 use YadamBiar\Support\Visitor;
 /**
  * REST routes of the messengers: bot webhook, deep link for the visitor, link status.
  */
-final class MessengerRestController implements Module {
+final class MessengerRestController implements RestRoutes {
 
-	const NAMESPACE_V1 = 'yadambiar/v1';
-
-	/**
-	 * Hooks.
-	 */
-	public function register() {
-		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
-	}
+	const LINKS_PER_HOUR = 20;
 
 	/**
 	 * REST routes.
+	 *
+	 * @param string $namespace Namespace.
 	 */
-	public static function routes() {
+	public function routes( $namespace ) {
 		$network = array(
 			'type'     => 'string',
 			'enum'     => array_keys( MessengerConfig::networks() ),
 			'required' => true,
 		);
 		register_rest_route(
-			self::NAMESPACE_V1,
+			$namespace,
 			'/bot/(?P<network>telegram|bale)',
 			array(
 				'methods'             => 'POST',
@@ -46,7 +41,7 @@ final class MessengerRestController implements Module {
 			)
 		);
 		register_rest_route(
-			self::NAMESPACE_V1,
+			$namespace,
 			'/messenger/link',
 			array(
 				'methods'             => 'POST',
@@ -59,7 +54,7 @@ final class MessengerRestController implements Module {
 			)
 		);
 		register_rest_route(
-			self::NAMESPACE_V1,
+			$namespace,
 			'/messenger/status',
 			array(
 				'methods'             => 'GET',
@@ -80,7 +75,7 @@ final class MessengerRestController implements Module {
 	 */
 	public static function rest_link( \WP_REST_Request $req ) {
 		$network = sanitize_key( (string) $req->get_param( 'network' ) );
-		if ( ! MessengerConfig::personal_ready( $network ) || ! RestController::rate_ok( 'msglink', 20 ) ) {
+		if ( ! MessengerConfig::personal_ready( $network ) || ! RateLimiter::allow( 'msglink', self::LINKS_PER_HOUR ) ) {
 			return new \WP_Error( 'yadambiar_error', __( 'این پیام‌رسان فعال نیست.', 'yadambiar' ), array( 'status' => 400 ) );
 		}
 		$owner = Account::current_owner( (string) $req->get_param( 'token' ) );

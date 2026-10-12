@@ -816,6 +816,22 @@ $GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "INSERT IGNORE INTO {$GLOBAL
 t( 0 === \YadamBiar\Notifications\Dispatcher::check_product( $dup_pid ), 'locked product is skipped (re-queued)' );
 $GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "DELETE FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s", 'yadambiar_lock_' . $dup_pid ) );
 
+echo "\n== REST input validation ==\n";
+list( $code ) = rest( 'POST', 'subscribe', array( 'product_id' => 'abc', 'in_stock' => 1, 'phone' => '09121234567' ) );
+t( 400 === $code, 'non-numeric product id rejected by the route schema' );
+list( $code ) = rest( 'POST', 'verify', array( 'contact' => '09121234567' ) );
+t( 400 === $code, 'verify without a code rejected' );
+$cookies = $_COOKIE;
+$_COOKIE = array();
+wp_set_current_user( 0 );
+list( $code ) = rest( 'GET', 'subscriptions' );
+t( 401 === $code, 'my requests need an owner' );
+$_COOKIE = $cookies;
+list( $code, $data ) = rest( 'POST', 'subscribe', array( 'product_id' => $oos_simple, 'in_stock' => 1, 'phone' => array( 'x' ), 'email' => 'a@example.test' ) );
+t( 500 > $code, 'array where a string is expected does not break the endpoint (' . $code . ')' );
+list( $code ) = rest( 'POST', 'bot/telegram', array( 'secret' => '' ) );
+t( 403 === $code, 'bot webhook without secret refused before the handler runs' );
+
 echo "\n== SMS gateways ==\n";
 $sms_pre = $GLOBALS['wp_filter']['yadambiar_pre_send_sms'];
 remove_all_filters( 'yadambiar_pre_send_sms' );
