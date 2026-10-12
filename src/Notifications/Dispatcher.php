@@ -9,7 +9,6 @@ namespace YadamBiar\Notifications;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Channels\Messenger\ChannelBroadcaster;
 use YadamBiar\Commerce\Reservation;
 use YadamBiar\Contracts\Module;
@@ -116,7 +115,7 @@ class Dispatcher implements Module {
 			$dup_old = ! $dup_run && ! RuleEngine::is_recurring( $sub ) && DuplicateGuard::recently_notified( $sub, $event, $match->get_id() );
 			if ( $dup_old ) {
 				$sub->notified_target = $match->get_id();
-				ChannelManager::log( $sub, $event, 'all', $sub->email ? $sub->email : $sub->phone, '', 'skipped' );
+				DeliveryLog::record( $sub, $event, 'all', $sub->email ? $sub->email : $sub->phone, '', 'skipped' );
 			}
 			if ( $dup_run || $dup_old ) {
 				if ( ! RuleEngine::is_recurring( $sub ) ) {

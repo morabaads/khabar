@@ -9,7 +9,7 @@ namespace YadamBiar\Channels\Messenger;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\ChannelManager;
+use YadamBiar\Notifications\DeliveryLog;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Money;
 use YadamBiar\Support\Text;
@@ -57,7 +57,7 @@ final class ChannelBroadcaster {
 				continue;
 			}
 			$out[ $network ] = BotApi::send( $network, $n['channel'], $text, $link );
-			ChannelManager::log( null, 'broadcast', $network, $n['channel'], $text, $out[ $network ] );
+			DeliveryLog::record( null, 'broadcast', $network, $n['channel'], $text, $out[ $network ] );
 		}
 		return $out;
 	}

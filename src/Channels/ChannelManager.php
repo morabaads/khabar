@@ -1,6 +1,7 @@
 <?php
 /**
- * Channel registry, message builder and send log.
+ * Routes notifications to channels: builds the message, picks the channels a request can be
+ * reached on, delivers through each channel adapter and logs every attempt.
  *
  * @package YadamBiar
  */
@@ -9,21 +10,56 @@ namespace YadamBiar\Channels;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Delivery\EmailDelivery;
+use YadamBiar\Channels\Delivery\MessengerDelivery;
+use YadamBiar\Channels\Delivery\OnsiteDelivery;
+use YadamBiar\Channels\Delivery\PushDelivery;
+use YadamBiar\Channels\Delivery\SmsDelivery;
 use YadamBiar\Channels\Sms\SmsChannel;
-use YadamBiar\Core\Installer;
+use YadamBiar\Contracts\NotificationChannel;
+use YadamBiar\Notifications\DeliveryLog;
 use YadamBiar\Settings\Settings;
-use YadamBiar\Support\Clock;
 use YadamBiar\Support\Text;
 
-class ChannelManager {
+/**
+ * Channel router.
+ */
+final class ChannelManager {
 
 	/**
-	 * Build the message for an event.
+	 * Adapters by key.
+	 *
+	 * @var NotificationChannel[]|null
+	 */
+	private static $channels;
+
+	/**
+	 * Channel adapters (filterable with "yadambiar_notification_channels").
+	 *
+	 * @return NotificationChannel[] key => adapter.
+	 */
+	public static function channels() {
+		if ( null === self::$channels ) {
+			$list           = apply_filters(
+				'yadambiar_notification_channels',
+				array( new SmsDelivery(), new EmailDelivery(), new OnsiteDelivery(), new PushDelivery(), new MessengerDelivery( 'telegram' ), new MessengerDelivery( 'bale' ) )
+			);
+			self::$channels = array();
+			foreach ( $list as $channel ) {
+				if ( $channel instanceof NotificationChannel ) {
+					self::$channels[ $channel->key() ] = $channel;
+				}
+			}
+		}
+		return self::$channels;
+	}
+
+	/**
+	 * Build the message for an event from its templates.
 	 *
 	 * @param string $event Event.
 	 * @param array  $vars  Vars.
-	 * @return array text, subject, html, url
+	 * @return array text, subject, html, url, vars
 	 */
 	public static function build_message( $event, $vars ) {
 		$text_vars                   = $vars;
@@ -38,37 +74,22 @@ class ChannelManager {
 	}
 
 	/**
-	 * Channels to use for a subscription.
+	 * Channels a request will be notified on: its chosen (or all enabled) channels it can be reached on;
+	 * never empty while a phone (SMS enabled) or email exists.
 	 *
 	 * @param object $sub Subscription.
 	 * @return string[]
 	 */
 	public static function resolve( $sub ) {
-		// WhatsApp was removed in 1.7.1; it may still be stored in old settings / subscriptions.
-		$enabled = array_diff( (array) Settings::get( 'channels_enabled', array() ), array( 'whatsapp' ) );
-		$chosen  = $sub->channel_list ? array_intersect( $sub->channel_list, $enabled ) : $enabled;
-		$out     = array();
-		foreach ( $chosen as $channel ) {
-			if ( 'sms' === $channel && ! $sub->phone ) {
-				continue;
+		$enabled  = (array) Settings::get( 'channels_enabled', array() );
+		$chosen   = $sub->channel_list ? array_intersect( $sub->channel_list, $enabled ) : $enabled;
+		$channels = self::channels();
+		$out      = array();
+		foreach ( $chosen as $key ) {
+			if ( isset( $channels[ $key ] ) ? $channels[ $key ]->can_reach( $sub ) : has_filter( 'yadambiar_send_channel_' . $key ) ) {
+				$out[] = $key; // Unknown keys only for add-ons serving the "yadambiar_send_channel_{key}" filter (not removed channels).
 			}
-			if ( 'email' === $channel && ! $sub->email ) {
-				continue;
-			}
-			if ( in_array( $channel, array( 'onsite', 'push' ), true ) && ! self::owner_of( $sub ) ) {
-				continue;
-			}
-			// Messengers: Bale reaches the phone number through Safir; otherwise a linked chat (customer started the bot) is needed.
-			if ( in_array( $channel, array( 'telegram', 'bale' ), true ) && ! MessengerChannel::can_reach( $channel, $sub ) ) {
-				continue;
-			}
-			// Push only reaches owners that granted browser permission.
-			if ( 'push' === $channel && ! PushChannel::has_subscription( self::owner_of( $sub ) ) ) {
-				continue;
-			}
-			$out[] = $channel;
 		}
-		// Never leave a subscriber without a channel when a contact is available.
 		if ( ! $out ) {
 			if ( $sub->phone && in_array( 'sms', $enabled, true ) ) {
 				$out[] = 'sms';
@@ -80,7 +101,7 @@ class ChannelManager {
 	}
 
 	/**
-	 * Owner key for onsite / push.
+	 * Owner key used by the bell, push and messenger links.
 	 *
 	 * @param object $sub Subscription.
 	 * @return string
@@ -90,7 +111,7 @@ class ChannelManager {
 	}
 
 	/**
-	 * Send a message to a subscription on its channels.
+	 * Send a message to a request on all of its channels.
 	 *
 	 * @param object $sub     Subscription.
 	 * @param string $event   Event.
@@ -98,75 +119,27 @@ class ChannelManager {
 	 * @return array channel => bool
 	 */
 	public static function send_to_subscription( $sub, $event, $message ) {
-		$results = array();
-		$onsite  = false;
-		foreach ( self::resolve( $sub ) as $channel ) {
-			$recipient = '';
-			switch ( $channel ) {
-				case 'email':
-					$recipient = $sub->email;
-					$result    = EmailChannel::send( $sub->email, $message['subject'], $message['html'] );
-					break;
-				case 'sms':
-					$recipient = $sub->phone;
-					$result    = SmsChannel::send( $sub->phone, $message['text'], $event, $message['vars'] );
-					break;
-				case 'onsite':
-				case 'push':
-					$recipient = self::owner_of( $sub );
-					if ( ! $onsite ) {
-						$onsite = OnsiteChannel::create( $recipient, $sub->id, $message['subject'], $message['text'], $message['url'] );
-					}
-					$result = 'push' === $channel ? PushChannel::notify_owner( $recipient ) : ( $onsite ? true : new \WP_Error( 'onsite', 'db' ) );
-					break;
-				case 'telegram':
-				case 'bale':
-					list( $recipient, $result ) = MessengerChannel::deliver( $channel, $sub, $message );
-					break;
-				default:
-					$result = apply_filters( 'yadambiar_send_channel_' . $channel, new \WP_Error( 'yadambiar_channel', 'Unknown channel' ), $sub, $event, $message );
+		$channels = self::channels();
+		$results  = array();
+		foreach ( self::resolve( $sub ) as $key ) {
+			if ( isset( $channels[ $key ] ) ) {
+				list( $recipient, $result ) = $channels[ $key ]->deliver( $sub, $event, $message );
+			} else {
+				$recipient = '';
+				$result    = apply_filters( 'yadambiar_send_channel_' . $key, new \WP_Error( 'yadambiar_channel', 'Unknown channel' ), $sub, $event, $message );
 			}
-			$results[ $channel ] = true === $result;
-			self::log( $sub, $event, $channel, $recipient, $message['text'], $result );
+			$results[ $key ] = true === $result;
+			DeliveryLog::record( $sub, $event, $key, $recipient, $message['text'], $result );
 		}
 		return $results;
 	}
 
 	/**
-	 * Write to the send log.
-	 *
-	 * @param object             $sub       Subscription.
-	 * @param string             $event     Event.
-	 * @param string             $channel   Channel.
-	 * @param string             $recipient Recipient.
-	 * @param string             $text      Text.
-	 * @param true|WP_Error|bool $result    Result.
-	 */
-	public static function log( $sub, $event, $channel, $recipient, $text, $result ) {
-		global $wpdb;
-		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			Installer::table( 'log' ),
-			array(
-				'subscription_id' => $sub ? $sub->id : 0,
-				'product_id'      => $sub ? $sub->product_id : 0,
-				'variation_id'    => $sub ? (int) $sub->notified_target : 0,
-				'event'           => $event,
-				'channel'         => $channel,
-				'recipient'       => (string) $recipient,
-				'status'          => true === $result ? 'sent' : ( 'skipped' === $result ? 'skipped' : 'failed' ),
-				'message'         => $text,
-				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : ( 'skipped' === $result ? __( 'تکراری: همین اعلان اخیراً برای این شخص ارسال شده بود', 'yadambiar' ) : 'failed' ) ),
-				'created_at'      => Clock::now(),
-			)
-		);
-	}
-
-	/**
-	 * Send a one time code to a phone or email.
+	 * Send a one-time code to a phone or email.
 	 *
 	 * @param string $contact Phone or email.
 	 * @param string $code    Code.
-	 * @return true|WP_Error
+	 * @return true|\WP_Error
 	 */
 	public static function send_code( $contact, $code ) {
 		$vars    = array(
@@ -181,15 +154,13 @@ class ChannelManager {
 	}
 
 	/**
-	 * Retry a failed log entry.
+	 * Retry a failed log entry (SMS, email, push).
 	 *
 	 * @param int $log_id Log id.
-	 * @return true|WP_Error
+	 * @return true|\WP_Error
 	 */
 	public static function retry( $log_id ) {
-		global $wpdb;
-		$table = Installer::table( 'log' );
-		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $log_id ) ); // phpcs:ignore
+		$row = DeliveryLog::get( $log_id );
 		if ( ! $row ) {
 			return new \WP_Error( 'yadambiar', __( 'یافت نشد', 'yadambiar' ) );
 		}
@@ -204,16 +175,9 @@ class ChannelManager {
 				$result = PushChannel::notify_owner( $row->recipient );
 				break;
 			default:
-				$result = new \WP_Error( 'yadambiar', __( 'این کانال قابل ارسال مجدد نیست.', 'yadambiar' ) );
+				return new \WP_Error( 'yadambiar', __( 'این کانال قابل ارسال مجدد نیست.', 'yadambiar' ) );
 		}
-		$wpdb->update( // phpcs:ignore
-			$table,
-			array(
-				'status' => true === $result ? 'sent' : 'failed',
-				'error'  => is_wp_error( $result ) ? $result->get_error_message() : '',
-			),
-			array( 'id' => $row->id )
-		);
+		DeliveryLog::update_result( $row->id, $result );
 		return $result;
 	}
 }
