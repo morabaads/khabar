@@ -84,6 +84,18 @@ final class Visitor {
 		if ( headers_sent() ) {
 			return;
 		}
-		setcookie( $name, $value, time() + $expire, COOKIEPATH ? COOKIEPATH : '/', COOKIE_DOMAIN, is_ssl(), true );
+		// HttpOnly + SameSite=Lax: scripts cannot read it and other sites cannot send requests with it.
+		setcookie(
+			$name,
+			$value,
+			array(
+				'expires'  => time() + $expire,
+				'path'     => COOKIEPATH ? COOKIEPATH : '/',
+				'domain'   => COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
+		);
 	}
 }

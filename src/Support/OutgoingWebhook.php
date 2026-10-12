@@ -26,20 +26,30 @@ final class OutgoingWebhook {
 		if ( ! $url || ! wp_http_validate_url( $url ) ) {
 			return;
 		}
+		$body    = wp_json_encode(
+			array(
+				'event' => $event,
+				'site'  => home_url(),
+				'time'  => gmdate( 'c' ),
+				'data'  => $data,
+			)
+		);
+		$headers = array(
+			'Content-Type'      => 'application/json',
+			'X-YadamBiar-Event' => (string) $event,
+		);
+		$secret  = (string) Settings::get( 'webhook_secret', '' );
+		if ( '' !== $secret ) {
+			// Receivers verify: hash_hmac( 'sha256', raw body, secret ) equals the header value after "sha256=".
+			$headers['X-YadamBiar-Signature'] = 'sha256=' . hash_hmac( 'sha256', $body, $secret );
+		}
 		wp_remote_post(
 			$url,
 			array(
 				'timeout'  => 5,
 				'blocking' => false,
-				'headers'  => array( 'Content-Type' => 'application/json' ),
-				'body'     => wp_json_encode(
-					array(
-						'event' => $event,
-						'site'  => home_url(),
-						'time'  => gmdate( 'c' ),
-						'data'  => $data,
-					)
-				),
+				'headers'  => $headers,
+				'body'     => $body,
 			)
 		);
 	}

@@ -832,6 +832,24 @@ t( 500 > $code, 'array where a string is expected does not break the endpoint ('
 list( $code ) = rest( 'POST', 'bot/telegram', array( 'secret' => '' ) );
 t( 403 === $code, 'bot webhook without secret refused before the handler runs' );
 
+echo "\n== Outgoing webhook ==\n";
+$hook_saved = \YadamBiar\Settings\Settings::all();
+settings( array( 'webhook_url' => 'https://93.184.216.34/in', 'webhook_secret' => 's3cret' ) );
+$GLOBALS['yadambiar_hook'] = null;
+$hook_spy = function ( $pre, $args, $url ) {
+	if ( false !== strpos( $url, '93.184.216.34' ) ) {
+		$GLOBALS['yadambiar_hook'] = $args;
+	}
+	return $pre;
+};
+add_filter( 'pre_http_request', $hook_spy, 1, 3 );
+\YadamBiar\Support\OutgoingWebhook::send( 'subscribed', array( 'x' => 1 ) );
+remove_filter( 'pre_http_request', $hook_spy, 1 );
+$hook_args = $GLOBALS['yadambiar_hook'];
+t( $hook_args && 'sha256=' . hash_hmac( 'sha256', $hook_args['body'], 's3cret' ) === $hook_args['headers']['X-YadamBiar-Signature'], 'outgoing webhook body is signed with the secret' );
+update_option( \YadamBiar\Settings\Settings::OPTION, $hook_saved );
+\YadamBiar\Settings\Settings::flush();
+
 echo "\n== SMS gateways ==\n";
 $sms_pre = $GLOBALS['wp_filter']['yadambiar_pre_send_sms'];
 remove_all_filters( 'yadambiar_pre_send_sms' );

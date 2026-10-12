@@ -21,15 +21,15 @@ final class Catalog {
 	 */
 	public static function events() {
 		return array(
-			'back_in_stock' => __( 'موجود شدن', 'yadam-biar' ),
-			'low_stock'     => __( 'موجود شدن تعداد محدود', 'yadam-biar' ),
-			'price_drop'    => __( 'کاهش قیمت', 'yadam-biar' ),
-			'price_rise'    => __( 'افزایش قیمت', 'yadam-biar' ),
-			'price_change'  => __( 'تغییر قیمت', 'yadam-biar' ),
-			'combo'         => __( 'قانون ترکیبی', 'yadam-biar' ),
-			'alternatives'  => __( 'پیشنهاد محصول جایگزین', 'yadam-biar' ),
-			'broadcast'     => __( 'اعلام موجود شدن در کانال', 'yadam-biar' ),
-			'otp'           => __( 'کد تایید', 'yadam-biar' ),
+			'back_in_stock' => __( 'موجود شدن', 'yadambiar' ),
+			'low_stock'     => __( 'موجود شدن تعداد محدود', 'yadambiar' ),
+			'price_drop'    => __( 'کاهش قیمت', 'yadambiar' ),
+			'price_rise'    => __( 'افزایش قیمت', 'yadambiar' ),
+			'price_change'  => __( 'تغییر قیمت', 'yadambiar' ),
+			'combo'         => __( 'قانون ترکیبی', 'yadambiar' ),
+			'alternatives'  => __( 'پیشنهاد محصول جایگزین', 'yadambiar' ),
+			'broadcast'     => __( 'اعلام موجود شدن در کانال', 'yadambiar' ),
+			'otp'           => __( 'کد تایید', 'yadambiar' ),
 		);
 	}
 
@@ -40,12 +40,12 @@ final class Catalog {
 	 */
 	public static function channels() {
 		return array(
-			'sms'      => __( 'پیامک', 'yadam-biar' ),
-			'email'    => __( 'ایمیل', 'yadam-biar' ),
-			'onsite'   => __( 'اعلان داخل سایت', 'yadam-biar' ),
-			'push'     => __( 'پوش نوتیفیکیشن', 'yadam-biar' ),
-			'telegram' => __( 'تلگرام', 'yadam-biar' ),
-			'bale'     => __( 'بله', 'yadam-biar' ),
+			'sms'      => __( 'پیامک', 'yadambiar' ),
+			'email'    => __( 'ایمیل', 'yadambiar' ),
+			'onsite'   => __( 'اعلان داخل سایت', 'yadambiar' ),
+			'push'     => __( 'پوش نوتیفیکیشن', 'yadambiar' ),
+			'telegram' => __( 'تلگرام', 'yadambiar' ),
+			'bale'     => __( 'بله', 'yadambiar' ),
 		);
 	}
 }
