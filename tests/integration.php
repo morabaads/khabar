@@ -24,6 +24,9 @@ add_filter( 'pre_wp_mail', function ( $pre, $atts ) {
 	$GLOBALS['yadambiar_mail'][] = $atts;
 	return true;
 }, 10, 2 );
+// Start clean: rate-limit / OTP cooldown transients left by a previous run.
+$GLOBALS['wpdb']->query( "DELETE FROM {$GLOBALS['wpdb']->options} WHERE option_name LIKE '\\_transient\\_%yadambiar\\_%' OR option_name LIKE '\\_transient\\_timeout\\_%yadambiar\\_%'" );
+wp_cache_flush();
 $GLOBALS['yadambiar_http'] = array();
 add_filter( 'pre_http_request', function ( $pre, $args, $url ) {
 	$GLOBALS['yadambiar_http'][] = array( 'url' => $url, 'body' => isset( $args['body'] ) ? $args['body'] : '' );
@@ -812,6 +815,60 @@ $GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "INSERT IGNORE INTO {$GLOBAL
 \YadamBiar\Subscriptions\SubscriptionRepository::update( $dup_a, array( 'status' => 'active' ) );
 t( 0 === \YadamBiar\Notifications\Dispatcher::check_product( $dup_pid ), 'locked product is skipped (re-queued)' );
 $GLOBALS['wpdb']->query( $GLOBALS['wpdb']->prepare( "DELETE FROM {$GLOBALS['wpdb']->options} WHERE option_name = %s", 'yadambiar_lock_' . $dup_pid ) );
+
+echo "\n== SMS gateways ==\n";
+$sms_pre = $GLOBALS['wp_filter']['yadambiar_pre_send_sms'];
+remove_all_filters( 'yadambiar_pre_send_sms' );
+$sms_saved = \YadamBiar\Settings\Settings::all();
+$gw_reply  = null;
+$gw_spy    = function ( $pre, $args, $url ) use ( &$gw_reply ) {
+	$GLOBALS['yadambiar_gw'][] = array( 'url' => $url, 'args' => $args );
+	return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => $gw_reply, 'headers' => array(), 'cookies' => array() );
+};
+add_filter( 'pre_http_request', $gw_spy, 99, 3 );
+$pat_items = array( 'back_in_stock' => array( 'event' => 'back_in_stock', 'code' => '777', 'vars' => array( array( 'name' => 'token', 'value' => '{product_name}' ), array( 'name' => 'token2', 'value' => '{price}' ) ) ) );
+$cases = array(
+	'kavenegar'   => array( '{"return":{"status":200,"message":"ok"},"entries":[{"messageid":991}]}', 'verify/lookup.json', 'api.kavenegar.com/v1/KEY/' ),
+	'smsir'       => array( '{"status":1,"message":"ok","data":{"messageId":5512}}', 'send/verify', 'api.sms.ir' ),
+	'melipayamak' => array( '{"RetStatus":1,"StrRetStatus":"Ok"}', 'BaseServiceNumber', 'rest.payamak-panel.com' ),
+	'ippanel'     => array( '{"status":"OK"}', 'pattern/normal/send', 'api2.ippanel.com' ),
+	'ghasedak'    => array( '{"isSuccess":true}', 'SendOtpSMS', 'ghasedak.me' ),
+	'iranpayamak' => array( '{"status":"success"}', 'sms/pattern', 'iranpayamak.com' ),
+);
+foreach ( $cases as $gw => $case ) {
+	settings( array( 'sms_gateway' => $gw, 'sms_mode' => 'pattern', 'sms_api_key' => 'KEY', 'sms_username' => 'u', 'sms_password' => 'p', 'sms_sender' => '3000', 'sms_pattern_items' => $pat_items, 'sms_base_url' => '' ) );
+	$GLOBALS['yadambiar_gw'] = array();
+	$gw_reply = $case[0];
+	$r    = \YadamBiar\Channels\Sms\SmsChannel::send( '۰۹۱۲۱۲۳۴۵۶۷', 'متن', 'back_in_stock', array( 'product_name' => 'کفش ورزشی', 'price' => '100' ) );
+	$req  = end( $GLOBALS['yadambiar_gw'] );
+	$body = is_array( $req['args']['body'] ) ? wp_json_encode( $req['args']['body'], JSON_UNESCAPED_UNICODE ) : (string) $req['args']['body'];
+	t( true === $r && false !== strpos( $req['url'], $case[1] ) && false !== strpos( $req['url'], $case[2] ) && false !== strpos( $body, '777' ) && false !== strpos( $body, '09121234567' ), "{$gw}: pattern send hits " . $case[1] );
+	if ( 'kavenegar' === $gw ) {
+		t( false !== strpos( $body, "کفش\u{200C}ورزشی" ), 'kavenegar: spaces in token replaced by ZWNJ' );
+		t( '991' === \YadamBiar\Channels\Sms\SmsChannel::last_message_id(), 'kavenegar: message id read for delivery check' );
+	}
+	if ( 'smsir' === $gw ) {
+		t( false !== strpos( $body, '"templateId":777' ), 'smsir: template id sent as number' );
+	}
+}
+// Text mode + failure mapping.
+settings( array( 'sms_gateway' => 'smsir', 'sms_mode' => 'text' ) );
+$gw_reply = '{"status":0,"message":"خط نامعتبر"}';
+$r = \YadamBiar\Channels\Sms\SmsChannel::send( '09121234567', 'سلام', 'back_in_stock', array() );
+t( is_wp_error( $r ) && 'خط نامعتبر' === $r->get_error_message(), 'provider error text surfaces' );
+$req = end( $GLOBALS['yadambiar_gw'] );
+t( false !== strpos( $req['url'], 'send/bulk' ) && false !== strpos( $req['args']['body'], '"lineNumber":3000' ), 'text mode uses the line as a number' );
+t( is_wp_error( \YadamBiar\Channels\Sms\SmsChannel::send( '123', 'x' ) ), 'invalid mobile rejected before any request' );
+settings( array( 'sms_gateway' => 'asanak' ) );
+t( is_wp_error( \YadamBiar\Channels\Sms\SmsChannel::account_info() ), 'diagnostics refused for gateways without them' );
+settings( array( 'sms_gateway' => 'webhook', 'sms_webhook_url' => 'http://127.0.0.1/hook?to={to}' ) );
+\YadamBiar\Channels\Sms\SmsChannel::send( '09121234567', 'x' );
+$req = end( $GLOBALS['yadambiar_gw'] );
+t( ! empty( $req['args']['reject_unsafe_urls'] ) && false !== strpos( $req['url'], 'to=09121234567' ), 'custom webhook goes through the safe HTTP API (local targets refused)' );
+remove_filter( 'pre_http_request', $gw_spy, 99 );
+update_option( \YadamBiar\Settings\Settings::OPTION, $sms_saved );
+\YadamBiar\Settings\Settings::flush();
+$GLOBALS['wp_filter']['yadambiar_pre_send_sms'] = $sms_pre;
 
 echo "\n== Elementor ==\n";
 if ( class_exists( '\\Elementor\\Plugin' ) ) {

@@ -109,7 +109,7 @@ final class ChannelActions extends ActionGroup {
 				'ok'       => true === $result,
 				'error'    => is_wp_error( $result ) ? $result->get_error_message() : '',
 				'id'       => true === $result ? SmsChannel::last_message_id() : '',
-				'response' => SmsChannel::$last_response,
+				'response' => SmsChannel::last_response(),
 			),
 			DAY_IN_SECONDS
 		);

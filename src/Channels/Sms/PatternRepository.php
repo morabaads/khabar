@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
+use YadamBiar\Support\Text;
 /**
  * SMS pattern (service-line template) definitions per event.
  */
@@ -55,5 +56,28 @@ final class PatternRepository {
 			$out[ $event ] = array( 'event' => $event, 'code' => $code, 'vars' => $vars );
 		}
 		return $out;
+	}
+
+	/**
+	 * Pattern code and filled-in values for an event (low stock falls back to the back-in-stock pattern).
+	 *
+	 * @param string $event Event key.
+	 * @param array  $vars  Message vars.
+	 * @return array|null array( code, params ) or null when the event has no pattern.
+	 */
+	public static function resolve( $event, array $vars ) {
+		$items = self::pattern_items();
+		$item  = isset( $items[ $event ] ) ? $items[ $event ] : ( 'low_stock' === $event && isset( $items['back_in_stock'] ) ? $items['back_in_stock'] : null );
+		if ( ! $item || '' === (string) $item['code'] ) {
+			return null;
+		}
+		$params = array();
+		foreach ( (array) $item['vars'] as $var ) {
+			$value = trim( wp_strip_all_tags( Text::render( $var['value'], $vars ) ) );
+			if ( '' !== $value ) {
+				$params[ $var['name'] ] = $value;
+			}
+		}
+		return array( (string) $item['code'], $params );
 	}
 }
