@@ -14,7 +14,10 @@ use YadamBiar\Settings\Settings;
 
 use Elementor\Controls_Manager;
 
-class PriceHistoryWidget extends BaseWidget {
+/**
+ * Elementor widget: price history chart.
+ */
+final class PriceHistoryWidget extends BaseWidget {
 
 	/**
 	 * Name.

@@ -11,7 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Frontend\Account;
 
-class MyAlertsWidget extends BaseWidget {
+/**
+ * Elementor widget: "my alerts" panel.
+ */
+final class MyAlertsWidget extends BaseWidget {
 
 	/**
 	 * Name.

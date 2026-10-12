@@ -14,7 +14,10 @@ use YadamBiar\Core\Installer;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Queue;
 
-class StockWatcher implements Module {
+/**
+ * Watches WooCommerce for stock / price changes (Flow 2 & 14) and queues checks.
+ */
+final class StockWatcher implements Module {
 
 	/**
 	 * Parent product ids to check at shutdown.

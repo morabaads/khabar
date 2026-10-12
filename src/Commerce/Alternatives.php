@@ -18,7 +18,10 @@ use YadamBiar\Contracts\Module;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Queue;
 
-class Alternatives implements Module {
+/**
+ * Alternative product suggestions for customers who have been waiting a long time.
+ */
+final class Alternatives implements Module {
 
 	/**
 	 * Hooks.

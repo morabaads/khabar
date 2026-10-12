@@ -26,7 +26,10 @@ use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 
-class Forecast {
+/**
+ * Demand forecast for purchase orders.
+ */
+final class Forecast {
 
 	const K_PRODUCT = 10;
 	const K_STORE   = 20;

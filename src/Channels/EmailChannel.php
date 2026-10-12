@@ -9,7 +9,10 @@ namespace YadamBiar\Channels;
 
 defined( 'ABSPATH' ) || exit;
 
-class EmailChannel {
+/**
+ * Email channel (uses the WooCommerce email wrapper).
+ */
+final class EmailChannel {
 
 	/**
 	 * Send an email.

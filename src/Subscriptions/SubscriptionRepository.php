@@ -16,7 +16,10 @@ use YadamBiar\Support\Money;
 use YadamBiar\Support\Phone;
 use YadamBiar\Support\Visitor;
 
-class SubscriptionRepository {
+/**
+ * Subscription repository.
+ */
+final class SubscriptionRepository {
 
 	/**
 	 * Status labels.

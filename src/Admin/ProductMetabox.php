@@ -14,7 +14,10 @@ use YadamBiar\Reports\ReportRepository;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\ProductAttributes;
 
-class ProductMetabox implements Module {
+/**
+ * Product edit screen: waiting customers box + products list column.
+ */
+final class ProductMetabox implements Module {
 
 	/**
 	 * Hooks.

@@ -11,7 +11,10 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Frontend\Bell;
 
-class BellWidget extends BaseWidget {
+/**
+ * Elementor widget: on-site notification bell.
+ */
+final class BellWidget extends BaseWidget {
 
 	/**
 	 * Name.

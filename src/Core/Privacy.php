@@ -15,7 +15,10 @@ use YadamBiar\Subscriptions\SubscriptionPresenter;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Phone;
 
-class Privacy implements Module {
+/**
+ * GDPR personal data export / erase.
+ */
+final class Privacy implements Module {
 
 	/**
 	 * Hooks.

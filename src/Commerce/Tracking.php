@@ -16,7 +16,10 @@ use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Phone;
 
-class Tracking implements Module {
+/**
+ * Click and conversion tracking (which notifications produced a sale).
+ */
+final class Tracking implements Module {
 
 	/**
 	 * Hooks.

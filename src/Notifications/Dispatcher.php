@@ -17,7 +17,10 @@ use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Queue;
 
-class Dispatcher implements Module {
+/**
+ * Evaluates waiting subscriptions of a product and sends notifications (Flow 2, 3 & 6).
+ */
+final class Dispatcher implements Module {
 
 	/**
 	 * Hooks.

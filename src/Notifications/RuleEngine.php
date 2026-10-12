@@ -14,7 +14,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Money;
 
-class RuleEngine {
+/**
+ * Rule engine: decides whether a subscription is satisfied by a product/variation.
+ */
+final class RuleEngine {
 
 	/**
 	 * Build a snapshot of a product state.

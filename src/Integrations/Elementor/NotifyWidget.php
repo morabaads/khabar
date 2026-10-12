@@ -17,7 +17,10 @@ use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Border;
 use Elementor\Group_Control_Box_Shadow;
 
-class NotifyWidget extends BaseWidget {
+/**
+ * Elementor widget: notify button + expectation form.
+ */
+final class NotifyWidget extends BaseWidget {
 
 	/**
 	 * Name.

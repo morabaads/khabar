@@ -16,7 +16,10 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Settings\Settings;
 
-class ProviderRegistry {
+/**
+ * Registry of Iranian SMS panels and the API driver each one talks to.
+ */
+final class ProviderRegistry {
 
 	/**
 	 * Drivers that support pattern (service-line) sending.

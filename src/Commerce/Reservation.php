@@ -16,7 +16,10 @@ use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Visitor;
 
-class Reservation implements Module {
+/**
+ * Early access ("رزرو زودتر از دیگران"): after a restock, waiting customers get an.
+ */
+final class Reservation implements Module {
 
 	const META = '_yadambiar_exclusive_until';
 

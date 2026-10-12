@@ -13,7 +13,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Settings\Settings;
 
-class PriceHistory implements Module {
+/**
+ * Price history: records every price change of simple products and variations and.
+ */
+final class PriceHistory implements Module {
 
 	const LAST_META = '_yadambiar_last_price';
 

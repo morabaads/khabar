@@ -18,7 +18,10 @@ use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Border;
 use Elementor\Group_Control_Box_Shadow;
 
-class AlternativesWidget extends BaseWidget {
+/**
+ * Elementor widget: similar / alternative products block.
+ */
+final class AlternativesWidget extends BaseWidget {
 
 	/**
 	 * Name.

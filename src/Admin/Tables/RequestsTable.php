@@ -21,7 +21,10 @@ if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class RequestsTable extends \WP_List_Table {
+/**
+ * Requests list table.
+ */
+final class RequestsTable extends \WP_List_Table {
 
 	/**
 	 * Constructor.

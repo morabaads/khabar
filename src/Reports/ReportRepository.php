@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Core\Installer;
 use YadamBiar\Support\Clock;
 
-class ReportRepository {
+/**
+ * Report queries for the admin dashboard (Feature 13, Flow 5).
+ */
+final class ReportRepository {
 
 	/**
 	 * Headline numbers.

@@ -20,7 +20,10 @@ use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\View;
 use YadamBiar\Support\Visitor;
 
-class Account implements Module {
+/**
+ * Customer panel: "یادآوری‌های من" (Flow 4) – My Account endpoint + shortcode for guests.
+ */
+final class Account implements Module {
 
 	const ENDPOINT = 'yadambiar-alerts';
 

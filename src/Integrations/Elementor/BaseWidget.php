@@ -11,6 +11,9 @@ defined( 'ABSPATH' ) || exit;
 
 use Elementor\Controls_Manager;
 
+/**
+ * Shared base for Yadam Biar Elementor widgets.
+ */
 abstract class BaseWidget extends \Elementor\Widget_Base {
 
 	/**

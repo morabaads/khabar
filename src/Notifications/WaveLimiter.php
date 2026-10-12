@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Settings\Settings;
 
-class WaveLimiter {
+/**
+ * Wave based sending: with limited stock notify the earliest subscribers first.
+ */
+final class WaveLimiter {
 
 	const META = '_yadambiar_wave';
 

@@ -19,7 +19,10 @@ use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Money;
 
-class Coupons implements Module {
+/**
+ * Personal one-time discount coupons inside notification messages.
+ */
+final class Coupons implements Module {
 
 	const CODE_PREFIX        = 'YB-';
 	const LEGACY_CODE_PREFIX = 'KHB-';

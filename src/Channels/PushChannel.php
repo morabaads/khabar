@@ -15,6 +15,9 @@ use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Media;
 
+/**
+ * Web Push (VAPID, payload-less). The service worker fetches the latest on-site.
+ */
 final class PushChannel {
 
 	/**

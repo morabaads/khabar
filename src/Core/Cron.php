@@ -14,7 +14,10 @@ use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Queue;
 
-class Cron implements Module {
+/**
+ * Daily maintenance: expiry, cleanup and a safety sweep for changes made outside WooCommerce CRUD.
+ */
+final class Cron implements Module {
 
 	/**
 	 * Hooks.

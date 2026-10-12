@@ -20,7 +20,10 @@ use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\View;
 
-class ProductWidget implements Module {
+/**
+ * Product page UI: smart "notify me" button, expectation form, price alerts (Flow 1 & 3).
+ */
+final class ProductWidget implements Module {
 
 	/**
 	 * Rendered product ids.

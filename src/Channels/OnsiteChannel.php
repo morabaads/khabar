@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Core\Installer;
 use YadamBiar\Support\Clock;
 
-class OnsiteChannel {
+/**
+ * On-site notifications (bell) – also the payload store for push notifications.
+ */
+final class OnsiteChannel {
 
 	/**
 	 * Create a notification.

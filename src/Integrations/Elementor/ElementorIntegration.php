@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\Assets;
 
-class ElementorIntegration implements Module {
+/**
+ * Elementor integration: "یادم بیار" widget category and widgets.
+ */
+final class ElementorIntegration implements Module {
 
 	/**
 	 * Hooks (only when Elementor is active).

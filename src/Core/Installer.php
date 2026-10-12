@@ -13,7 +13,10 @@ use YadamBiar\Core\Migration\LegacyKhabarMigration;
 use YadamBiar\Settings\Schema;
 use YadamBiar\Settings\Settings;
 
-class Installer {
+/**
+ * Installation: tables, pages, cron.
+ */
+final class Installer {
 
 	/**
 	 * Activation.
