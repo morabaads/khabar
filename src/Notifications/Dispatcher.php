@@ -15,6 +15,7 @@ use YadamBiar\Channels\Sms\ProviderRegistry;
 use YadamBiar\Commerce\Coupons;
 use YadamBiar\Commerce\Reservation;
 use YadamBiar\Commerce\Tracking;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Frontend\Account;
 use YadamBiar\Settings\Settings;
@@ -25,12 +26,12 @@ use YadamBiar\Support\OutgoingWebhook;
 use YadamBiar\Support\ProductAttributes;
 use YadamBiar\Support\Queue;
 
-class Dispatcher {
+class Dispatcher implements Module {
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'yadambiar_check_product', array( __CLASS__, 'check_product' ), 10, 1 );
 	}
 
@@ -288,7 +289,7 @@ class Dispatcher {
 			Queue::schedule( 'yadambiar_check_product', array( (int) $product_id ), $waves->deferred() );
 		}
 
-		wp_cache_delete( 'yadambiar_wc_' . $product_id . '_0', 'yadam-biar' );
+		wp_cache_delete( 'yadambiar_wc_' . $product_id . '_0', 'yadambiar' );
 		return $sent;
 	}
 
@@ -310,19 +311,19 @@ class Dispatcher {
 		return apply_filters(
 			'yadambiar_message_vars',
 			array(
-				'customer_name'  => $sub->name ? $sub->name : __( 'مشتری', 'yadam-biar' ),
+				'customer_name'  => $sub->name ? $sub->name : __( 'مشتری', 'yadambiar' ),
 				'product_name'   => $parent ? $parent->get_name() : $target->get_name(),
 				'variation'      => $variation ? '(' . $variation . ')' : '',
-				'price'          => null === $snap['price'] ? __( 'استعلام در سایت', 'yadam-biar' ) : Money::price_text( $snap['price'] ),
+				'price'          => null === $snap['price'] ? __( 'استعلام در سایت', 'yadambiar' ) : Money::price_text( $snap['price'] ),
 				'old_price'      => Money::price_text( $sub->base_price ),
 				'regular_price'  => Money::price_text( $target->get_regular_price() ),
 				'target_price'   => Money::price_text( $target_p ),
-				'stock'          => null !== $snap['qty'] ? $snap['qty'] : __( 'موجود', 'yadam-biar' ),
+				'stock'          => null !== $snap['qty'] ? $snap['qty'] : __( 'موجود', 'yadambiar' ),
 				'link'           => Tracking::link( $sub, $target->get_id() ),
 				'site_name'      => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
 				'minutes'        => $minutes,
 				/* translators: %d minutes */
-				'exclusive_note' => $exclusive ? '<p><strong>' . sprintf( __( 'شما %d دقیقه فرصت خرید اختصاصی دارید؛ پس از آن محصول برای همه قابل خرید می‌شود.', 'yadam-biar' ), $minutes ) . '</strong></p>' : '',
+				'exclusive_note' => $exclusive ? '<p><strong>' . sprintf( __( 'شما %d دقیقه فرصت خرید اختصاصی دارید؛ پس از آن محصول برای همه قابل خرید می‌شود.', 'yadambiar' ), $minutes ) . '</strong></p>' : '',
 				'manage_link'    => Account::manage_url( $sub ),
 				'code'           => '',
 			),
@@ -353,7 +354,7 @@ class Dispatcher {
 		$vars      = array_merge( self::vars( $sub, $target, $snap, $exclusive ), Coupons::vars( $coupon ) );
 		if ( $exclusive ) {
 			/* translators: %d minutes */
-			$vars['exclusive_note_text'] = sprintf( __( '%d دقیقه فرصت خرید اختصاصی دارید.', 'yadam-biar' ), $vars['minutes'] );
+			$vars['exclusive_note_text'] = sprintf( __( '%d دقیقه فرصت خرید اختصاصی دارید.', 'yadambiar' ), $vars['minutes'] );
 		}
 
 		$message = ChannelManager::build_message( $event, $vars );
@@ -443,14 +444,14 @@ class Dispatcher {
 		foreach ( $subs as $sub ) {
 			$row = array( 'sub' => $sub, 'ok' => false, 'reason' => '', 'target' => '', 'channels' => array(), 'warnings' => array() );
 			if ( 'pending' === $sub->status ) {
-				$row['reason'] = __( 'مشتری هنوز کد تایید (OTP) را وارد نکرده؛ درخواست فعال نشده است', 'yadam-biar' );
+				$row['reason'] = __( 'مشتری هنوز کد تایید (OTP) را وارد نکرده؛ درخواست فعال نشده است', 'yadambiar' );
 			} elseif ( $sub->expires_at && strtotime( $sub->expires_at . ' UTC' ) < time() ) {
-				$row['reason'] = __( 'درخواست منقضی شده است', 'yadam-biar' );
+				$row['reason'] = __( 'درخواست منقضی شده است', 'yadambiar' );
 			} else {
 				$opts['cooldown_ok'] = ! $sub->last_notified_at || ( strtotime( $sub->last_notified_at . ' UTC' ) + $cooldown ) <= time();
 				$cands               = self::candidates( $sub, $product, $children );
 				if ( ! $cands ) {
-					$row['reason'] = __( 'تنوع درخواستی وجود ندارد یا منتشر نشده است', 'yadam-biar' );
+					$row['reason'] = __( 'تنوع درخواستی وجود ندارد یا منتشر نشده است', 'yadambiar' );
 				}
 				foreach ( $cands as $cand ) {
 					$x = RuleEngine::explain( $sub, RuleEngine::snapshot( $cand ), $opts );
@@ -470,21 +471,21 @@ class Dispatcher {
 					continue;
 				}
 				if ( 'sms' === $ch && ! $sub->phone ) {
-					$row['warnings'][] = __( 'پیامک انتخاب شده ولی شماره موبایل ثبت نشده', 'yadam-biar' );
+					$row['warnings'][] = __( 'پیامک انتخاب شده ولی شماره موبایل ثبت نشده', 'yadambiar' );
 				} elseif ( 'email' === $ch && ! $sub->email ) {
-					$row['warnings'][] = __( 'ایمیل انتخاب شده ولی آدرس ایمیل ثبت نشده', 'yadam-biar' );
+					$row['warnings'][] = __( 'ایمیل انتخاب شده ولی آدرس ایمیل ثبت نشده', 'yadambiar' );
 				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) && MessengerChannel::phone_ready( $ch ) && ! $sub->phone ) {
-					$row['warnings'][] = __( 'بله انتخاب شده ولی شماره موبایل ثبت نشده (سفیر به شماره موبایل ارسال می‌کند)', 'yadam-biar' );
+					$row['warnings'][] = __( 'بله انتخاب شده ولی شماره موبایل ثبت نشده (سفیر به شماره موبایل ارسال می‌کند)', 'yadambiar' );
 				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) ) {
 					/* translators: %s network */
-					$row['warnings'][] = sprintf( __( '%s انتخاب شده ولی مشتری ربات را Start نکرده (حساب متصل نیست)', 'yadam-biar' ), 'telegram' === $ch ? __( 'تلگرام', 'yadam-biar' ) : __( 'بله', 'yadam-biar' ) );
+					$row['warnings'][] = sprintf( __( '%s انتخاب شده ولی مشتری ربات را Start نکرده (حساب متصل نیست)', 'yadambiar' ), 'telegram' === $ch ? __( 'تلگرام', 'yadambiar' ) : __( 'بله', 'yadambiar' ) );
 				} elseif ( ! Settings::has( 'channels_enabled', $ch ) ) {
 					/* translators: %s channel */
-					$row['warnings'][] = sprintf( __( 'کانال «%s» در تنظیمات غیرفعال است', 'yadam-biar' ), $ch );
+					$row['warnings'][] = sprintf( __( 'کانال «%s» در تنظیمات غیرفعال است', 'yadambiar' ), $ch );
 				}
 			}
 			if ( $row['ok'] && ! $row['channels'] ) {
-				$row['warnings'][] = __( 'شرایط برقرار است ولی هیچ کانالی برای ارسال به این مشتری در دسترس نیست', 'yadam-biar' );
+				$row['warnings'][] = __( 'شرایط برقرار است ولی هیچ کانالی برای ارسال به این مشتری در دسترس نیست', 'yadambiar' );
 			}
 			$out[] = $row;
 		}
@@ -501,19 +502,19 @@ class Dispatcher {
 	public static function health( $product_id = 0 ) {
 		$out = array();
 		if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
-			$out[] = array( 'warn', __( 'WP-Cron در wp-config غیرفعال است؛ اگر کرون سرور تنظیم نشده باشد، صف بررسی موجودی هرگز اجرا نمی‌شود.', 'yadam-biar' ) );
+			$out[] = array( 'warn', __( 'WP-Cron در wp-config غیرفعال است؛ اگر کرون سرور تنظیم نشده باشد، صف بررسی موجودی هرگز اجرا نمی‌شود.', 'yadambiar' ) );
 		}
 		if ( function_exists( 'as_get_scheduled_actions' ) ) {
 			$late = as_get_scheduled_actions( array( 'hook' => 'yadambiar_check_product', 'status' => 'pending', 'date' => gmdate( 'Y-m-d H:i:s', time() - 5 * MINUTE_IN_SECONDS ), 'date_compare' => '<=', 'per_page' => 50 ), 'ids' );
 			if ( $late ) {
 				/* translators: %d count */
-				$out[] = array( 'error', sprintf( __( '%d بررسی در صف Action Scheduler عقب افتاده است؛ صف اجرا نمی‌شود (ووکامرس ← وضعیت ← اقدامات زمان‌بندی‌شده را ببینید یا کرون سرور را تنظیم کنید).', 'yadam-biar' ), count( $late ) ) );
+				$out[] = array( 'error', sprintf( __( '%d بررسی در صف Action Scheduler عقب افتاده است؛ صف اجرا نمی‌شود (ووکامرس ← وضعیت ← اقدامات زمان‌بندی‌شده را ببینید یا کرون سرور را تنظیم کنید).', 'yadambiar' ), count( $late ) ) );
 			} else {
-				$out[] = array( 'ok', __( 'صف بررسی (Action Scheduler) عقب‌افتادگی ندارد.', 'yadam-biar' ) );
+				$out[] = array( 'ok', __( 'صف بررسی (Action Scheduler) عقب‌افتادگی ندارد.', 'yadambiar' ) );
 			}
 			$failed = as_get_scheduled_actions( array( 'hook' => 'yadambiar_check_product', 'status' => 'failed', 'per_page' => 5 ), 'ids' );
 			if ( $failed ) {
-				$out[] = array( 'error', __( 'بعضی بررسی‌ها با خطا متوقف شده‌اند؛ جزئیات در ووکامرس ← وضعیت ← اقدامات زمان‌بندی‌شده (گروه yadambiar).', 'yadam-biar' ) );
+				$out[] = array( 'error', __( 'بعضی بررسی‌ها با خطا متوقف شده‌اند؛ جزئیات در ووکامرس ← وضعیت ← اقدامات زمان‌بندی‌شده (گروه yadambiar).', 'yadambiar' ) );
 			}
 		}
 		$enabled = (array) Settings::get( 'channels_enabled', array() );
@@ -521,7 +522,7 @@ class Dispatcher {
 			$driver = ProviderRegistry::driver( (string) Settings::get( 'sms_gateway', '' ) );
 			$cred   = in_array( $driver, ProviderRegistry::USER_DRIVERS, true ) ? Settings::get( 'sms_username' ) : Settings::get( 'sms_api_key' );
 			if ( 'webhook' !== $driver && ! $cred ) {
-				$out[] = array( 'error', __( 'پیامک فعال است ولی اطلاعات ورود سامانه پیامک وارد نشده.', 'yadam-biar' ) );
+				$out[] = array( 'error', __( 'پیامک فعال است ولی اطلاعات ورود سامانه پیامک وارد نشده.', 'yadambiar' ) );
 			}
 		}
 		$nets = (array) Settings::get( 'broadcast_networks', array() );
@@ -530,7 +531,7 @@ class Dispatcher {
 			$waiting = SubscriptionRepository::waiting_count( $product_id, null, true );
 			if ( $waiting < $min ) {
 				/* translators: 1: min 2: waiting */
-				$out[] = array( 'warn', sprintf( __( 'اعلام در کانال (تلگرام/بله) فقط وقتی انجام می‌شود که دست‌کم %1$s نفر منتظر باشند و اعلان به آن‌ها ارسال شود؛ این محصول الان %2$s منتظر دارد. «حداقل تعداد منتظر» را در تنظیمات کمتر کنید.', 'yadam-biar' ), number_format_i18n( $min ), number_format_i18n( $waiting ) ) );
+				$out[] = array( 'warn', sprintf( __( 'اعلام در کانال (تلگرام/بله) فقط وقتی انجام می‌شود که دست‌کم %1$s نفر منتظر باشند و اعلان به آن‌ها ارسال شود؛ این محصول الان %2$s منتظر دارد. «حداقل تعداد منتظر» را در تنظیمات کمتر کنید.', 'yadambiar' ), number_format_i18n( $min ), number_format_i18n( $waiting ) ) );
 			}
 		}
 		return $out;

@@ -155,7 +155,7 @@ class ChannelManager {
 				'recipient'       => (string) $recipient,
 				'status'          => true === $result ? 'sent' : ( 'skipped' === $result ? 'skipped' : 'failed' ),
 				'message'         => $text,
-				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : ( 'skipped' === $result ? __( 'تکراری: همین اعلان اخیراً برای این شخص ارسال شده بود', 'yadam-biar' ) : 'failed' ) ),
+				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : ( 'skipped' === $result ? __( 'تکراری: همین اعلان اخیراً برای این شخص ارسال شده بود', 'yadambiar' ) : 'failed' ) ),
 				'created_at'      => Clock::now(),
 			)
 		);
@@ -191,7 +191,7 @@ class ChannelManager {
 		$table = Installer::table( 'log' );
 		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $log_id ) ); // phpcs:ignore
 		if ( ! $row ) {
-			return new \WP_Error( 'yadam-biar', __( 'یافت نشد', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar', __( 'یافت نشد', 'yadambiar' ) );
 		}
 		switch ( $row->channel ) {
 			case 'sms':
@@ -204,7 +204,7 @@ class ChannelManager {
 				$result = PushChannel::notify_owner( $row->recipient );
 				break;
 			default:
-				$result = new \WP_Error( 'yadam-biar', __( 'این کانال قابل ارسال مجدد نیست.', 'yadam-biar' ) );
+				$result = new \WP_Error( 'yadambiar', __( 'این کانال قابل ارسال مجدد نیست.', 'yadambiar' ) );
 		}
 		$wpdb->update( // phpcs:ignore
 			$table,

@@ -28,7 +28,7 @@ class MyAlertsWidget extends BaseWidget {
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'یادآوری‌های من', 'yadam-biar' );
+		return __( 'یادآوری‌های من', 'yadambiar' );
 	}
 
 	/**
@@ -47,12 +47,12 @@ class MyAlertsWidget extends BaseWidget {
 		$this->start_controls_section(
 			'style',
 			array(
-				'label' => __( 'ظاهر', 'yadam-biar' ),
+				'label' => __( 'ظاهر', 'yadambiar' ),
 				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 			)
 		);
-		$this->add_control( 'card_bg', array( 'label' => __( 'پس‌زمینه کارت‌ها', 'yadam-biar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-sub' => 'background: {{VALUE}};' ) ) );
-		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی', 'yadam-biar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-panel' => '--yadambiar-accent: {{VALUE}};' ) ) );
+		$this->add_control( 'card_bg', array( 'label' => __( 'پس‌زمینه کارت‌ها', 'yadambiar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-sub' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی', 'yadambiar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-panel' => '--yadambiar-accent: {{VALUE}};' ) ) );
 		$this->end_controls_section();
 	}
 

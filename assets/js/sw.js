@@ -15,7 +15,7 @@ self.addEventListener('push', function (event) {
 				icon: data.icon || undefined,
 				dir: 'rtl',
 				lang: 'fa',
-				tag: 'yadam-biar',
+				tag: 'yadambiar',
 				renotify: true,
 				data: { url: data.url || '/' }
 			});

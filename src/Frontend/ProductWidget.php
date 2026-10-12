@@ -15,12 +15,15 @@ use YadamBiar\Channels\PushChannel;
 use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\PriceHistory;
 use YadamBiar\Commerce\Reservation;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
+use YadamBiar\Settings\Appearance;
+use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\View;
 use YadamBiar\Support\Visitor;
 
-class ProductWidget {
+class ProductWidget implements Module {
 
 	/**
 	 * Rendered product ids.
@@ -32,7 +35,7 @@ class ProductWidget {
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		$positions = array(
 			'after_price' => 15,
 			'after_cart'  => 35,
@@ -44,45 +47,45 @@ class ProductWidget {
 		}
 		// Block themes do not run the classic summary hooks: attach to the equivalent blocks.
 		add_filter( 'render_block', array( __CLASS__, 'render_block' ), 10, 3 );
-		add_shortcode( 'yadam-biar', array( __CLASS__, 'shortcode' ) );
+		add_shortcode( 'yadambiar', array( __CLASS__, 'shortcode' ) );
 		add_shortcode( 'yadambiar_bell', array( __CLASS__, 'bell_shortcode' ) );
 		add_action( 'wp_footer', array( __CLASS__, 'floating_bell' ) );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 	}
 
 	/**
 	 * Register assets.
 	 */
-	public static function register() {
-		wp_register_style( 'yadam-biar', YADAMBIAR_URL . 'assets/css/frontend.css', array(), YADAMBIAR_VERSION );
-		wp_add_inline_style( 'yadam-biar', ':root{' . Settings::css_vars() . '}' );
-		wp_register_script( 'yadam-biar', YADAMBIAR_URL . 'assets/js/frontend.js', array( 'jquery' ), YADAMBIAR_VERSION, true );
+	public static function register_assets() {
+		wp_register_style( 'yadambiar', YADAMBIAR_URL . 'assets/css/frontend.css', array(), YADAMBIAR_VERSION );
+		wp_add_inline_style( 'yadambiar', ':root{' . Appearance::css_vars() . '}' );
+		wp_register_script( 'yadambiar', YADAMBIAR_URL . 'assets/js/frontend.js', array( 'jquery' ), YADAMBIAR_VERSION, true );
 		$keys = PushChannel::enabled() ? PushChannel::keys() : null;
 		wp_localize_script(
-			'yadam-biar',
+			'yadambiar',
 			'YadamBiarData',
 			array(
-				'rest'      => esc_url_raw( rest_url( 'yadam-biar/v1/' ) ),
+				'rest'      => esc_url_raw( rest_url( 'yadambiar/v1/' ) ),
 				'nonce'     => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 				'annotate'  => (bool) Settings::get( 'annotate_variations' ),
 				'pushKey'   => $keys ? $keys['public'] : '',
 				'sw'        => add_query_arg( 'yadambiar_sw', 1, home_url( '/' ) ),
 				'decimals'  => wc_get_price_decimals(),
 				'i18n'      => array(
-					'outOfStock' => __( 'ناموجود 🔔', 'yadam-biar' ),
-					'error'      => __( 'خطایی رخ داد. دوباره تلاش کنید.', 'yadam-biar' ),
-					'confirmDel' => __( 'این درخواست حذف شود؟', 'yadam-biar' ),
-					'saved'      => __( 'ذخیره شد.', 'yadam-biar' ),
-					'pushDenied' => __( 'اجازه نمایش اعلان داده نشد.', 'yadam-biar' ),
-					'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadam-biar' ),
-					'any'        => __( 'هر کدام', 'yadam-biar' ),
-					'noNotes'    => __( 'اعلانی ندارید.', 'yadam-biar' ),
-					'connect'    => __( 'دریافت در %s', 'yadam-biar' ),
-					'connected'  => __( '%s متصل است ✓', 'yadam-biar' ),
-					'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadam-biar' ),
+					'outOfStock' => __( 'ناموجود 🔔', 'yadambiar' ),
+					'error'      => __( 'خطایی رخ داد. دوباره تلاش کنید.', 'yadambiar' ),
+					'confirmDel' => __( 'این درخواست حذف شود؟', 'yadambiar' ),
+					'saved'      => __( 'ذخیره شد.', 'yadambiar' ),
+					'pushDenied' => __( 'اجازه نمایش اعلان داده نشد.', 'yadambiar' ),
+					'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadambiar' ),
+					'any'        => __( 'هر کدام', 'yadambiar' ),
+					'noNotes'    => __( 'اعلانی ندارید.', 'yadambiar' ),
+					'connect'    => __( 'دریافت در %s', 'yadambiar' ),
+					'connected'  => __( '%s متصل است ✓', 'yadambiar' ),
+					'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadambiar' ),
 					'networks'   => array(
-						'telegram' => __( 'تلگرام', 'yadam-biar' ),
-						'bale'     => __( 'بله', 'yadam-biar' ),
+						'telegram' => __( 'تلگرام', 'yadambiar' ),
+						'bale'     => __( 'بله', 'yadambiar' ),
 					),
 				),
 			)
@@ -93,11 +96,11 @@ class ProductWidget {
 	 * Enqueue assets (called when a widget renders).
 	 */
 	public static function enqueue() {
-		if ( ! wp_script_is( 'yadam-biar', 'registered' ) ) {
-			self::register();
+		if ( ! wp_script_is( 'yadambiar', 'registered' ) ) {
+			self::register_assets();
 		}
-		wp_enqueue_style( 'yadam-biar' );
-		wp_enqueue_script( 'yadam-biar' );
+		wp_enqueue_style( 'yadambiar' );
+		wp_enqueue_script( 'yadambiar' );
 	}
 
 	/**
@@ -207,7 +210,7 @@ class ProductWidget {
 	 */
 	public static function shortcode( $atts ) {
 		global $product;
-		$atts = shortcode_atts( array( 'product_id' => 0 ), $atts, 'yadam-biar' );
+		$atts = shortcode_atts( array( 'product_id' => 0 ), $atts, 'yadambiar' );
 		$p    = $atts['product_id'] ? wc_get_product( absint( $atts['product_id'] ) ) : $product;
 		return $p instanceof \WC_Product ? self::render( $p ) : '';
 	}
@@ -302,7 +305,7 @@ class ProductWidget {
 			'email' => $user->ID ? $user->user_email : '',
 			'phone' => $user->ID ? get_user_meta( $user->ID, 'billing_phone', true ) : '',
 		);
-		$channels   = array_intersect_key( Settings::channels(), array_flip( (array) $s['channels_enabled'] ) );
+		$channels   = array_intersect_key( Catalog::channels(), array_flip( (array) $s['channels_enabled'] ) );
 		if ( isset( $channels['push'] ) && ! PushChannel::enabled() ) {
 			unset( $channels['push'] );
 		}
@@ -345,7 +348,7 @@ class ProductWidget {
 		ob_start();
 		?>
 		<div class="yadambiar-bell" data-yadambiar-bell>
-			<button type="button" class="yadambiar-bell-btn" aria-label="<?php esc_attr_e( 'اعلان‌ها', 'yadam-biar' ); ?>">🔔<?php if ( $unread ) : ?><span class="yadambiar-bell-count"><?php echo esc_html( number_format_i18n( $unread ) ); ?></span><?php endif; ?></button>
+			<button type="button" class="yadambiar-bell-btn" aria-label="<?php esc_attr_e( 'اعلان‌ها', 'yadambiar' ); ?>">🔔<?php if ( $unread ) : ?><span class="yadambiar-bell-count"><?php echo esc_html( number_format_i18n( $unread ) ); ?></span><?php endif; ?></button>
 			<div class="yadambiar-bell-list" hidden></div>
 		</div>
 		<?php

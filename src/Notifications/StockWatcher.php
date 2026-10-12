@@ -9,11 +9,12 @@ namespace YadamBiar\Notifications;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Queue;
 
-class StockWatcher {
+class StockWatcher implements Module {
 
 	/**
 	 * Parent product ids to check at shutdown.
@@ -25,7 +26,7 @@ class StockWatcher {
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'woocommerce_product_set_stock_status', array( __CLASS__, 'on_id' ), 20, 1 );
 		add_action( 'woocommerce_variation_set_stock_status', array( __CLASS__, 'on_id' ), 20, 1 );
 		add_action( 'woocommerce_product_set_stock', array( __CLASS__, 'on_product' ), 20, 1 );

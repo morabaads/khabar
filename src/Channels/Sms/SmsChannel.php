@@ -36,7 +36,7 @@ class SmsChannel {
 		self::$last_response = null;
 		$to = Phone::normalize_phone( $to );
 		if ( ! $to ) {
-			return new \WP_Error( 'yadambiar_sms', __( 'شماره موبایل نامعتبر', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_sms', __( 'شماره موبایل نامعتبر', 'yadambiar' ) );
 		}
 
 		$pre = apply_filters( 'yadambiar_pre_send_sms', null, $to, $text, $event, $vars );
@@ -49,7 +49,7 @@ class SmsChannel {
 		$params  = array();
 		// Drivers without a pattern API always send the text message.
 		if ( ( $force_pattern || 'pattern' === Settings::get( 'sms_mode' ) ) && 'text' !== $event && in_array( $driver, ProviderRegistry::PATTERN_DRIVERS, true ) ) {
-			$items = Settings::pattern_items();
+			$items = PatternRepository::pattern_items();
 			$item  = isset( $items[ $event ] ) ? $items[ $event ] : ( 'low_stock' === $event && isset( $items['back_in_stock'] ) ? $items['back_in_stock'] : null );
 			if ( $item ) {
 				$pattern = (string) $item['code'];
@@ -86,7 +86,7 @@ class SmsChannel {
 			case 'webhook':
 				return self::webhook( $to, $text );
 		}
-		return new \WP_Error( 'yadambiar_sms', __( 'سامانه پیامک تنظیم نشده است.', 'yadam-biar' ) );
+		return new \WP_Error( 'yadambiar_sms', __( 'سامانه پیامک تنظیم نشده است.', 'yadambiar' ) );
 	}
 
 	/**
@@ -158,8 +158,8 @@ class SmsChannel {
 			}
 			$lines = self::request( 'https://api.sms.ir/v1/line', $args );
 			return array(
-				__( 'اعتبار', 'yadam-biar' )         => isset( $credit['data'] ) ? (string) $credit['data'] : '—',
-				__( 'خطوط فعال حساب', 'yadam-biar' ) => ( ! is_wp_error( $lines ) && ! empty( $lines['data'] ) ) ? implode( '، ', array_map( 'strval', (array) $lines['data'] ) ) : '—',
+				__( 'اعتبار', 'yadambiar' )         => isset( $credit['data'] ) ? (string) $credit['data'] : '—',
+				__( 'خطوط فعال حساب', 'yadambiar' ) => ( ! is_wp_error( $lines ) && ! empty( $lines['data'] ) ) ? implode( '، ', array_map( 'strval', (array) $lines['data'] ) ) : '—',
 			);
 		}
 		if ( 'kavenegar' === $driver ) {
@@ -167,9 +167,9 @@ class SmsChannel {
 			if ( is_wp_error( $res ) ) {
 				return $res;
 			}
-			return array( __( 'اعتبار (ریال)', 'yadam-biar' ) => isset( $res['entries']['remaincredit'] ) ? (string) $res['entries']['remaincredit'] : '—' );
+			return array( __( 'اعتبار (ریال)', 'yadambiar' ) => isset( $res['entries']['remaincredit'] ) ? (string) $res['entries']['remaincredit'] : '—' );
 		}
-		return new \WP_Error( 'yadambiar_sms', __( 'بررسی حساب فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'yadam-biar' ) );
+		return new \WP_Error( 'yadambiar_sms', __( 'بررسی حساب فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'yadambiar' ) );
 	}
 
 	/**
@@ -194,24 +194,24 @@ class SmsChannel {
 			}
 			$state  = isset( $res['data']['deliveryState'] ) ? (int) $res['data']['deliveryState'] : 0;
 			$labels = array(
-				1 => __( 'به گوشی رسیده است', 'yadam-biar' ),
-				2 => __( 'به گوشی نرسیده است', 'yadam-biar' ),
-				3 => __( 'در حال پردازش در مخابرات', 'yadam-biar' ),
-				4 => __( 'به مخابرات نرسیده است', 'yadam-biar' ),
-				5 => __( 'به اپراتور رسیده است', 'yadam-biar' ),
-				6 => __( 'ناموفق', 'yadam-biar' ),
-				7 => __( 'شماره در لیست سیاه مخابرات است (پیامک تبلیغاتی دریافت نمی‌کند) — از ارسال پترن استفاده کنید', 'yadam-biar' ),
+				1 => __( 'به گوشی رسیده است', 'yadambiar' ),
+				2 => __( 'به گوشی نرسیده است', 'yadambiar' ),
+				3 => __( 'در حال پردازش در مخابرات', 'yadambiar' ),
+				4 => __( 'به مخابرات نرسیده است', 'yadambiar' ),
+				5 => __( 'به اپراتور رسیده است', 'yadambiar' ),
+				6 => __( 'ناموفق', 'yadambiar' ),
+				7 => __( 'شماره در لیست سیاه مخابرات است (پیامک تبلیغاتی دریافت نمی‌کند) — از ارسال پترن استفاده کنید', 'yadambiar' ),
 			);
-			return ( isset( $labels[ $state ] ) ? $labels[ $state ] : __( 'نامشخص', 'yadam-biar' ) ) . ' (deliveryState=' . $state . ')';
+			return ( isset( $labels[ $state ] ) ? $labels[ $state ] : __( 'نامشخص', 'yadambiar' ) ) . ' (deliveryState=' . $state . ')';
 		}
 		if ( 'kavenegar' === $driver ) {
 			$res = self::request( 'https://api.kavenegar.com/v1/' . rawurlencode( $key ) . '/sms/status.json?messageid=' . rawurlencode( $id ), array( 'method' => 'GET' ) );
 			if ( is_wp_error( $res ) ) {
 				return $res;
 			}
-			return isset( $res['entries'][0]['statustext'] ) ? $res['entries'][0]['statustext'] . ' (status=' . (int) $res['entries'][0]['status'] . ')' : __( 'نامشخص', 'yadam-biar' );
+			return isset( $res['entries'][0]['statustext'] ) ? $res['entries'][0]['statustext'] . ' (status=' . (int) $res['entries'][0]['status'] . ')' : __( 'نامشخص', 'yadambiar' );
 		}
-		return new \WP_Error( 'yadambiar_sms', __( 'بررسی وضعیت تحویل فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'yadam-biar' ) );
+		return new \WP_Error( 'yadambiar_sms', __( 'بررسی وضعیت تحویل فقط برای SMS.ir و کاوه‌نگار در دسترس است.', 'yadambiar' ) );
 	}
 
 	/**
@@ -363,7 +363,7 @@ class SmsChannel {
 			// SMS.ir wants the line as a JSON number (e.g. 30007732000000), not a string.
 			$line = preg_replace( '/\D/', '', Text::latin_digits( (string) Settings::get( 'sms_sender' ) ) );
 			if ( '' === $line ) {
-				return new \WP_Error( 'yadambiar_sms', __( 'SMS.ir: «شماره فرستنده (خط)» را در تنظیمات پیامک وارد کنید (مثلاً 30007732000000).', 'yadam-biar' ) );
+				return new \WP_Error( 'yadambiar_sms', __( 'SMS.ir: «شماره فرستنده (خط)» را در تنظیمات پیامک وارد کنید (مثلاً 30007732000000).', 'yadambiar' ) );
 			}
 			$res = self::request(
 				'https://api.sms.ir/v1/send/bulk',
@@ -511,7 +511,7 @@ class SmsChannel {
 						'PhoneNumber'         => Settings::get( 'sms_sender' ),
 						'Message'             => $text,
 						'Mobiles'             => array( $to ),
-						'UserGroupID'         => uniqid( 'yadam-biar', false ),
+						'UserGroupID'         => uniqid( 'yadambiar', false ),
 						'SendDateInTimeStamp' => time(),
 					)
 				),
@@ -572,7 +572,7 @@ class SmsChannel {
 	private static function webhook( $to, $text ) {
 		$url = Settings::get( 'sms_webhook_url' );
 		if ( ! $url ) {
-			return new \WP_Error( 'yadambiar_sms', __( 'آدرس وب‌سرویس پیامک تنظیم نشده است.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_sms', __( 'آدرس وب‌سرویس پیامک تنظیم نشده است.', 'yadambiar' ) );
 		}
 		$url  = strtr(
 			$url,

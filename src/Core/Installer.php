@@ -9,6 +9,8 @@ namespace YadamBiar\Core;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Core\Migration\LegacyKhabarMigration;
+use YadamBiar\Settings\Schema;
 use YadamBiar\Settings\Settings;
 
 class Installer {
@@ -17,10 +19,11 @@ class Installer {
 	 * Activation.
 	 */
 	public static function activate() {
+		LegacyKhabarMigration::run(); // Before the tables exist, so the old ones can simply be renamed.
 		self::create_tables();
 		self::create_pages();
 		if ( false === get_option( Settings::OPTION ) ) {
-			add_option( Settings::OPTION, Settings::defaults() );
+			add_option( Settings::OPTION, Schema::defaults() );
 		}
 		if ( ! wp_next_scheduled( 'yadambiar_daily' ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'yadambiar_daily' );
@@ -236,7 +239,7 @@ class Installer {
 		}
 		$page_id = wp_insert_post(
 			array(
-				'post_title'   => __( 'یادآوری‌های من', 'yadam-biar' ),
+				'post_title'   => __( 'یادآوری‌های من', 'yadambiar' ),
 				'post_name'    => 'my-alerts',
 				'post_content' => '<!-- wp:shortcode -->[yadambiar_my_alerts]<!-- /wp:shortcode -->',
 				'post_status'  => 'publish',

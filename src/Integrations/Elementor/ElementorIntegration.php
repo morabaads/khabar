@@ -9,19 +9,20 @@ namespace YadamBiar\Integrations\Elementor;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\ProductWidget;
 
-class ElementorIntegration {
+class ElementorIntegration implements Module {
 
 	/**
 	 * Hooks (only when Elementor is active).
 	 */
-	public static function init() {
+	public function register() {
 		if ( ! did_action( 'elementor/loaded' ) && ! class_exists( '\\Elementor\\Plugin' ) ) {
 			return;
 		}
 		add_action( 'elementor/elements/categories_registered', array( __CLASS__, 'category' ) );
-		add_action( 'elementor/widgets/register', array( __CLASS__, 'register' ) );
+		add_action( 'elementor/widgets/register', array( __CLASS__, 'register_widgets' ) );
 		add_action( 'elementor/preview/enqueue_scripts', array( __CLASS__, 'preview_assets' ) );
 		add_action( 'elementor/frontend/after_enqueue_scripts', array( __CLASS__, 'editor_hooks' ) );
 	}
@@ -33,9 +34,9 @@ class ElementorIntegration {
 	 */
 	public static function category( $manager ) {
 		$manager->add_category(
-			'yadam-biar',
+			'yadambiar',
 			array(
-				'title' => __( 'یادم بیار', 'yadam-biar' ),
+				'title' => __( 'یادم بیار', 'yadambiar' ),
 				'icon'  => 'eicon-bell',
 			)
 		);
@@ -61,7 +62,7 @@ class ElementorIntegration {
 	 *
 	 * @param \Elementor\Widgets_Manager $manager Manager.
 	 */
-	public static function register( $manager ) {
+	public static function register_widgets( $manager ) {
 		foreach ( self::widgets() as $class ) {
 			$manager->register( new $class() );
 		}
@@ -78,8 +79,8 @@ class ElementorIntegration {
 	 * Re-initialise widgets when Elementor (re)renders them in the editor.
 	 */
 	public static function editor_hooks() {
-		if ( ! wp_script_is( 'yadam-biar', 'registered' ) ) {
-			ProductWidget::register();
+		if ( ! wp_script_is( 'yadambiar', 'registered' ) ) {
+			ProductWidget::register_assets();
 		}
 		$names = array( 'yadambiar-notify', 'yadambiar-price-history', 'yadambiar-my-alerts', 'yadambiar-bell' );
 		$js    = 'jQuery(window).on("elementor/frontend/init",function(){' . implode(

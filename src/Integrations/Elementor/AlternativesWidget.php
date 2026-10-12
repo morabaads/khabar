@@ -35,7 +35,7 @@ class AlternativesWidget extends BaseWidget {
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'محصولات مشابه (یادم بیار)', 'yadam-biar' );
+		return __( 'محصولات مشابه (یادم بیار)', 'yadambiar' );
 	}
 
 	/**
@@ -51,24 +51,24 @@ class AlternativesWidget extends BaseWidget {
 	 * Controls.
 	 */
 	protected function register_controls() {
-		$this->start_controls_section( 'content', array( 'label' => __( 'محتوا', 'yadam-biar' ) ) );
+		$this->start_controls_section( 'content', array( 'label' => __( 'محتوا', 'yadambiar' ) ) );
 		$this->product_controls();
-		$this->add_control( 'title', array( 'label' => __( 'عنوان', 'yadam-biar' ), 'type' => Controls_Manager::TEXT, 'placeholder' => __( 'تا موجود شدن، این محصولات مشابه موجودند', 'yadam-biar' ) ) );
-		$this->add_control( 'count', array( 'label' => __( 'تعداد محصولات', 'yadam-biar' ), 'type' => Controls_Manager::NUMBER, 'min' => 1, 'max' => 12, 'default' => (int) Settings::get( 'alt_page_count', 4 ) ) );
+		$this->add_control( 'title', array( 'label' => __( 'عنوان', 'yadambiar' ), 'type' => Controls_Manager::TEXT, 'placeholder' => __( 'تا موجود شدن، این محصولات مشابه موجودند', 'yadambiar' ) ) );
+		$this->add_control( 'count', array( 'label' => __( 'تعداد محصولات', 'yadambiar' ), 'type' => Controls_Manager::NUMBER, 'min' => 1, 'max' => 12, 'default' => (int) Settings::get( 'alt_page_count', 4 ) ) );
 		$this->add_control(
 			'always',
 			array(
-				'label'        => __( 'نمایش حتی برای محصول موجود', 'yadam-biar' ),
+				'label'        => __( 'نمایش حتی برای محصول موجود', 'yadambiar' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'return_value' => 'yes',
 				'default'      => '',
-				'description'  => __( 'در حالت عادی فقط برای محصول ناموجود نمایش داده می‌شود.', 'yadam-biar' ),
+				'description'  => __( 'در حالت عادی فقط برای محصول ناموجود نمایش داده می‌شود.', 'yadambiar' ),
 			)
 		);
 		$this->add_responsive_control(
 			'card_w',
 			array(
-				'label'      => __( 'عرض هر کارت', 'yadam-biar' ),
+				'label'      => __( 'عرض هر کارت', 'yadambiar' ),
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( 'px' ),
 				'range'      => array( 'px' => array( 'min' => 110, 'max' => 320 ) ),
@@ -78,7 +78,7 @@ class AlternativesWidget extends BaseWidget {
 		$this->add_responsive_control(
 			'img_h',
 			array(
-				'label'      => __( 'ارتفاع تصویر', 'yadam-biar' ),
+				'label'      => __( 'ارتفاع تصویر', 'yadambiar' ),
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( 'px' ),
 				'range'      => array( 'px' => array( 'min' => 60, 'max' => 300 ) ),
@@ -87,15 +87,15 @@ class AlternativesWidget extends BaseWidget {
 		);
 		$this->end_controls_section();
 
-		$this->start_controls_section( 'style_box', array( 'label' => __( 'کادر و کارت‌ها', 'yadam-biar' ), 'tab' => Controls_Manager::TAB_STYLE ) );
-		$this->add_control( 'box_bg', array( 'label' => __( 'پس‌زمینه کادر', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts' => 'background: {{VALUE}};' ) ) );
-		$this->add_control( 'card_bg', array( 'label' => __( 'پس‌زمینه کارت', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alt' => 'background: {{VALUE}};' ) ) );
-		$this->add_control( 'card_hover', array( 'label' => __( 'رنگ حاشیه در هاور', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alt:hover, {{WRAPPER}} .yadambiar-alt:focus-visible' => 'border-color: {{VALUE}};' ) ) );
+		$this->start_controls_section( 'style_box', array( 'label' => __( 'کادر و کارت‌ها', 'yadambiar' ), 'tab' => Controls_Manager::TAB_STYLE ) );
+		$this->add_control( 'box_bg', array( 'label' => __( 'پس‌زمینه کادر', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'card_bg', array( 'label' => __( 'پس‌زمینه کارت', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alt' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'card_hover', array( 'label' => __( 'رنگ حاشیه در هاور', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alt:hover, {{WRAPPER}} .yadambiar-alt:focus-visible' => 'border-color: {{VALUE}};' ) ) );
 		$this->add_group_control( Group_Control_Border::get_type(), array( 'name' => 'card_border', 'selector' => '{{WRAPPER}} .yadambiar-alt' ) );
 		$this->add_responsive_control(
 			'card_radius',
 			array(
-				'label'      => __( 'گردی گوشه کارت', 'yadam-biar' ),
+				'label'      => __( 'گردی گوشه کارت', 'yadambiar' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
 				'selectors'  => array( '{{WRAPPER}} .yadambiar-alt' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
@@ -104,14 +104,14 @@ class AlternativesWidget extends BaseWidget {
 		$this->add_group_control( Group_Control_Box_Shadow::get_type(), array( 'name' => 'card_shadow', 'selector' => '{{WRAPPER}} .yadambiar-alt' ) );
 		$this->end_controls_section();
 
-		$this->start_controls_section( 'style_text', array( 'label' => __( 'متن‌ها', 'yadam-biar' ), 'tab' => Controls_Manager::TAB_STYLE ) );
-		$this->add_control( 'title_color', array( 'label' => __( 'رنگ عنوان بخش', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-title' => 'color: {{VALUE}};' ) ) );
+		$this->start_controls_section( 'style_text', array( 'label' => __( 'متن‌ها', 'yadambiar' ), 'tab' => Controls_Manager::TAB_STYLE ) );
+		$this->add_control( 'title_color', array( 'label' => __( 'رنگ عنوان بخش', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-title' => 'color: {{VALUE}};' ) ) );
 		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'title_typo', 'selector' => '{{WRAPPER}} .yadambiar-alts-title' ) );
-		$this->add_control( 'name_color', array( 'label' => __( 'رنگ نام محصول', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-name' => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'name_color', array( 'label' => __( 'رنگ نام محصول', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-name' => 'color: {{VALUE}};' ) ) );
 		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'name_typo', 'selector' => '{{WRAPPER}} .yadambiar-alts-name' ) );
-		$this->add_control( 'price_color', array( 'label' => __( 'رنگ قیمت', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-price' => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'price_color', array( 'label' => __( 'رنگ قیمت', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-price' => 'color: {{VALUE}};' ) ) );
 		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'price_typo', 'selector' => '{{WRAPPER}} .yadambiar-alts-price' ) );
-		$this->add_control( 'accent', array( 'label' => __( 'رنگ نوار کنار عنوان', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-title::before' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'accent', array( 'label' => __( 'رنگ نوار کنار عنوان', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-alts-title::before' => 'background: {{VALUE}};' ) ) );
 		$this->end_controls_section();
 	}
 
@@ -121,7 +121,7 @@ class AlternativesWidget extends BaseWidget {
 	protected function render() {
 		$product = $this->product();
 		if ( ! $product ) {
-			$this->placeholder( __( 'محصولات مشابه: در صفحه محصول نمایش داده می‌شود یا شناسه محصول را وارد کنید.', 'yadam-biar' ) );
+			$this->placeholder( __( 'محصولات مشابه: در صفحه محصول نمایش داده می‌شود یا شناسه محصول را وارد کنید.', 'yadambiar' ) );
 			return;
 		}
 		if ( $product->is_type( 'variation' ) ) {
@@ -138,7 +138,7 @@ class AlternativesWidget extends BaseWidget {
 			)
 		);
 		if ( '' === $html ) {
-			$this->placeholder( __( 'محصول مشابهی برای نمایش پیدا نشد (یا محصول موجود است).', 'yadam-biar' ) );
+			$this->placeholder( __( 'محصول مشابهی برای نمایش پیدا نشد (یا محصول موجود است).', 'yadambiar' ) );
 			return;
 		}
 		ProductWidget::enqueue();

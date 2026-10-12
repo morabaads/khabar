@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Core\Installer;
-use YadamBiar\Settings\Settings;
+use YadamBiar\Settings\Catalog;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Money;
 use YadamBiar\Support\Phone;
@@ -72,13 +72,13 @@ class RequestsTable extends \WP_List_Table {
 	public function get_columns() {
 		return array(
 			'cb'         => '<input type="checkbox" />',
-			'product'    => __( 'محصول', 'yadam-biar' ),
-			'conditions' => __( 'شرایط', 'yadam-biar' ),
-			'contact'    => __( 'مشتری', 'yadam-biar' ),
-			'channels'   => __( 'کانال', 'yadam-biar' ),
-			'status'     => __( 'وضعیت', 'yadam-biar' ),
-			'created_at' => __( 'تاریخ ثبت', 'yadam-biar' ),
-			'notified'   => __( 'آخرین اعلان', 'yadam-biar' ),
+			'product'    => __( 'محصول', 'yadambiar' ),
+			'conditions' => __( 'شرایط', 'yadambiar' ),
+			'contact'    => __( 'مشتری', 'yadambiar' ),
+			'channels'   => __( 'کانال', 'yadambiar' ),
+			'status'     => __( 'وضعیت', 'yadambiar' ),
+			'created_at' => __( 'تاریخ ثبت', 'yadambiar' ),
+			'notified'   => __( 'آخرین اعلان', 'yadambiar' ),
 		);
 	}
 
@@ -102,9 +102,9 @@ class RequestsTable extends \WP_List_Table {
 	 */
 	protected function get_bulk_actions() {
 		return array(
-			'activate' => __( 'فعال‌سازی مجدد', 'yadam-biar' ),
-			'cancel'   => __( 'لغو', 'yadam-biar' ),
-			'delete'   => __( 'حذف', 'yadam-biar' ),
+			'activate' => __( 'فعال‌سازی مجدد', 'yadambiar' ),
+			'cancel'   => __( 'لغو', 'yadambiar' ),
+			'delete'   => __( 'حذف', 'yadambiar' ),
 		);
 	}
 
@@ -120,7 +120,7 @@ class RequestsTable extends \WP_List_Table {
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
 		$base    = admin_url( 'admin.php?page=yadambiar&view=requests' );
 		$total   = array_sum( wp_list_pluck( $counts, 'c' ) );
-		$views   = array( 'all' => sprintf( '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_url( $base ), $current ? '' : 'current', esc_html__( 'همه', 'yadam-biar' ), number_format_i18n( $total ) ) );
+		$views   = array( 'all' => sprintf( '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_url( $base ), $current ? '' : 'current', esc_html__( 'همه', 'yadambiar' ), number_format_i18n( $total ) ) );
 		foreach ( SubscriptionRepository::statuses() as $key => $label ) {
 			if ( empty( $counts[ $key ] ) ) {
 				continue;
@@ -140,14 +140,14 @@ class RequestsTable extends \WP_List_Table {
 			return;
 		}
 		$type = isset( $_REQUEST['type'] ) ? sanitize_key( $_REQUEST['type'] ) : ''; // phpcs:ignore
-		echo '<div class="alignleft actions"><select name="type"><option value="">' . esc_html__( 'همه انواع', 'yadam-biar' ) . '</option>';
+		echo '<div class="alignleft actions"><select name="type"><option value="">' . esc_html__( 'همه انواع', 'yadambiar' ) . '</option>';
 		foreach ( SubscriptionRepository::types() as $key => $label ) {
 			printf( '<option value="%s" %s>%s</option>', esc_attr( $key ), selected( $type, $key, false ), esc_html( $label ) );
 		}
 		echo '</select>';
-		submit_button( __( 'فیلتر', 'yadam-biar' ), '', 'filter_action', false );
+		submit_button( __( 'فیلتر', 'yadambiar' ), '', 'filter_action', false );
 		$export = wp_nonce_url( add_query_arg( array( 'action' => 'yadambiar_export' ) + array_map( 'sanitize_text_field', wp_unslash( $_GET ) ), admin_url( 'admin-post.php' ) ), 'yadambiar_export' ); // phpcs:ignore
-		echo ' <a class="button" href="' . esc_url( $export ) . '">' . esc_html__( 'خروجی CSV', 'yadam-biar' ) . '</a></div>';
+		echo ' <a class="button" href="' . esc_url( $export ) . '">' . esc_html__( 'خروجی CSV', 'yadambiar' ) . '</a></div>';
 	}
 
 	/**
@@ -199,10 +199,10 @@ class RequestsTable extends \WP_List_Table {
 			$out .= '<br><small>' . esc_html( ProductAttributes::attributes_label( $item->attributes ) ) . '</small>';
 		}
 		if ( $p ) {
-			$out .= '<br><small class="yadambiar-muted">' . esc_html( Money::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) ) . '</small>';
+			$out .= '<br><small class="yadambiar-muted">' . esc_html( Money::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'yadambiar' ) : esc_html__( 'ناموجود', 'yadambiar' ) ) . '</small>';
 		}
 		$actions = array(
-			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'yadam-biar' ) . '</a>',
+			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'yadambiar' ) . '</a>',
 		);
 		return $out . $this->row_actions( $actions );
 	}
@@ -222,20 +222,20 @@ class RequestsTable extends \WP_List_Table {
 			case 'contact':
 				$parts = array_filter( array( esc_html( $item->name ), $item->phone ? '<span dir="ltr">' . esc_html( $item->phone ) . '</span>' : '', esc_html( $item->email ) ) );
 				if ( $item->user_id ) {
-					$parts[] = '<a href="' . esc_url( get_edit_user_link( $item->user_id ) ) . '">' . esc_html__( 'کاربر', 'yadam-biar' ) . ' #' . (int) $item->user_id . '</a>';
+					$parts[] = '<a href="' . esc_url( get_edit_user_link( $item->user_id ) ) . '">' . esc_html__( 'کاربر', 'yadambiar' ) . ' #' . (int) $item->user_id . '</a>';
 				}
 				return implode( '<br>', $parts );
 			case 'channels':
-				$labels = Settings::channels();
+				$labels = Catalog::channels();
 				return esc_html( implode( '، ', array_map( function ( $c ) use ( $labels ) { return $labels[ $c ] ?? $c; }, $item->channel_list ) ) ) ?: '—'; // phpcs:ignore
 			case 'status':
 				$st  = SubscriptionRepository::statuses();
 				$out = '<span class="yadambiar-status yadambiar-status-' . esc_attr( $item->status ) . '">' . esc_html( $st[ $item->status ] ?? $item->status ) . '</span>';
 				if ( $item->clicked_at ) {
-					$out .= '<br><small>' . esc_html__( 'کلیک کرد', 'yadam-biar' ) . '</small>';
+					$out .= '<br><small>' . esc_html__( 'کلیک کرد', 'yadambiar' ) . '</small>';
 				}
 				if ( $item->order_id ) {
-					$out .= '<br><small><a href="' . esc_url( admin_url( 'post.php?post=' . $item->order_id . '&action=edit' ) ) . '">' . esc_html__( 'سفارش', 'yadam-biar' ) . ' #' . (int) $item->order_id . '</a></small>';
+					$out .= '<br><small><a href="' . esc_url( admin_url( 'post.php?post=' . $item->order_id . '&action=edit' ) ) . '">' . esc_html__( 'سفارش', 'yadambiar' ) . ' #' . (int) $item->order_id . '</a></small>';
 				}
 				return $out;
 			case 'created_at':
@@ -250,6 +250,6 @@ class RequestsTable extends \WP_List_Table {
 	 * Empty message.
 	 */
 	public function no_items() {
-		esc_html_e( 'درخواستی یافت نشد.', 'yadam-biar' );
+		esc_html_e( 'درخواستی یافت نشد.', 'yadambiar' );
 	}
 }

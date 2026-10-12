@@ -10,16 +10,17 @@ namespace YadamBiar\Core;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Http\RestController;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Phone;
 
-class Privacy {
+class Privacy implements Module {
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_filter( 'wp_privacy_personal_data_exporters', array( __CLASS__, 'register_exporter' ) );
 		add_filter( 'wp_privacy_personal_data_erasers', array( __CLASS__, 'register_eraser' ) );
 		add_action( 'admin_init', array( __CLASS__, 'policy' ) );
@@ -30,7 +31,7 @@ class Privacy {
 	 */
 	public static function policy() {
 		if ( function_exists( 'wp_add_privacy_policy_content' ) ) {
-			wp_add_privacy_policy_content( __( 'یادم بیار', 'yadam-biar' ), wpautop( __( 'وقتی برای اطلاع از موجود شدن یا تغییر قیمت یک محصول درخواست ثبت می‌کنید، نام، شماره موبایل، ایمیل و IP شما ذخیره می‌شود تا اعلان مربوطه برایتان ارسال شود. این اطلاعات پس از انقضای درخواست حذف یا غیرفعال می‌شود.', 'yadam-biar' ) ) );
+			wp_add_privacy_policy_content( __( 'یادم بیار', 'yadambiar' ), wpautop( __( 'وقتی برای اطلاع از موجود شدن یا تغییر قیمت یک محصول درخواست ثبت می‌کنید، نام، شماره موبایل، ایمیل و IP شما ذخیره می‌شود تا اعلان مربوطه برایتان ارسال شود. این اطلاعات پس از انقضای درخواست حذف یا غیرفعال می‌شود.', 'yadambiar' ) ) );
 		}
 	}
 
@@ -41,8 +42,8 @@ class Privacy {
 	 * @return array
 	 */
 	public static function register_exporter( $exporters ) {
-		$exporters['yadam-biar'] = array(
-			'exporter_friendly_name' => __( 'درخواست‌های یادم بیار', 'yadam-biar' ),
+		$exporters['yadambiar'] = array(
+			'exporter_friendly_name' => __( 'درخواست‌های یادم بیار', 'yadambiar' ),
 			'callback'               => array( __CLASS__, 'export' ),
 		);
 		return $exporters;
@@ -55,8 +56,8 @@ class Privacy {
 	 * @return array
 	 */
 	public static function register_eraser( $erasers ) {
-		$erasers['yadam-biar'] = array(
-			'eraser_friendly_name' => __( 'درخواست‌های یادم بیار', 'yadam-biar' ),
+		$erasers['yadambiar'] = array(
+			'eraser_friendly_name' => __( 'درخواست‌های یادم بیار', 'yadambiar' ),
 			'callback'             => array( __CLASS__, 'erase' ),
 		);
 		return $erasers;
@@ -113,16 +114,16 @@ class Privacy {
 		foreach ( SubscriptionRepository::for_owner( self::owner( $email ), true ) as $sub ) {
 			$data    = RestController::export( $sub );
 			$items[] = array(
-				'group_id'    => 'yadam-biar',
-				'group_label' => __( 'درخواست‌های یادم بیار', 'yadam-biar' ),
+				'group_id'    => 'yadambiar',
+				'group_label' => __( 'درخواست‌های یادم بیار', 'yadambiar' ),
 				'item_id'     => 'yadambiar-' . $sub->id,
 				'data'        => array(
-					array( 'name' => __( 'محصول', 'yadam-biar' ), 'value' => $data['product'] ),
-					array( 'name' => __( 'شرایط', 'yadam-biar' ), 'value' => $data['conditions'] ),
-					array( 'name' => __( 'موبایل', 'yadam-biar' ), 'value' => $sub->phone ),
-					array( 'name' => __( 'ایمیل', 'yadam-biar' ), 'value' => $sub->email ),
-					array( 'name' => __( 'IP', 'yadam-biar' ), 'value' => $sub->ip ),
-					array( 'name' => __( 'تاریخ', 'yadam-biar' ), 'value' => $sub->created_at ),
+					array( 'name' => __( 'محصول', 'yadambiar' ), 'value' => $data['product'] ),
+					array( 'name' => __( 'شرایط', 'yadambiar' ), 'value' => $data['conditions'] ),
+					array( 'name' => __( 'موبایل', 'yadambiar' ), 'value' => $sub->phone ),
+					array( 'name' => __( 'ایمیل', 'yadambiar' ), 'value' => $sub->email ),
+					array( 'name' => __( 'IP', 'yadambiar' ), 'value' => $sub->ip ),
+					array( 'name' => __( 'تاریخ', 'yadambiar' ), 'value' => $sub->created_at ),
 				),
 			);
 		}
@@ -135,11 +136,11 @@ class Privacy {
 			foreach ( (array) $rows as $row ) {
 				$items[] = array(
 					'group_id'    => 'yadambiar-notifications',
-					'group_label' => __( 'اعلان‌های یادم بیار', 'yadam-biar' ),
+					'group_label' => __( 'اعلان‌های یادم بیار', 'yadambiar' ),
 					'item_id'     => 'yadambiar-note-' . $row->id,
 					'data'        => array(
-						array( 'name' => __( 'عنوان', 'yadam-biar' ), 'value' => $row->title ),
-						array( 'name' => __( 'تاریخ', 'yadam-biar' ), 'value' => $row->created_at ),
+						array( 'name' => __( 'عنوان', 'yadambiar' ), 'value' => $row->title ),
+						array( 'name' => __( 'تاریخ', 'yadambiar' ), 'value' => $row->created_at ),
 					),
 				);
 			}

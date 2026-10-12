@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API (yadam-biar/v1).
+ * REST API (yadambiar/v1).
  *
  * @package YadamBiar
  */
@@ -13,6 +13,7 @@ use YadamBiar\Channels\ChannelManager;
 use YadamBiar\Channels\Messenger\MessengerChannel;
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Channels\PushChannel;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\Account;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
@@ -25,14 +26,14 @@ use YadamBiar\Support\Queue;
 use YadamBiar\Support\Text;
 use YadamBiar\Support\Visitor;
 
-class RestController {
+class RestController implements Module {
 
-	const NS = 'yadam-biar/v1';
+	const NS = 'yadambiar/v1';
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 	}
 
@@ -102,16 +103,16 @@ class RestController {
 			return rest_ensure_response( array( 'success' => true, 'message' => $s['success_message'] ) );
 		}
 		if ( ! self::rate_ok( 'sub', (int) $s['rate_limit'] ) ) {
-			return self::error( __( 'تعداد درخواست‌های شما زیاد است. کمی بعد دوباره تلاش کنید.', 'yadam-biar' ), 429 );
+			return self::error( __( 'تعداد درخواست‌های شما زیاد است. کمی بعد دوباره تلاش کنید.', 'yadambiar' ), 429 );
 		}
 		$uid = get_current_user_id();
 		if ( $s['require_login'] && ! $uid ) {
-			return self::error( __( 'برای ثبت درخواست ابتدا وارد حساب کاربری شوید.', 'yadam-biar' ), 401 );
+			return self::error( __( 'برای ثبت درخواست ابتدا وارد حساب کاربری شوید.', 'yadambiar' ), 401 );
 		}
 
 		$product = wc_get_product( absint( $req->get_param( 'product_id' ) ) );
 		if ( ! $product || 'publish' !== $product->get_status() ) {
-			return self::error( __( 'محصول یافت نشد.', 'yadam-biar' ), 404 );
+			return self::error( __( 'محصول یافت نشد.', 'yadambiar' ), 404 );
 		}
 		if ( $product->is_type( 'variation' ) ) {
 			$product = wc_get_product( $product->get_parent_id() );
@@ -131,7 +132,7 @@ class RestController {
 		if ( $variation_id ) {
 			$variation = wc_get_product( $variation_id );
 			if ( ! $variation || $variation->get_parent_id() !== $product->get_id() ) {
-				return self::error( __( 'تنوع انتخابی معتبر نیست.', 'yadam-biar' ) );
+				return self::error( __( 'تنوع انتخابی معتبر نیست.', 'yadambiar' ) );
 			}
 			$target     = $variation;
 			$attributes = array();
@@ -161,19 +162,19 @@ class RestController {
 		$separate     = 'separate' === $req->get_param( 'mode' );
 
 		if ( ! $in_stock && null === $price_below && null === $price_above && ! $price_change && ! $min_qty ) {
-			return self::error( __( 'حداقل یک شرط اعلان را انتخاب کنید.', 'yadam-biar' ) );
+			return self::error( __( 'حداقل یک شرط اعلان را انتخاب کنید.', 'yadambiar' ) );
 		}
 		if ( null !== $price_below && null !== $price_above && $price_below < $price_above && ! $separate ) {
-			return self::error( __( 'محدوده قیمت تعیین‌شده منطقی نیست.', 'yadam-biar' ) );
+			return self::error( __( 'محدوده قیمت تعیین‌شده منطقی نیست.', 'yadambiar' ) );
 		}
 
 		$current = '' === $target->get_price() ? null : (float) $target->get_price();
 		if ( null !== $price_below && null !== $current && $price_below >= $current && ! $in_stock && ! $min_qty && null === $price_above ) {
-			return self::error( __( 'قیمت هدف باید کمتر از قیمت فعلی باشد.', 'yadam-biar' ) );
+			return self::error( __( 'قیمت هدف باید کمتر از قیمت فعلی باشد.', 'yadambiar' ) );
 		}
 		$only_stock = $in_stock && null === $price_below && null === $price_above && ! $price_change && ! $min_qty;
 		if ( $only_stock && ! $target->is_type( 'variable' ) && 'instock' === $target->get_stock_status() ) {
-			return self::error( __( 'این محصول هم‌اکنون موجود است.', 'yadam-biar' ) );
+			return self::error( __( 'این محصول هم‌اکنون موجود است.', 'yadambiar' ) );
 		}
 
 		// Contact (Feature 9).
@@ -186,10 +187,10 @@ class RestController {
 			$phone = Phone::normalize_phone( get_user_meta( $uid, 'billing_phone', true ) );
 		}
 		if ( '' !== $raw_ph && ! $phone ) {
-			return self::error( __( 'شماره موبایل معتبر نیست.', 'yadam-biar' ) );
+			return self::error( __( 'شماره موبایل معتبر نیست.', 'yadambiar' ) );
 		}
 		if ( '' !== (string) $req->get_param( 'email' ) && ! is_email( $email ) ) {
-			return self::error( __( 'ایمیل معتبر نیست.', 'yadam-biar' ) );
+			return self::error( __( 'ایمیل معتبر نیست.', 'yadambiar' ) );
 		}
 		$mode     = $s['contact_mode'];
 		$enabled  = (array) $s['channels_enabled'];
@@ -200,22 +201,22 @@ class RestController {
 		if ( $channels && ( $need_ph || $need_em ) ) {
 			// The ticked channels decide which contact is required.
 			if ( $need_ph && ! $phone ) {
-				return self::error( __( 'شماره موبایل را وارد کنید.', 'yadam-biar' ) );
+				return self::error( __( 'شماره موبایل را وارد کنید.', 'yadambiar' ) );
 			}
 			if ( $need_em && ! $email ) {
-				return self::error( __( 'ایمیل را وارد کنید.', 'yadam-biar' ) );
+				return self::error( __( 'ایمیل را وارد کنید.', 'yadambiar' ) );
 			}
 		} elseif ( ( 'phone' === $mode && ! $phone ) || ( 'email' === $mode && ! $email ) || ( 'both' === $mode && ( ! $phone || ! $email ) ) || ( 'either' === $mode && ! $phone && ! $email ) ) {
 			$labels = array(
-				'phone'  => __( 'شماره موبایل را وارد کنید.', 'yadam-biar' ),
-				'email'  => __( 'ایمیل را وارد کنید.', 'yadam-biar' ),
-				'both'   => __( 'شماره موبایل و ایمیل را وارد کنید.', 'yadam-biar' ),
-				'either' => __( 'شماره موبایل یا ایمیل را وارد کنید.', 'yadam-biar' ),
+				'phone'  => __( 'شماره موبایل را وارد کنید.', 'yadambiar' ),
+				'email'  => __( 'ایمیل را وارد کنید.', 'yadambiar' ),
+				'both'   => __( 'شماره موبایل و ایمیل را وارد کنید.', 'yadambiar' ),
+				'either' => __( 'شماره موبایل یا ایمیل را وارد کنید.', 'yadambiar' ),
 			);
 			return self::error( $labels[ $mode ] );
 		}
 		if ( (int) $s['max_per_contact'] && SubscriptionRepository::count_for_contact( $email, $phone ) >= (int) $s['max_per_contact'] ) {
-			return self::error( __( 'تعداد درخواست‌های فعال شما به حداکثر رسیده است.', 'yadam-biar' ) );
+			return self::error( __( 'تعداد درخواست‌های فعال شما به حداکثر رسیده است.', 'yadambiar' ) );
 		}
 
 		$verify = $s['verify_contact'];
@@ -292,7 +293,7 @@ class RestController {
 					'need_code' => true,
 					'contact'   => $contact,
 					/* translators: %s masked contact */
-					'message'   => sprintf( __( 'کد تایید به %s ارسال شد.', 'yadam-biar' ), Text::mask( $contact ) ),
+					'message'   => sprintf( __( 'کد تایید به %s ارسال شد.', 'yadambiar' ), Text::mask( $contact ) ),
 				)
 			);
 		}
@@ -350,14 +351,14 @@ class RestController {
 	 */
 	private static function send_code( $contact, $ids ) {
 		if ( ! self::rate_ok( 'otp', 5 ) ) {
-			return new \WP_Error( 'yadam-biar', __( 'تعداد درخواست کد زیاد است.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar', __( 'تعداد درخواست کد زیاد است.', 'yadambiar' ) );
 		}
 		// Per-contact limits (independent of the client IP): 60s between codes, 5 codes per hour.
 		$ckey = 'yadambiar_otpc_' . md5( strtolower( $contact ) );
 		$meta = get_transient( $ckey );
 		$meta = is_array( $meta ) ? $meta : array( 'n' => 0, 'last' => 0 );
 		if ( time() - (int) $meta['last'] < 60 || $meta['n'] >= 5 ) {
-			return new \WP_Error( 'yadam-biar', __( 'کد اخیراً ارسال شده است؛ کمی بعد دوباره تلاش کنید.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar', __( 'کد اخیراً ارسال شده است؛ کمی بعد دوباره تلاش کنید.', 'yadambiar' ) );
 		}
 		set_transient( $ckey, array( 'n' => $meta['n'] + 1, 'last' => time() ), HOUR_IN_SECONDS );
 
@@ -391,15 +392,15 @@ class RestController {
 		$key     = 'yadambiar_otp_' . md5( strtolower( $contact ) );
 		$state   = get_transient( $key );
 		if ( ! $contact || ! is_array( $state ) ) {
-			return self::error( __( 'کد منقضی شده است؛ دوباره درخواست دهید.', 'yadam-biar' ) );
+			return self::error( __( 'کد منقضی شده است؛ دوباره درخواست دهید.', 'yadambiar' ) );
 		}
 		if ( $state['tries'] >= 5 ) {
-			return self::error( __( 'تعداد تلاش‌ها بیش از حد مجاز است.', 'yadam-biar' ) );
+			return self::error( __( 'تعداد تلاش‌ها بیش از حد مجاز است.', 'yadambiar' ) );
 		}
 		if ( ! wp_check_password( $code, $state['hash'] ) ) {
 			++$state['tries'];
 			set_transient( $key, $state, 10 * MINUTE_IN_SECONDS );
-			return self::error( __( 'کد وارد شده صحیح نیست.', 'yadam-biar' ) );
+			return self::error( __( 'کد وارد شده صحیح نیست.', 'yadambiar' ) );
 		}
 		delete_transient( $key );
 		$pid = 0;
@@ -474,7 +475,7 @@ class RestController {
 	public static function list_subscriptions( \WP_REST_Request $req ) {
 		$owner = self::owner( $req );
 		if ( ! $owner ) {
-			return self::error( __( 'دسترسی ندارید.', 'yadam-biar' ), 401 );
+			return self::error( __( 'دسترسی ندارید.', 'yadambiar' ), 401 );
 		}
 		return rest_ensure_response( array_map( array( __CLASS__, 'export' ), SubscriptionRepository::for_owner( $owner ) ) );
 	}
@@ -489,14 +490,14 @@ class RestController {
 		$sub   = SubscriptionRepository::get( (int) $req['id'] );
 		$owner = self::owner( $req );
 		if ( ! SubscriptionRepository::owned_by( $sub, $owner ) ) {
-			return self::error( __( 'دسترسی ندارید.', 'yadam-biar' ), 403 );
+			return self::error( __( 'دسترسی ندارید.', 'yadambiar' ), 403 );
 		}
 		$data = array();
 		foreach ( array( 'price_below', 'price_above' ) as $field ) {
 			if ( null !== $req->get_param( $field ) && null !== $sub->$field ) {
 				$value = Money::parse_price( $req->get_param( $field ) );
 				if ( ! $value ) {
-					return self::error( __( 'قیمت معتبر نیست.', 'yadam-biar' ) );
+					return self::error( __( 'قیمت معتبر نیست.', 'yadambiar' ) );
 				}
 				$data[ $field ] = $value;
 			}
@@ -508,14 +509,14 @@ class RestController {
 			$raw   = trim( (string) $req->get_param( 'phone' ) );
 			$phone = Phone::normalize_phone( $raw );
 			if ( '' !== $raw && ! $phone ) {
-				return self::error( __( 'شماره موبایل معتبر نیست.', 'yadam-biar' ) );
+				return self::error( __( 'شماره موبایل معتبر نیست.', 'yadambiar' ) );
 			}
 			$data['phone'] = $phone;
 		}
 		if ( null !== $req->get_param( 'email' ) ) {
 			$email = sanitize_email( (string) $req->get_param( 'email' ) );
 			if ( '' !== (string) $req->get_param( 'email' ) && ! is_email( $email ) ) {
-				return self::error( __( 'ایمیل معتبر نیست.', 'yadam-biar' ) );
+				return self::error( __( 'ایمیل معتبر نیست.', 'yadambiar' ) );
 			}
 			$data['email'] = $email;
 		}
@@ -523,7 +524,7 @@ class RestController {
 			$phone = isset( $data['phone'] ) ? $data['phone'] : $sub->phone;
 			$email = isset( $data['email'] ) ? $data['email'] : $sub->email;
 			if ( ! $phone && ! $email ) {
-				return self::error( __( 'حداقل یک راه ارتباطی لازم است.', 'yadam-biar' ) );
+				return self::error( __( 'حداقل یک راه ارتباطی لازم است.', 'yadambiar' ) );
 			}
 		}
 		if ( null !== $req->get_param( 'channels' ) ) {
@@ -548,7 +549,7 @@ class RestController {
 	public static function delete_subscription( \WP_REST_Request $req ) {
 		$sub = SubscriptionRepository::get( (int) $req['id'] );
 		if ( ! SubscriptionRepository::owned_by( $sub, self::owner( $req ) ) ) {
-			return self::error( __( 'دسترسی ندارید.', 'yadam-biar' ), 403 );
+			return self::error( __( 'دسترسی ندارید.', 'yadambiar' ), 403 );
 		}
 		SubscriptionRepository::update( $sub->id, array( 'status' => 'cancelled' ) );
 		return rest_ensure_response( array( 'success' => true ) );
@@ -587,10 +588,10 @@ class RestController {
 	 */
 	public static function push_subscribe( \WP_REST_Request $req ) {
 		if ( ! PushChannel::enabled() || ! self::rate_ok( 'push', 20 ) ) {
-			return self::error( __( 'پوش فعال نیست.', 'yadam-biar' ) );
+			return self::error( __( 'پوش فعال نیست.', 'yadambiar' ) );
 		}
 		$ok = PushChannel::save_subscription( Visitor::owner_key( true ), (array) $req->get_param( 'subscription' ) );
-		return $ok ? rest_ensure_response( array( 'success' => true ) ) : self::error( __( 'اشتراک نامعتبر است.', 'yadam-biar' ) );
+		return $ok ? rest_ensure_response( array( 'success' => true ) ) : self::error( __( 'اشتراک نامعتبر است.', 'yadambiar' ) );
 	}
 
 	/**

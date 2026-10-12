@@ -57,4 +57,25 @@ final class Text {
 		$len = strlen( $value );
 		return $len > 7 ? substr( $value, 0, 4 ) . str_repeat( '*', $len - 7 ) . substr( $value, -3 ) : $value;
 	}
+
+	/**
+	 * Parse "key=value" lines into an array.
+	 *
+	 * @param string $text Text.
+	 * @return array
+	 */
+	public static function parse_lines( $text ) {
+		$out = array();
+		foreach ( preg_split( '/\r\n|\r|\n/', (string) $text ) as $line ) {
+			$pos = strpos( $line, '=' );
+			if ( false === $pos ) {
+				continue;
+			}
+			$k = trim( substr( $line, 0, $pos ) );
+			if ( '' !== $k ) {
+				$out[ $k ] = trim( substr( $line, $pos + 1 ) );
+			}
+		}
+		return $out;
+	}
 }

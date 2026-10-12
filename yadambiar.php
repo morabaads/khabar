@@ -7,7 +7,7 @@
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Yadam Biar
- * Text Domain:       yadam-biar
+ * Text Domain:       yadambiar
  * Domain Path:       /languages
  * WC requires at least: 6.0
  * WC tested up to:   9.9

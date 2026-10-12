@@ -10,12 +10,13 @@ namespace YadamBiar\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Visitor;
 
-class Reservation {
+class Reservation implements Module {
 
 	const META = '_yadambiar_exclusive_until';
 
@@ -29,7 +30,7 @@ class Reservation {
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_filter( 'woocommerce_is_purchasable', array( __CLASS__, 'filter_purchasable' ), 99, 2 );
 		add_filter( 'woocommerce_variation_is_purchasable', array( __CLASS__, 'filter_purchasable' ), 99, 2 );
 		add_action( 'woocommerce_single_product_summary', array( __CLASS__, 'notice' ), 29 );
@@ -158,9 +159,9 @@ class Reservation {
 				$mins = (int) ceil( $left / 60 );
 				$msg  = self::has_access( $id )
 					/* translators: %d minutes */
-					? sprintf( __( '🎉 این کالا برای شما رزرو شده است. %d دقیقه فرصت خرید اختصاصی دارید.', 'yadam-biar' ), $mins )
+					? sprintf( __( '🎉 این کالا برای شما رزرو شده است. %d دقیقه فرصت خرید اختصاصی دارید.', 'yadambiar' ), $mins )
 					/* translators: %d minutes */
-					: sprintf( __( 'این کالا تازه موجود شده و تا %d دقیقه دیگر فقط برای مشتریان منتظر قابل خرید است.', 'yadam-biar' ), $mins );
+					: sprintf( __( 'این کالا تازه موجود شده و تا %d دقیقه دیگر فقط برای مشتریان منتظر قابل خرید است.', 'yadambiar' ), $mins );
 				echo '<div class="yadambiar-exclusive-note">' . esc_html( $msg ) . '</div>';
 				return;
 			}
@@ -179,7 +180,7 @@ class Reservation {
 		$left = self::remaining( $variation->get_id() );
 		if ( $left > 0 && ! self::has_access( $variation->get_id() ) ) {
 			/* translators: %d minutes */
-			$data['availability_html'] .= '<p class="yadambiar-exclusive-note">' . esc_html( sprintf( __( 'تا %d دقیقه دیگر فقط برای مشتریان منتظر قابل خرید است.', 'yadam-biar' ), ceil( $left / 60 ) ) ) . '</p>';
+			$data['availability_html'] .= '<p class="yadambiar-exclusive-note">' . esc_html( sprintf( __( 'تا %d دقیقه دیگر فقط برای مشتریان منتظر قابل خرید است.', 'yadambiar' ), ceil( $left / 60 ) ) ) . '</p>';
 		}
 		return $data;
 	}

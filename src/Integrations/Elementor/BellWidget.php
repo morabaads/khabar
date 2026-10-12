@@ -28,7 +28,7 @@ class BellWidget extends BaseWidget {
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'زنگوله اعلان‌ها', 'yadam-biar' );
+		return __( 'زنگوله اعلان‌ها', 'yadambiar' );
 	}
 
 	/**
@@ -47,12 +47,12 @@ class BellWidget extends BaseWidget {
 		$this->start_controls_section(
 			'style',
 			array(
-				'label' => __( 'ظاهر', 'yadam-biar' ),
+				'label' => __( 'ظاهر', 'yadambiar' ),
 				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 			)
 		);
-		$this->add_control( 'bg', array( 'label' => __( 'پس‌زمینه', 'yadam-biar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-bell-btn' => 'background: {{VALUE}};' ) ) );
-		$this->add_control( 'badge', array( 'label' => __( 'رنگ شمارنده', 'yadam-biar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-bell-count' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'bg', array( 'label' => __( 'پس‌زمینه', 'yadambiar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-bell-btn' => 'background: {{VALUE}};' ) ) );
+		$this->add_control( 'badge', array( 'label' => __( 'رنگ شمارنده', 'yadambiar' ), 'type' => \Elementor\Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-bell-count' => 'background: {{VALUE}};' ) ) );
 		$this->end_controls_section();
 	}
 
@@ -62,7 +62,7 @@ class BellWidget extends BaseWidget {
 	protected function render() {
 		$html = ProductWidget::bell_shortcode();
 		if ( ! $html ) {
-			$this->placeholder( __( 'کانال «اعلان داخل سایت» در تنظیمات غیرفعال است.', 'yadam-biar' ) );
+			$this->placeholder( __( 'کانال «اعلان داخل سایت» در تنظیمات غیرفعال است.', 'yadambiar' ) );
 		}
 		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput
 	}

@@ -10,18 +10,18 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="yadambiar-panel" data-token="<?php echo esc_attr( $token ); ?>">
-	<h3><?php esc_html_e( 'محصولاتی که منتظرشان هستم', 'yadam-biar' ); ?></h3>
+	<h3><?php esc_html_e( 'محصولاتی که منتظرشان هستم', 'yadambiar' ); ?></h3>
 	<?php if ( ! empty( $messengers ) ) : ?>
 		<div class="yadambiar-connect" data-networks="<?php echo esc_attr( wp_json_encode( $messengers ) ); ?>" hidden></div>
 	<?php endif; ?>
 	<?php if ( ! $subs ) : ?>
-		<p class="yadambiar-empty"><?php esc_html_e( 'هنوز درخواستی ثبت نکرده‌اید.', 'yadam-biar' ); ?></p>
+		<p class="yadambiar-empty"><?php esc_html_e( 'هنوز درخواستی ثبت نکرده‌اید.', 'yadambiar' ); ?></p>
 	<?php else : ?>
 		<ul class="yadambiar-sub-list">
 			<?php
 			foreach ( $subs as $yadambiar_sub ) :
 				$yadambiar_p    = wc_get_product( $yadambiar_sub->variation_id ? $yadambiar_sub->variation_id : $yadambiar_sub->product_id );
-				$yadambiar_name = $yadambiar_p ? $yadambiar_p->get_name() : __( 'محصول حذف شده', 'yadam-biar' );
+				$yadambiar_name = $yadambiar_p ? $yadambiar_p->get_name() : __( 'محصول حذف شده', 'yadambiar' );
 				$yadambiar_st   = \YadamBiar\Subscriptions\SubscriptionRepository::statuses();
 				?>
 				<li class="yadambiar-sub yadambiar-status-<?php echo esc_attr( $yadambiar_sub->status ); ?>" data-id="<?php echo esc_attr( $yadambiar_sub->id ); ?>">
@@ -37,7 +37,7 @@ defined( 'ABSPATH' ) || exit;
 								<div class="yadambiar-sub-now">
 									<?php
 									/* translators: 1: price 2: stock */
-									printf( esc_html__( 'الان: %1$s — %2$s', 'yadam-biar' ), esc_html( \YadamBiar\Support\Money::price_text( $yadambiar_p->get_price() ) ), $yadambiar_p->is_in_stock() ? esc_html__( 'موجود', 'yadam-biar' ) : esc_html__( 'ناموجود', 'yadam-biar' ) );
+									printf( esc_html__( 'الان: %1$s — %2$s', 'yadambiar' ), esc_html( \YadamBiar\Support\Money::price_text( $yadambiar_p->get_price() ) ), $yadambiar_p->is_in_stock() ? esc_html__( 'موجود', 'yadambiar' ) : esc_html__( 'ناموجود', 'yadambiar' ) );
 									?>
 								</div>
 							<?php endif; ?>
@@ -45,21 +45,21 @@ defined( 'ABSPATH' ) || exit;
 						<span class="yadambiar-badge"><?php echo esc_html( isset( $yadambiar_st[ $yadambiar_sub->status ] ) ? $yadambiar_st[ $yadambiar_sub->status ] : $yadambiar_sub->status ); ?></span>
 					</div>
 					<div class="yadambiar-sub-actions">
-						<button type="button" class="yadambiar-link yadambiar-edit"><?php esc_html_e( 'ویرایش', 'yadam-biar' ); ?></button>
-						<button type="button" class="yadambiar-link yadambiar-delete"><?php esc_html_e( 'حذف', 'yadam-biar' ); ?></button>
+						<button type="button" class="yadambiar-link yadambiar-edit"><?php esc_html_e( 'ویرایش', 'yadambiar' ); ?></button>
+						<button type="button" class="yadambiar-link yadambiar-delete"><?php esc_html_e( 'حذف', 'yadambiar' ); ?></button>
 					</div>
 					<form class="yadambiar-edit-form" hidden>
 						<?php if ( null !== $yadambiar_sub->price_below ) : ?>
-							<label><span><?php esc_html_e( 'قیمت هدف (کمتر از)', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="price_below" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_below, wc_get_price_decimals() ) ); ?>"></label>
+							<label><span><?php esc_html_e( 'قیمت هدف (کمتر از)', 'yadambiar' ); ?></span><input type="text" inputmode="numeric" name="price_below" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_below, wc_get_price_decimals() ) ); ?>"></label>
 						<?php endif; ?>
 						<?php if ( null !== $yadambiar_sub->price_above ) : ?>
-							<label><span><?php esc_html_e( 'قیمت (بیشتر از)', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="price_above" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_above, wc_get_price_decimals() ) ); ?>"></label>
+							<label><span><?php esc_html_e( 'قیمت (بیشتر از)', 'yadambiar' ); ?></span><input type="text" inputmode="numeric" name="price_above" value="<?php echo esc_attr( wc_format_decimal( $yadambiar_sub->price_above, wc_get_price_decimals() ) ); ?>"></label>
 						<?php endif; ?>
 						<?php if ( $yadambiar_sub->min_qty ) : ?>
-							<label><span><?php esc_html_e( 'حداقل موجودی', 'yadam-biar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" value="<?php echo esc_attr( $yadambiar_sub->min_qty ); ?>"></label>
+							<label><span><?php esc_html_e( 'حداقل موجودی', 'yadambiar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" value="<?php echo esc_attr( $yadambiar_sub->min_qty ); ?>"></label>
 						<?php endif; ?>
-						<label><span><?php esc_html_e( 'موبایل', 'yadam-biar' ); ?></span><input type="tel" dir="ltr" name="phone" value="<?php echo esc_attr( $yadambiar_sub->phone ); ?>"></label>
-						<label><span><?php esc_html_e( 'ایمیل', 'yadam-biar' ); ?></span><input type="email" dir="ltr" name="email" value="<?php echo esc_attr( $yadambiar_sub->email ); ?>"></label>
+						<label><span><?php esc_html_e( 'موبایل', 'yadambiar' ); ?></span><input type="tel" dir="ltr" name="phone" value="<?php echo esc_attr( $yadambiar_sub->phone ); ?>"></label>
+						<label><span><?php esc_html_e( 'ایمیل', 'yadambiar' ); ?></span><input type="email" dir="ltr" name="email" value="<?php echo esc_attr( $yadambiar_sub->email ); ?>"></label>
 						<?php if ( \YadamBiar\Settings\Settings::get( 'user_selects_channel' ) && count( $channels ) > 1 ) : ?>
 							<div class="yadambiar-channels">
 								<?php foreach ( $channels as $yadambiar_ch => $yadambiar_label ) : ?>
@@ -68,7 +68,7 @@ defined( 'ABSPATH' ) || exit;
 							</div>
 						<?php endif; ?>
 						<p class="yadambiar-msg" hidden></p>
-						<button type="submit" class="button"><?php esc_html_e( 'ذخیره تغییرات', 'yadam-biar' ); ?></button>
+						<button type="submit" class="button"><?php esc_html_e( 'ذخیره تغییرات', 'yadambiar' ); ?></button>
 					</form>
 				</li>
 			<?php endforeach; ?>
@@ -76,12 +76,12 @@ defined( 'ABSPATH' ) || exit;
 	<?php endif; ?>
 
 	<?php if ( $notes ) : ?>
-		<h3><?php esc_html_e( 'اعلان‌های اخیر', 'yadam-biar' ); ?></h3>
+		<h3><?php esc_html_e( 'اعلان‌های اخیر', 'yadambiar' ); ?></h3>
 		<ul class="yadambiar-notes">
 			<?php foreach ( $notes as $yadambiar_note ) : ?>
 				<li class="<?php echo $yadambiar_note->is_read ? '' : 'yadambiar-unread'; ?>">
 					<a href="<?php echo esc_url( $yadambiar_note->url ); ?>"><strong><?php echo esc_html( $yadambiar_note->title ); ?></strong></a>
-					<span><?php /* translators: %s time */ printf( esc_html__( '%s پیش', 'yadam-biar' ), esc_html( human_time_diff( strtotime( $yadambiar_note->created_at . ' UTC' ) ) ) ); ?></span>
+					<span><?php /* translators: %s time */ printf( esc_html__( '%s پیش', 'yadambiar' ), esc_html( human_time_diff( strtotime( $yadambiar_note->created_at . ' UTC' ) ) ) ); ?></span>
 				</li>
 			<?php endforeach; ?>
 		</ul>

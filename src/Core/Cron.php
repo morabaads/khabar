@@ -9,16 +9,17 @@ namespace YadamBiar\Core;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Queue;
 
-class Cron {
+class Cron implements Module {
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'yadambiar_daily', array( __CLASS__, 'daily' ) );
 		if ( ! wp_next_scheduled( 'yadambiar_daily' ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'yadambiar_daily' );

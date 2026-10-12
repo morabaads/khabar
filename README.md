@@ -136,7 +136,7 @@ Flowهای ۱ تا ۶ PRD هم دقیقاً به همین ترتیب پیاده 
 | `yadambiar_forecast_sales` | filter | جایگزینی داده فروش در پیش‌بینی (مثلاً از ERP) |
 | `yadambiar_template` | filter | مسیر قالب‌ها |
 
-REST API: `yadam-biar/v1/subscribe`، `verify`، `subscriptions`، `subscriptions/{id}`، `notifications`، `push/subscribe`، `push/latest`، `messenger/link`، `messenger/status`، `bot/{telegram|bale}` (وب‌هوک).
+REST API: `yadambiar/v1/subscribe`، `verify`، `subscriptions`، `subscriptions/{id}`، `notifications`، `push/subscribe`، `push/latest`، `messenger/link`، `messenger/status`، `bot/{telegram|bale}` (وب‌هوک).
 
 ## معماری
 

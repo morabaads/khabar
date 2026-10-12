@@ -15,6 +15,7 @@ namespace YadamBiar\Commerce;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Notifications\Dispatcher;
 use YadamBiar\Notifications\RuleEngine;
@@ -25,12 +26,12 @@ use YadamBiar\Support\Money;
 use YadamBiar\Support\Queue;
 use YadamBiar\Support\Text;
 
-class Alternatives {
+class Alternatives implements Module {
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'yadambiar_daily', array( __CLASS__, 'schedule' ), 20 );
 		add_action( 'yadambiar_send_alternatives', array( __CLASS__, 'run' ) );
 	}
@@ -471,7 +472,7 @@ class Alternatives {
 			return '';
 		}
 		$count = ! empty( $args['count'] ) ? (int) $args['count'] : (int) Settings::get( 'alt_page_count', 4 );
-		$title = ! empty( $args['title'] ) ? (string) $args['title'] : __( 'تا موجود شدن، این محصولات مشابه موجودند', 'yadam-biar' );
+		$title = ! empty( $args['title'] ) ? (string) $args['title'] : __( 'تا موجود شدن، این محصولات مشابه موجودند', 'yadambiar' );
 		$alts  = self::find( $product, array(), null, min( 12, max( 1, $count ) ) );
 		if ( ! $alts ) {
 			return '';
@@ -488,7 +489,7 @@ class Alternatives {
 							<span class="yadambiar-alts-img"><?php echo wp_kses_post( $alt['product']->get_image( 'woocommerce_gallery_thumbnail' ) ); ?></span>
 							<span class="yadambiar-alts-name"><?php echo esc_html( $alt['target']->get_name() ); ?></span>
 							<span class="yadambiar-alts-price"><?php echo wp_kses_post( $alt['target']->get_price_html() ); ?></span>
-							<span class="yadambiar-alts-cta"><?php esc_html_e( 'مشاهده', 'yadam-biar' ); ?> ←</span>
+							<span class="yadambiar-alts-cta"><?php esc_html_e( 'مشاهده', 'yadambiar' ); ?> ←</span>
 						</a>
 					</li>
 				<?php endforeach; ?>

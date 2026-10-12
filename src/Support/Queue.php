@@ -23,10 +23,10 @@ final class Queue {
 	 */
 	public static function schedule( $hook, $args = array(), $delay = 0 ) {
 		if ( function_exists( 'as_schedule_single_action' ) ) {
-			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'yadam-biar' ) ) {
+			if ( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( $hook, $args, 'yadambiar' ) ) {
 				return;
 			}
-			as_schedule_single_action( time() + $delay, $hook, $args, 'yadam-biar' );
+			as_schedule_single_action( time() + $delay, $hook, $args, 'yadambiar' );
 			return;
 		}
 		if ( ! wp_next_scheduled( $hook, $args ) ) {

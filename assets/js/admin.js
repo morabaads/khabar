@@ -263,7 +263,7 @@ jQuery(function ($) {
 		var u;
 		try { u = new URL(href, location.href); } catch (e) { return false; }
 		if (u.origin !== location.origin) { return false; }
-		if (/\/admin\.php$/.test(u.pathname)) { return u.searchParams.get('page') === 'yadam-biar'; }
+		if (/\/admin\.php$/.test(u.pathname)) { return u.searchParams.get('page') === 'yadambiar'; }
 		if (/\/admin-post\.php$/.test(u.pathname)) {
 			var a = u.searchParams.get('action') || '';
 			return /^yadambiar_/.test(a) && !NATIVE.test(a);

@@ -34,7 +34,7 @@ class NotifyWidget extends BaseWidget {
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'دکمه یادم بیار', 'yadam-biar' );
+		return __( 'دکمه یادم بیار', 'yadambiar' );
 	}
 
 	/**
@@ -50,12 +50,12 @@ class NotifyWidget extends BaseWidget {
 	 * Controls.
 	 */
 	protected function register_controls() {
-		$this->start_controls_section( 'content', array( 'label' => __( 'محتوا', 'yadam-biar' ) ) );
+		$this->start_controls_section( 'content', array( 'label' => __( 'محتوا', 'yadambiar' ) ) );
 		$this->product_controls();
 		$this->add_control(
 			'button_text_stock',
 			array(
-				'label'       => __( 'متن دکمه موجود شدن', 'yadam-biar' ),
+				'label'       => __( 'متن دکمه موجود شدن', 'yadambiar' ),
 				'type'        => Controls_Manager::TEXT,
 				'placeholder' => Settings::get( 'button_text_stock' ),
 			)
@@ -63,7 +63,7 @@ class NotifyWidget extends BaseWidget {
 		$this->add_control(
 			'button_text_price',
 			array(
-				'label'       => __( 'متن دکمه هشدار قیمت', 'yadam-biar' ),
+				'label'       => __( 'متن دکمه هشدار قیمت', 'yadambiar' ),
 				'type'        => Controls_Manager::TEXT,
 				'placeholder' => Settings::get( 'button_text_price' ),
 			)
@@ -71,7 +71,7 @@ class NotifyWidget extends BaseWidget {
 		$this->add_control(
 			'show_price_alert',
 			array(
-				'label'        => __( 'نمایش هشدار قیمت برای کالای موجود', 'yadam-biar' ),
+				'label'        => __( 'نمایش هشدار قیمت برای کالای موجود', 'yadambiar' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'return_value' => 'yes',
 				'default'      => Settings::get( 'show_price_alert' ) ? 'yes' : '',
@@ -80,7 +80,7 @@ class NotifyWidget extends BaseWidget {
 		$this->add_control(
 			'show_extras',
 			array(
-				'label'        => __( 'نمایش جایگزین‌ها و نمودار (طبق تنظیمات افزونه)', 'yadam-biar' ),
+				'label'        => __( 'نمایش جایگزین‌ها و نمودار (طبق تنظیمات افزونه)', 'yadambiar' ),
 				'type'         => Controls_Manager::SWITCHER,
 				'return_value' => 'yes',
 				'default'      => 'yes',
@@ -89,12 +89,12 @@ class NotifyWidget extends BaseWidget {
 		$this->add_responsive_control(
 			'align',
 			array(
-				'label'     => __( 'چینش', 'yadam-biar' ),
+				'label'     => __( 'چینش', 'yadambiar' ),
 				'type'      => Controls_Manager::CHOOSE,
 				'options'   => array(
-					'right'  => array( 'title' => __( 'راست', 'yadam-biar' ), 'icon' => 'eicon-text-align-right' ),
-					'center' => array( 'title' => __( 'وسط', 'yadam-biar' ), 'icon' => 'eicon-text-align-center' ),
-					'left'   => array( 'title' => __( 'چپ', 'yadam-biar' ), 'icon' => 'eicon-text-align-left' ),
+					'right'  => array( 'title' => __( 'راست', 'yadambiar' ), 'icon' => 'eicon-text-align-right' ),
+					'center' => array( 'title' => __( 'وسط', 'yadambiar' ), 'icon' => 'eicon-text-align-center' ),
+					'left'   => array( 'title' => __( 'چپ', 'yadambiar' ), 'icon' => 'eicon-text-align-left' ),
 				),
 				'selectors' => array( '{{WRAPPER}} .yadambiar-cta' => 'text-align: {{VALUE}};' ),
 			)
@@ -105,7 +105,7 @@ class NotifyWidget extends BaseWidget {
 		$this->start_controls_section(
 			'style_button',
 			array(
-				'label' => __( 'دکمه', 'yadam-biar' ),
+				'label' => __( 'دکمه', 'yadambiar' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
@@ -114,7 +114,7 @@ class NotifyWidget extends BaseWidget {
 		$this->add_responsive_control(
 			'btn_width',
 			array(
-				'label'      => __( 'عرض', 'yadam-biar' ),
+				'label'      => __( 'عرض', 'yadambiar' ),
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( '%', 'px' ),
 				'range'      => array( 'px' => array( 'min' => 80, 'max' => 800 ) ),
@@ -122,20 +122,20 @@ class NotifyWidget extends BaseWidget {
 			)
 		);
 		$this->start_controls_tabs( 'btn_tabs' );
-		$this->start_controls_tab( 'btn_normal', array( 'label' => __( 'عادی', 'yadam-biar' ) ) );
-		$this->add_control( 'btn_color', array( 'label' => __( 'رنگ متن', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn => 'color: {{VALUE}};' ) ) );
-		$this->add_control( 'btn_bg', array( 'label' => __( 'پس‌زمینه', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn => 'background: {{VALUE}};' ) ) );
+		$this->start_controls_tab( 'btn_normal', array( 'label' => __( 'عادی', 'yadambiar' ) ) );
+		$this->add_control( 'btn_color', array( 'label' => __( 'رنگ متن', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'btn_bg', array( 'label' => __( 'پس‌زمینه', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn => 'background: {{VALUE}};' ) ) );
 		$this->end_controls_tab();
-		$this->start_controls_tab( 'btn_hover', array( 'label' => __( 'هاور', 'yadam-biar' ) ) );
-		$this->add_control( 'btn_color_h', array( 'label' => __( 'رنگ متن', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn . ':hover' => 'color: {{VALUE}};' ) ) );
-		$this->add_control( 'btn_bg_h', array( 'label' => __( 'پس‌زمینه', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn . ':hover' => 'background: {{VALUE}}; filter: none;' ) ) );
+		$this->start_controls_tab( 'btn_hover', array( 'label' => __( 'هاور', 'yadambiar' ) ) );
+		$this->add_control( 'btn_color_h', array( 'label' => __( 'رنگ متن', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn . ':hover' => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'btn_bg_h', array( 'label' => __( 'پس‌زمینه', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( $btn . ':hover' => 'background: {{VALUE}}; filter: none;' ) ) );
 		$this->end_controls_tab();
 		$this->end_controls_tabs();
 		$this->add_group_control( Group_Control_Border::get_type(), array( 'name' => 'btn_border', 'selector' => $btn, 'separator' => 'before' ) );
 		$this->add_responsive_control(
 			'btn_radius',
 			array(
-				'label'      => __( 'گردی گوشه', 'yadam-biar' ),
+				'label'      => __( 'گردی گوشه', 'yadambiar' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
 				'selectors'  => array( $btn => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
@@ -144,7 +144,7 @@ class NotifyWidget extends BaseWidget {
 		$this->add_responsive_control(
 			'btn_padding',
 			array(
-				'label'      => __( 'فاصله داخلی', 'yadam-biar' ),
+				'label'      => __( 'فاصله داخلی', 'yadambiar' ),
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', 'em' ),
 				'selectors'  => array( $btn => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ),
@@ -157,25 +157,25 @@ class NotifyWidget extends BaseWidget {
 		$this->start_controls_section(
 			'style_misc',
 			array(
-				'label' => __( 'لینک قیمت و فرم', 'yadam-biar' ),
+				'label' => __( 'لینک قیمت و فرم', 'yadambiar' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
-		$this->add_control( 'link_color', array( 'label' => __( 'رنگ لینک هشدار قیمت', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-cta-price .yadambiar-price-btn' => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'link_color', array( 'label' => __( 'رنگ لینک هشدار قیمت', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-cta-price .yadambiar-price-btn' => 'color: {{VALUE}};' ) ) );
 		$this->add_group_control( Group_Control_Typography::get_type(), array( 'name' => 'link_typo', 'selector' => '{{WRAPPER}} .yadambiar-cta-price .yadambiar-price-btn' ) );
-		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی فرم', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar' => '--yadambiar-accent: {{VALUE}};' ) ) );
-		$this->add_control( 'count_color', array( 'label' => __( 'رنگ «نفر منتظر»', 'yadam-biar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-waiting' => 'color: {{VALUE}};' ) ) );
+		$this->add_control( 'accent', array( 'label' => __( 'رنگ اصلی فرم', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar' => '--yadambiar-accent: {{VALUE}};' ) ) );
+		$this->add_control( 'count_color', array( 'label' => __( 'رنگ «نفر منتظر»', 'yadambiar' ), 'type' => Controls_Manager::COLOR, 'selectors' => array( '{{WRAPPER}} .yadambiar-waiting' => 'color: {{VALUE}};' ) ) );
 		$this->end_controls_section();
 
 		// Popup + card colours (CSS variables).
 		$this->start_controls_section(
 			'style_popup',
 			array(
-				'label' => __( 'رنگ‌بندی پاپ‌آپ', 'yadam-biar' ),
+				'label' => __( 'رنگ‌بندی پاپ‌آپ', 'yadambiar' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
 			)
 		);
-		$this->add_control( 'popup_note', array( 'type' => Controls_Manager::RAW_HTML, 'raw' => esc_html__( 'خالی بگذارید تا رنگ‌های تنظیمات افزونه (ظاهر و رنگ‌ها) استفاده شود.', 'yadam-biar' ), 'content_classes' => 'elementor-descriptor' ) );
+		$this->add_control( 'popup_note', array( 'type' => Controls_Manager::RAW_HTML, 'raw' => esc_html__( 'خالی بگذارید تا رنگ‌های تنظیمات افزونه (ظاهر و رنگ‌ها) استفاده شود.', 'yadambiar' ), 'content_classes' => 'elementor-descriptor' ) );
 		$this->color_var_controls( 'v_' );
 		$this->end_controls_section();
 	}
@@ -186,7 +186,7 @@ class NotifyWidget extends BaseWidget {
 	protected function render() {
 		$product = $this->product();
 		if ( ! $product ) {
-			$this->placeholder( __( 'یادم بیار: در صفحه محصول نمایش داده می‌شود یا شناسه محصول را وارد کنید.', 'yadam-biar' ) );
+			$this->placeholder( __( 'یادم بیار: در صفحه محصول نمایش داده می‌شود یا شناسه محصول را وارد کنید.', 'yadambiar' ) );
 			return;
 		}
 		$s = $this->get_settings_for_display();

@@ -10,18 +10,19 @@ namespace YadamBiar\Channels;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 
-class PushChannel {
+class PushChannel implements Module {
 
 	const OPTION = 'yadambiar_vapid';
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'init', array( __CLASS__, 'serve_worker' ), 1 );
 	}
 
@@ -205,12 +206,12 @@ class PushChannel {
 		global $wpdb;
 		$keys = self::keys();
 		if ( ! $keys ) {
-			return new \WP_Error( 'yadambiar_push', __( 'کلید VAPID موجود نیست (OpenSSL).', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_push', __( 'کلید VAPID موجود نیست (OpenSSL).', 'yadambiar' ) );
 		}
 		$table = Installer::table( 'push' );
 		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT id, endpoint FROM {$table} WHERE owner_key = %s", $owner_key ) ); // phpcs:ignore
 		if ( ! $rows ) {
-			return new \WP_Error( 'yadambiar_push', __( 'کاربر اجازه پوش نداده است.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_push', __( 'کاربر اجازه پوش نداده است.', 'yadambiar' ) );
 		}
 		$ok = false;
 		foreach ( $rows as $row ) {
@@ -239,7 +240,7 @@ class PushChannel {
 				$ok = true;
 			}
 		}
-		return $ok ? true : new \WP_Error( 'yadambiar_push', __( 'ارسال پوش ناموفق بود.', 'yadam-biar' ) );
+		return $ok ? true : new \WP_Error( 'yadambiar_push', __( 'ارسال پوش ناموفق بود.', 'yadambiar' ) );
 	}
 
 	/**
@@ -310,7 +311,7 @@ class PushChannel {
 		header( 'Content-Type: application/javascript; charset=utf-8' );
 		header( 'Service-Worker-Allowed: /' );
 		header( 'Cache-Control: no-cache' );
-		$latest = esc_url_raw( rest_url( 'yadam-biar/v1/push/latest' ) );
+		$latest = esc_url_raw( rest_url( 'yadambiar/v1/push/latest' ) );
 		echo "/* Yadam Biar service worker */\n";
 		echo 'var YADAMBIAR_LATEST = ' . wp_json_encode( $latest ) . ";\n";
 		echo file_get_contents( YADAMBIAR_DIR . 'assets/js/sw.js' ); // phpcs:ignore

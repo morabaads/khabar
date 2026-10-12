@@ -51,7 +51,7 @@ function settings( $over ) {
 }
 
 function rest( $method, $path, $params = array() ) {
-	$req = new WP_REST_Request( $method, '/yadam-biar/v1/' . $path );
+	$req = new WP_REST_Request( $method, '/yadambiar/v1/' . $path );
 	foreach ( $params as $k => $v ) {
 		$req->set_param( $k, $v );
 	}
@@ -195,7 +195,7 @@ wc_update_product_stock( $v, 2, 'set' );
 $pending = \YadamBiar\Notifications\StockWatcher::pending();
 t( isset( $pending[ $pid ] ), 'stock change of a variation queues its parent product' );
 \YadamBiar\Notifications\StockWatcher::flush();
-t( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'yadambiar_check_product', array( $pid ), 'yadam-biar' ), 'check scheduled in Action Scheduler' );
+t( function_exists( 'as_has_scheduled_action' ) && as_has_scheduled_action( 'yadambiar_check_product', array( $pid ), 'yadambiar' ), 'check scheduled in Action Scheduler' );
 $sent = \YadamBiar\Notifications\Dispatcher::check_product( $pid );
 t( 2 === $sent, "2 subscribers notified (got {$sent})" );
 t( 'notified' === sub_status( $sub_blue42 ) && 'notified' === sub_status( $sub_any42 ), 'both subscriptions marked notified' );
@@ -482,7 +482,7 @@ $start_code = substr( $d['url'], strpos( $d['url'], 'start=' ) + 6 );
 $guest_owner = \YadamBiar\Support\Visitor::owner_key();
 
 $wh = function ( $network, $text, $secret, $chat = 555 ) {
-	$req = new WP_REST_Request( 'POST', '/yadam-biar/v1/bot/' . $network );
+	$req = new WP_REST_Request( 'POST', '/yadambiar/v1/bot/' . $network );
 	$req->set_param( 'secret', $secret );
 	$req->set_header( 'content-type', 'application/json' );
 	$req->set_body( wp_json_encode( array( 'update_id' => 1, 'message' => array( 'chat' => array( 'id' => $chat ), 'from' => array( 'username' => 'ali' ), 'text' => $text ) ) ) );
@@ -555,7 +555,7 @@ reset_capture();
 wc_update_product_stock( wc_get_product( $cp_pid ), 10, 'set' );
 \YadamBiar\Notifications\Dispatcher::check_product( $cp_pid );
 $cs = \YadamBiar\Subscriptions\SubscriptionRepository::get( $cp_sub );
-t( 0 === strpos( $cs->coupon_code, 'KHB-' ), 'coupon created: ' . $cs->coupon_code );
+t( 0 === strpos( $cs->coupon_code, \YadamBiar\Commerce\Coupons::CODE_PREFIX ), 'coupon created: ' . $cs->coupon_code );
 $coupon = new WC_Coupon( $cs->coupon_code );
 t( array( $cp_pid ) === $coupon->get_product_ids() && 1 === $coupon->get_usage_limit() && 'percent' === $coupon->get_discount_type() && 10.0 === (float) $coupon->get_amount(), 'single-use 10% coupon restricted to the product' );
 $left = $coupon->get_date_expires()->getTimestamp() - time();
@@ -658,13 +658,35 @@ t( ! isset( $by[ $fc_vars[42] ] ), 'in-stock size 42 not in purchase list' );
 t( $by[ $fc_vars[40] ]['calc']['order'] >= 1, 'suggested order for size 40: ' . $by[ $fc_vars[40] ]['calc']['order'] );
 
 echo "\n== WhatsApp removed ==\n";
-t( ! isset( \YadamBiar\Settings\Settings::channels()['whatsapp'] ) && ! class_exists( 'YadamBiar\\Channels\\WhatsappChannel' ), 'whatsapp channel no longer exists' );
+t( ! isset( \YadamBiar\Settings\Catalog::channels()['whatsapp'] ) && ! class_exists( 'YadamBiar\\Channels\\WhatsappChannel' ), 'whatsapp channel no longer exists' );
 settings( array( 'channels_enabled' => array( 'sms', 'whatsapp' ), 'whatsapp_token' => 'old' ) );
 $wa_sub = (object) array( 'id' => 0, 'phone' => '09121234567', 'email' => '', 'user_id' => 0, 'owner_key' => '', 'channel_list' => array( 'whatsapp', 'sms' ) );
 t( array( 'sms' ) === \YadamBiar\Channels\ChannelManager::resolve( $wa_sub ), 'stale whatsapp in old settings/subscriptions is ignored' );
-\YadamBiar\Settings\Settings::save( array( 'channels_enabled' => array( 'sms' ) ), 'channels' );
-$o = get_option( \YadamBiar\Settings\Settings::OPTION );
-t( ! isset( $o['whatsapp_token'] ) && ! in_array( 'whatsapp', $o['channels_enabled'], true ), 'leftover whatsapp settings dropped on save' );
+
+echo "\n== Migration from the previous plugin (Khabar) ==\n";
+global $wpdb;
+$mg_backup = get_option( \YadamBiar\Settings\Settings::OPTION );
+delete_option( \YadamBiar\Settings\Settings::OPTION );
+delete_option( \YadamBiar\Core\Migration\LegacyKhabarMigration::DONE_OPTION );
+update_option( 'khabar_settings', array( 'channels_enabled' => array( 'sms', 'whatsapp' ), 'whatsapp_token' => 'x', 'eitaa_token' => 'y', 'sms_patterns' => "back_in_stock=123\notp=", 'sms_pattern_vars' => 'token={product_name}' ) );
+$mg_new = $wpdb->prefix . 'yadambiar_price_history';
+$mg_old = $wpdb->prefix . 'khabar_price_history';
+$wpdb->query( "RENAME TABLE `{$mg_new}` TO `{$mg_old}`" );
+$mg_pid = wp_insert_post( array( 'post_type' => 'product', 'post_status' => 'publish', 'post_title' => 'Migrated' ) );
+add_post_meta( $mg_pid, '_khabar_wave', 'w' );
+\YadamBiar\Core\Migration\LegacyKhabarMigration::run();
+\YadamBiar\Settings\Settings::flush();
+$mg = get_option( \YadamBiar\Settings\Settings::OPTION );
+t( is_array( $mg ) && array( 'sms' ) === $mg['channels_enabled'], 'settings imported, removed channels dropped' );
+t( ! isset( $mg['whatsapp_token'] ) && ! isset( $mg['eitaa_token'] ) && ! isset( $mg['sms_patterns'] ), 'leftover settings of removed features not imported' );
+t( isset( $mg['sms_pattern_items']['back_in_stock'] ) && '123' === $mg['sms_pattern_items']['back_in_stock']['code'] && 'token' === $mg['sms_pattern_items']['back_in_stock']['vars'][0]['name'], 'old SMS pattern text converted to pattern items' );
+t( $mg_new === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $mg_new ) ) && ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $mg_old ) ), 'old table renamed with its rows' );
+t( 'w' === get_post_meta( $mg_pid, '_yadambiar_wave', true ) && '' === get_post_meta( $mg_pid, '_khabar_wave', true ), 'product meta keys renamed' );
+\YadamBiar\Core\Migration\LegacyKhabarMigration::run();
+t( (bool) get_option( \YadamBiar\Core\Migration\LegacyKhabarMigration::DONE_OPTION ), 'migration runs once' );
+update_option( \YadamBiar\Settings\Settings::OPTION, $mg_backup );
+delete_option( 'khabar_settings' );
+\YadamBiar\Settings\Settings::flush();
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
 echo "\n== Messenger channel ids & bot check ==\n";

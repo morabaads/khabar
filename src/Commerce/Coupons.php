@@ -13,12 +13,16 @@ namespace YadamBiar\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Notifications\RuleEngine;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Money;
 
-class Coupons {
+class Coupons implements Module {
+
+	const CODE_PREFIX        = 'YB-';
+	const LEGACY_CODE_PREFIX = 'KHB-';
 
 	const META    = '_yadambiar_subscription';
 	const SESSION = 'yadambiar_coupon';
@@ -26,7 +30,7 @@ class Coupons {
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'woocommerce_add_to_cart', array( __CLASS__, 'auto_apply' ), 20 );
 		add_action( 'woocommerce_before_cart', array( __CLASS__, 'auto_apply' ) );
 		add_action( 'woocommerce_before_checkout_form', array( __CLASS__, 'auto_apply' ) );
@@ -64,7 +68,7 @@ class Coupons {
 		$hours = max( 1, (int) Settings::get( 'coupon_hours', 48 ) );
 
 		for ( $i = 0; $i < 3; $i++ ) {
-			$code = 'KHB-' . strtoupper( wp_generate_password( 8, false, false ) );
+			$code = self::CODE_PREFIX . strtoupper( wp_generate_password( 8, false, false ) );
 			if ( ! wc_get_coupon_id_by_code( $code ) ) {
 				break;
 			}
@@ -73,7 +77,7 @@ class Coupons {
 		$coupon = new \WC_Coupon();
 		$coupon->set_code( $code );
 		/* translators: 1: subscription id 2: product name */
-		$coupon->set_description( sprintf( __( 'یادم بیار — درخواست #%1$d — %2$s', 'yadam-biar' ), $sub->id, $target->get_name() ) );
+		$coupon->set_description( sprintf( __( 'یادم بیار — درخواست #%1$d — %2$s', 'yadambiar' ), $sub->id, $target->get_name() ) );
 		$coupon->set_discount_type( $type );
 		$coupon->set_amount( $amount );
 		$coupon->set_product_ids( array( $target->get_id() ) );
@@ -114,13 +118,13 @@ class Coupons {
 			? number_format_i18n( min( 100, (float) Settings::get( 'coupon_amount' ) ) ) . '٪'
 			: Money::price_text( Settings::get( 'coupon_amount' ) );
 		/* translators: %d hours */
-		$expiry = sprintf( _n( '%d ساعت', '%d ساعت', $hours, 'yadam-biar' ), $hours );
+		$expiry = sprintf( _n( '%d ساعت', '%d ساعت', $hours, 'yadambiar' ), $hours );
 		return array(
 			'coupon'        => $code,
 			'coupon_amount' => $amount,
 			'coupon_expiry' => $expiry,
 			/* translators: 1: amount 2: code 3: expiry */
-			'coupon_note'   => sprintf( __( '🎁 کد تخفیف %1$s مخصوص شما: %2$s (اعتبار %3$s)', 'yadam-biar' ), $amount, $code, $expiry ),
+			'coupon_note'   => sprintf( __( '🎁 کد تخفیف %1$s مخصوص شما: %2$s (اعتبار %3$s)', 'yadambiar' ), $amount, $code, $expiry ),
 		);
 	}
 
@@ -175,7 +179,7 @@ class Coupons {
 	public static function subscriptions_in_order( $order ) {
 		$ids = array();
 		foreach ( $order->get_coupon_codes() as $code ) {
-			if ( 0 !== stripos( $code, 'khb-' ) ) {
+			if ( 0 !== stripos( $code, self::CODE_PREFIX ) && 0 !== stripos( $code, self::LEGACY_CODE_PREFIX ) ) {
 				continue;
 			}
 			$coupon = new \WC_Coupon( $code );

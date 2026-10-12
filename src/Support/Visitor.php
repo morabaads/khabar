@@ -18,6 +18,18 @@ final class Visitor {
 
 	const ACCESS_COOKIE = 'yadambiar_access';
 
+	const LEGACY_GUEST_COOKIE = 'khabar_gk';
+
+	/**
+	 * Alphanumeric value of a cookie ('' when missing).
+	 *
+	 * @param string $name Cookie name.
+	 * @return string
+	 */
+	public static function cookie( $name ) {
+		return isset( $_COOKIE[ $name ] ) && is_string( $_COOKIE[ $name ] ) ? (string) preg_replace( '/[^a-zA-Z0-9]/', '', wp_unslash( $_COOKIE[ $name ] ) ) : '';
+	}
+
 	/**
 	 * Client IP.
 	 *
@@ -41,8 +53,15 @@ final class Visitor {
 		if ( $uid ) {
 			return 'u:' . $uid;
 		}
-		$key = isset( $_COOKIE[ self::GUEST_COOKIE ] ) ? preg_replace( '/[^a-zA-Z0-9]/', '', wp_unslash( $_COOKIE[ self::GUEST_COOKIE ] ) ) : '';
-		if ( strlen( $key ) === 32 ) {
+		$key = self::cookie( self::GUEST_COOKIE );
+		if ( 32 !== strlen( $key ) ) {
+			// Guests of the previous plugin version keep their requests (same key, new cookie name).
+			$key = self::cookie( self::LEGACY_GUEST_COOKIE );
+			if ( 32 === strlen( $key ) && $create ) {
+				self::set_cookie( self::GUEST_COOKIE, $key, YEAR_IN_SECONDS );
+			}
+		}
+		if ( 32 === strlen( $key ) ) {
 			return 'g:' . $key;
 		}
 		if ( ! $create ) {

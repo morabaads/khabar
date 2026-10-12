@@ -140,37 +140,37 @@ class RuleEngine {
 		$opts  = array_merge( array( 'price_requires_stock' => true, 'cooldown_ok' => true, 'low_stock_threshold' => 0 ), $opts );
 		$event = self::evaluate( $sub, $snap, $opts );
 		if ( $event ) {
-			return array( 'ok' => true, 'reason' => __( 'شرایط برقرار است و باید اعلان ارسال شود', 'yadam-biar' ) );
+			return array( 'ok' => true, 'reason' => __( 'شرایط برقرار است و باید اعلان ارسال شود', 'yadambiar' ) );
 		}
 		$price      = $snap['price'];
 		$price_cond = null !== $sub->price_below || null !== $sub->price_above || $sub->price_change;
 		$not_stock  = ! $snap['in_stock'];
-		$why_stock  = ! empty( $snap['stocked'] ) && $not_stock ? __( 'کالا موجود است ولی قابل خرید نیست (منتشر نشده یا غیرفعال است)', 'yadam-biar' ) : __( 'کالا هنوز ناموجود است', 'yadam-biar' );
+		$why_stock  = ! empty( $snap['stocked'] ) && $not_stock ? __( 'کالا موجود است ولی قابل خرید نیست (منتشر نشده یا غیرفعال است)', 'yadambiar' ) : __( 'کالا هنوز ناموجود است', 'yadambiar' );
 		if ( ( $sub->in_stock || $sub->min_qty ) && $not_stock ) {
 			return array( 'ok' => false, 'reason' => $why_stock );
 		}
 		if ( ! ( $sub->in_stock || $sub->min_qty ) && $price_cond && $opts['price_requires_stock'] && $not_stock ) {
-			return array( 'ok' => false, 'reason' => __( 'شرط قیمت فقط برای کالای موجود بررسی می‌شود و کالا ناموجود است', 'yadam-biar' ) );
+			return array( 'ok' => false, 'reason' => __( 'شرط قیمت فقط برای کالای موجود بررسی می‌شود و کالا ناموجود است', 'yadambiar' ) );
 		}
 		if ( $sub->min_qty && $snap['manage'] && (int) $snap['qty'] < (int) $sub->min_qty ) {
 			/* translators: 1: stock 2: wanted */
-			return array( 'ok' => false, 'reason' => sprintf( __( 'موجودی (%1$s) کمتر از حداقل درخواستی (%2$s) است', 'yadam-biar' ), (int) $snap['qty'], (int) $sub->min_qty ) );
+			return array( 'ok' => false, 'reason' => sprintf( __( 'موجودی (%1$s) کمتر از حداقل درخواستی (%2$s) است', 'yadambiar' ), (int) $snap['qty'], (int) $sub->min_qty ) );
 		}
 		if ( null !== $sub->price_below && ( null === $price || $price > (float) $sub->price_below ) ) {
 			/* translators: 1: current 2: target */
-			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز به قیمت هدف (%2$s) نرسیده است', 'yadam-biar' ), Money::price_text( $price ), Money::price_text( $sub->price_below ) ) );
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز به قیمت هدف (%2$s) نرسیده است', 'yadambiar' ), Money::price_text( $price ), Money::price_text( $sub->price_below ) ) );
 		}
 		if ( null !== $sub->price_above && ( null === $price || $price < (float) $sub->price_above ) ) {
 			/* translators: 1: current 2: threshold */
-			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز از %2$s بیشتر نشده است', 'yadam-biar' ), Money::price_text( $price ), Money::price_text( $sub->price_above ) ) );
+			return array( 'ok' => false, 'reason' => sprintf( __( 'قیمت فعلی (%1$s) هنوز از %2$s بیشتر نشده است', 'yadambiar' ), Money::price_text( $price ), Money::price_text( $sub->price_above ) ) );
 		}
 		if ( $sub->price_change ) {
 			if ( ! $opts['cooldown_ok'] ) {
-				return array( 'ok' => false, 'reason' => __( 'در فاصله‌ی زمانی بین دو اعلان تغییر قیمت است', 'yadam-biar' ) );
+				return array( 'ok' => false, 'reason' => __( 'در فاصله‌ی زمانی بین دو اعلان تغییر قیمت است', 'yadambiar' ) );
 			}
-			return array( 'ok' => false, 'reason' => __( 'قیمت از زمان ثبت درخواست تغییری نکرده است', 'yadam-biar' ) );
+			return array( 'ok' => false, 'reason' => __( 'قیمت از زمان ثبت درخواست تغییری نکرده است', 'yadambiar' ) );
 		}
-		return array( 'ok' => false, 'reason' => __( 'هیچ شرطی برقرار نیست', 'yadam-biar' ) );
+		return array( 'ok' => false, 'reason' => __( 'هیچ شرطی برقرار نیست', 'yadambiar' ) );
 	}
 
 	/**

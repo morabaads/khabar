@@ -16,6 +16,7 @@ namespace YadamBiar\Channels\Messenger;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Frontend\Account;
 use YadamBiar\Http\RestController;
@@ -27,14 +28,14 @@ use YadamBiar\Support\Phone;
 use YadamBiar\Support\Text;
 use YadamBiar\Support\Visitor;
 
-class MessengerChannel {
+class MessengerChannel implements Module {
 
 	const CODE_TTL = 30 * MINUTE_IN_SECONDS;
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 	}
 
@@ -47,7 +48,7 @@ class MessengerChannel {
 		$tg_base = untrailingslashit( Settings::get( 'telegram_api_base', 'https://api.telegram.org' ) );
 		return array(
 			'telegram' => array(
-				'label'    => __( 'تلگرام', 'yadam-biar' ),
+				'label'    => __( 'تلگرام', 'yadambiar' ),
 				'token'    => (string) Settings::get( 'telegram_token' ),
 				'bot'      => ltrim( (string) Settings::get( 'telegram_bot' ), '@' ),
 				'api'      => ( $tg_base ? $tg_base : 'https://api.telegram.org' ) . '/bot%s/%s',
@@ -56,7 +57,7 @@ class MessengerChannel {
 				'channel'  => self::normalize_chat( Settings::get( 'telegram_channel' ) ),
 			),
 			'bale'     => array(
-				'label'    => __( 'بله', 'yadam-biar' ),
+				'label'    => __( 'بله', 'yadambiar' ),
 				'token'    => (string) Settings::get( 'bale_token' ),
 				'bot'      => ltrim( (string) Settings::get( 'bale_bot' ), '@' ),
 				'api'      => 'https://tapi.bale.ai/bot%s/%s',
@@ -180,11 +181,11 @@ class MessengerChannel {
 		$key    = trim( (string) Settings::get( 'bale_safir_key', '' ) );
 		$bot_id = self::safir_bot_id();
 		if ( '' === $key || ! $bot_id ) {
-			return new \WP_Error( 'yadambiar_safir', __( 'کلید API یا شناسه بازوی سفیر بله تنظیم نشده است.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_safir', __( 'کلید API یا شناسه بازوی سفیر بله تنظیم نشده است.', 'yadambiar' ) );
 		}
 		$to = Phone::international_phone( Phone::normalize_phone( $phone ), '98' );
 		if ( ! $to ) {
-			return new \WP_Error( 'yadambiar_safir', __( 'شماره موبایل نامعتبر', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_safir', __( 'شماره موبایل نامعتبر', 'yadambiar' ) );
 		}
 		$text = ! empty( $message['subject'] ) ? '🔔 ' . $message['subject'] . "\n\n" . $message['text'] : $message['text'];
 		$body = array( 'text' => $text );
@@ -196,7 +197,7 @@ class MessengerChannel {
 				'inline_keyboard' => array(
 					array(
 						array(
-							'text' => __( '🛒 مشاهده و خرید', 'yadam-biar' ),
+							'text' => __( '🛒 مشاهده و خرید', 'yadambiar' ),
 							'url'  => $url,
 						),
 					),
@@ -235,18 +236,18 @@ class MessengerChannel {
 			return true;
 		}
 		$known = array(
-			'2'  => __( 'خطای داخلی سرور سفیر', 'yadam-biar' ),
-			'3'  => __( 'محدودیت سرعت ارسال سفیر', 'yadam-biar' ),
-			'4'  => __( 'داده ارسالی نامعتبر است', 'yadam-biar' ),
-			'8'  => __( 'شماره موبایل نامعتبر است', 'yadam-biar' ),
-			'17' => __( 'این شماره در بله حساب کاربری ندارد', 'yadam-biar' ),
-			'20' => __( 'اعتبار سفیر کافی نیست (شارژ پنل کسب‌وکار بله)', 'yadam-biar' ),
-			'21' => __( 'به سقف تعداد مخاطبان سفیر رسیده‌اید', 'yadam-biar' ),
+			'2'  => __( 'خطای داخلی سرور سفیر', 'yadambiar' ),
+			'3'  => __( 'محدودیت سرعت ارسال سفیر', 'yadambiar' ),
+			'4'  => __( 'داده ارسالی نامعتبر است', 'yadambiar' ),
+			'8'  => __( 'شماره موبایل نامعتبر است', 'yadambiar' ),
+			'17' => __( 'این شماره در بله حساب کاربری ندارد', 'yadambiar' ),
+			'20' => __( 'اعتبار سفیر کافی نیست (شارژ پنل کسب‌وکار بله)', 'yadambiar' ),
+			'21' => __( 'به سقف تعداد مخاطبان سفیر رسیده‌اید', 'yadambiar' ),
 		);
 		$ecode = is_array( $err ) ? (string) ( isset( $err['code'] ) ? $err['code'] : ( isset( $err['error'] ) ? $err['error'] : '' ) ) : '';
 		$edesc = is_array( $err ) ? (string) ( isset( $err['description'] ) ? $err['description'] : ( isset( $err['message'] ) ? $err['message'] : '' ) ) : '';
 		$text  = isset( $known[ $ecode ] ) ? $known[ $ecode ] : ( $edesc ? $edesc : 'HTTP ' . $code . ': ' . mb_substr( $raw, 0, 200 ) );
-		return new \WP_Error( 'yadambiar_safir', __( 'سفیر بله: ', 'yadam-biar' ) . $text . ( $ecode ? ' (' . $ecode . ')' : '' ) );
+		return new \WP_Error( 'yadambiar_safir', __( 'سفیر بله: ', 'yadambiar' ) . $text . ( $ecode ? ' (' . $ecode . ')' : '' ) );
 	}
 
 	/**
@@ -266,7 +267,7 @@ class MessengerChannel {
 	 * @return string
 	 */
 	public static function webhook_url( $network ) {
-		return add_query_arg( 'secret', self::secret( $network ), rest_url( 'yadam-biar/v1/bot/' . $network ) );
+		return add_query_arg( 'secret', self::secret( $network ), rest_url( 'yadambiar/v1/bot/' . $network ) );
 	}
 
 	/**
@@ -300,83 +301,83 @@ class MessengerChannel {
 		$safir = self::phone_ready( $network );
 		if ( $safir ) {
 			/* translators: %d bot id */
-			$out[] = array( 'ok', sprintf( __( 'سفیر تنظیم شده (بازو %d): اعلان شخصی مستقیم به شماره موبایل مشتری در بله ارسال می‌شود و Start لازم نیست. صحت کلید را با «ارسال آزمایشی ← بله (شماره موبایل)» بسنجید.', 'yadam-biar' ), self::safir_bot_id() ) );
+			$out[] = array( 'ok', sprintf( __( 'سفیر تنظیم شده (بازو %d): اعلان شخصی مستقیم به شماره موبایل مشتری در بله ارسال می‌شود و Start لازم نیست. صحت کلید را با «ارسال آزمایشی ← بله (شماره موبایل)» بسنجید.', 'yadambiar' ), self::safir_bot_id() ) );
 		} elseif ( 'bale' === $network && Settings::get( 'bale_safir_key' ) && ! self::safir_bot_id() ) {
-			$out[] = array( 'error', __( 'کلید سفیر وارد شده ولی شناسه بازو (bot_id) مشخص نیست؛ آن را وارد کنید یا توکن ربات را بگذارید.', 'yadam-biar' ) );
+			$out[] = array( 'error', __( 'کلید سفیر وارد شده ولی شناسه بازو (bot_id) مشخص نیست؛ آن را وارد کنید یا توکن ربات را بگذارید.', 'yadambiar' ) );
 		} elseif ( 'bale' === $network ) {
-			$out[] = array( 'warn', __( 'سفیر تنظیم نشده؛ پیام شخصی فقط به مشتریانی می‌رسد که ربات را Start کرده‌اند. برای ارسال مستقیم به شماره موبایل، کلید سفیر را وارد کنید.', 'yadam-biar' ) );
+			$out[] = array( 'warn', __( 'سفیر تنظیم نشده؛ پیام شخصی فقط به مشتریانی می‌رسد که ربات را Start کرده‌اند. برای ارسال مستقیم به شماره موبایل، کلید سفیر را وارد کنید.', 'yadambiar' ) );
 		}
 		if ( ! $n || ! $n['token'] ) {
 			$out[] = $safir
-				? array( 'warn', __( 'توکن ربات وارد نشده؛ فقط برای اعلام در کانال بله لازم است.', 'yadam-biar' ) )
-				: array( 'error', __( 'توکن ربات وارد نشده است.', 'yadam-biar' ) );
+				? array( 'warn', __( 'توکن ربات وارد نشده؛ فقط برای اعلام در کانال بله لازم است.', 'yadambiar' ) )
+				: array( 'error', __( 'توکن ربات وارد نشده است.', 'yadambiar' ) );
 			return $out;
 		}
 		$me = self::api( $network, 'getMe', array() );
 		if ( is_wp_error( $me ) ) {
 			/* translators: %s error */
-			return array( array( 'error', sprintf( __( 'ربات پاسخ نداد (توکن اشتباه است یا سایت به سرور پیام‌رسان دسترسی ندارد): %s', 'yadam-biar' ), $me->get_error_message() ) ) );
+			return array( array( 'error', sprintf( __( 'ربات پاسخ نداد (توکن اشتباه است یا سایت به سرور پیام‌رسان دسترسی ندارد): %s', 'yadambiar' ), $me->get_error_message() ) ) );
 		}
 		$username = isset( $me['username'] ) ? (string) $me['username'] : '';
 		/* translators: %s bot username */
-		$out[] = array( 'ok', sprintf( __( 'توکن درست است؛ ربات ‎@%s پاسخ داد.', 'yadam-biar' ), $username ) );
+		$out[] = array( 'ok', sprintf( __( 'توکن درست است؛ ربات ‎@%s پاسخ داد.', 'yadambiar' ), $username ) );
 		if ( ! $n['bot'] && ! $safir ) {
-			$out[] = array( 'error', __( 'نام کاربری ربات وارد نشده؛ دکمه «دریافت در پیام‌رسان» به مشتری نمایش داده نمی‌شود.', 'yadam-biar' ) );
+			$out[] = array( 'error', __( 'نام کاربری ربات وارد نشده؛ دکمه «دریافت در پیام‌رسان» به مشتری نمایش داده نمی‌شود.', 'yadambiar' ) );
 		} elseif ( $username && 0 !== strcasecmp( $username, $n['bot'] ) ) {
 			/* translators: 1: username in settings 2: username of the token's bot */
-			$out[] = array( 'error', sprintf( __( 'نام کاربری ربات در تنظیمات (%1$s) با ربات این توکن (%2$s) یکی نیست؛ مشتری به ربات اشتباه فرستاده می‌شود.', 'yadam-biar' ), $n['bot'], $username ) );
+			$out[] = array( 'error', sprintf( __( 'نام کاربری ربات در تنظیمات (%1$s) با ربات این توکن (%2$s) یکی نیست؛ مشتری به ربات اشتباه فرستاده می‌شود.', 'yadambiar' ), $n['bot'], $username ) );
 		}
 		if ( ! Settings::has( 'channels_enabled', $network ) ) {
-			$out[] = array( 'error', __( 'این پیام‌رسان در «کانال‌های فعال» (بالای همین صفحه) تیک نخورده؛ پیام شخصی ارسال نمی‌شود.', 'yadam-biar' ) );
+			$out[] = array( 'error', __( 'این پیام‌رسان در «کانال‌های فعال» (بالای همین صفحه) تیک نخورده؛ پیام شخصی ارسال نمی‌شود.', 'yadambiar' ) );
 		}
 		if ( 0 !== strpos( rest_url(), 'https://' ) ) {
-			$out[] = array( 'error', __( 'آدرس سایت HTTPS نیست؛ پیام‌رسان‌ها وب‌هوک بدون HTTPS را قبول نمی‌کنند.', 'yadam-biar' ) );
+			$out[] = array( 'error', __( 'آدرس سایت HTTPS نیست؛ پیام‌رسان‌ها وب‌هوک بدون HTTPS را قبول نمی‌کنند.', 'yadambiar' ) );
 		}
 
 		$info = self::api( $network, 'getWebhookInfo', array() );
 		if ( is_wp_error( $info ) ) {
 			/* translators: %s error */
-			$out[] = array( 'warn', sprintf( __( 'وضعیت وب‌هوک دریافت نشد: %s', 'yadam-biar' ), $info->get_error_message() ) );
+			$out[] = array( 'warn', sprintf( __( 'وضعیت وب‌هوک دریافت نشد: %s', 'yadambiar' ), $info->get_error_message() ) );
 		} else {
 			$url = isset( $info['url'] ) ? (string) $info['url'] : '';
 			if ( '' === $url ) {
-				$out[] = array( 'error', __( 'وب‌هوک ثبت نشده است؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید. بدون آن، Start مشتری به سایت نمی‌رسد و حسابش متصل نمی‌شود.', 'yadam-biar' ) );
+				$out[] = array( 'error', __( 'وب‌هوک ثبت نشده است؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید. بدون آن، Start مشتری به سایت نمی‌رسد و حسابش متصل نمی‌شود.', 'yadambiar' ) );
 			} elseif ( $url !== self::webhook_url( $network ) ) {
-				$out[] = array( 'error', __( 'وب‌هوک ربات به آدرس دیگری ثبت شده (مثلاً سایت یا افزونه دیگری)؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید.', 'yadam-biar' ) );
+				$out[] = array( 'error', __( 'وب‌هوک ربات به آدرس دیگری ثبت شده (مثلاً سایت یا افزونه دیگری)؛ دکمه «ثبت وب‌هوک ربات‌ها» را بزنید.', 'yadambiar' ) );
 			} else {
-				$out[] = array( 'ok', __( 'وب‌هوک درست ثبت شده است.', 'yadam-biar' ) );
+				$out[] = array( 'ok', __( 'وب‌هوک درست ثبت شده است.', 'yadambiar' ) );
 			}
 			if ( ! empty( $info['last_error_message'] ) ) {
 				$when  = ! empty( $info['last_error_date'] ) ? wp_date( 'Y/m/d H:i', (int) $info['last_error_date'] ) : '';
 				/* translators: 1: date 2: error */
-				$out[] = array( 'error', sprintf( __( 'پیام‌رسان آخرین بار نتوانست پیام کاربر را به سایت برساند (%1$s): %2$s — معمولاً فایروال، افزونه امنیتی یا مسدود بودن REST API سایت.', 'yadam-biar' ), $when, $info['last_error_message'] ) );
+				$out[] = array( 'error', sprintf( __( 'پیام‌رسان آخرین بار نتوانست پیام کاربر را به سایت برساند (%1$s): %2$s — معمولاً فایروال، افزونه امنیتی یا مسدود بودن REST API سایت.', 'yadambiar' ), $when, $info['last_error_message'] ) );
 			}
 			if ( ! empty( $info['pending_update_count'] ) ) {
 				/* translators: %d count */
-				$out[] = array( 'warn', sprintf( __( '%d پیام کاربر در صف ربات مانده و هنوز به سایت نرسیده.', 'yadam-biar' ), (int) $info['pending_update_count'] ) );
+				$out[] = array( 'warn', sprintf( __( '%d پیام کاربر در صف ربات مانده و هنوز به سایت نرسیده.', 'yadambiar' ), (int) $info['pending_update_count'] ) );
 			}
 		}
 
 		$linked = $safir ? -1 : (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . Installer::table( 'messenger' ) . ' WHERE network = %s', $network ) ); // phpcs:ignore
-		$out[]  = $safir ? array( 'ok', __( 'با سفیر نیازی به اتصال (Start) مشتریان نیست.', 'yadam-biar' ) ) : ( $linked
+		$out[]  = $safir ? array( 'ok', __( 'با سفیر نیازی به اتصال (Start) مشتریان نیست.', 'yadambiar' ) ) : ( $linked
 			/* translators: %d customers */
-			? array( 'ok', sprintf( __( '%d مشتری حسابش را به ربات متصل کرده است.', 'yadam-biar' ), $linked ) )
-			: array( 'warn', __( 'هنوز هیچ مشتری‌ای متصل نشده. پیام شخصی فقط به مشتریانی می‌رسد که بعد از ثبت درخواست روی «دریافت در پیام‌رسان» زده و در ربات Start را زده باشند.', 'yadam-biar' ) ) );
+			? array( 'ok', sprintf( __( '%d مشتری حسابش را به ربات متصل کرده است.', 'yadambiar' ), $linked ) )
+			: array( 'warn', __( 'هنوز هیچ مشتری‌ای متصل نشده. پیام شخصی فقط به مشتریانی می‌رسد که بعد از ثبت درخواست روی «دریافت در پیام‌رسان» زده و در ربات Start را زده باشند.', 'yadambiar' ) ) );
 
 		if ( $n['channel'] ) {
 			$chat = self::api( $network, 'getChat', array( 'chat_id' => $n['channel'] ) );
 			if ( is_wp_error( $chat ) ) {
 				/* translators: 1: channel 2: error */
-				$out[] = array( 'error', sprintf( __( 'کانال %1$s در دسترس ربات نیست: %2$s — شناسه را بررسی کنید و ربات را ادمین کانال کنید.', 'yadam-biar' ), $n['channel'], $chat->get_error_message() ) );
+				$out[] = array( 'error', sprintf( __( 'کانال %1$s در دسترس ربات نیست: %2$s — شناسه را بررسی کنید و ربات را ادمین کانال کنید.', 'yadambiar' ), $n['channel'], $chat->get_error_message() ) );
 			} else {
 				$member = ! empty( $me['id'] ) ? self::api( $network, 'getChatMember', array( 'chat_id' => $n['channel'], 'user_id' => $me['id'] ) ) : null;
 				$status = is_array( $member ) && isset( $member['status'] ) ? $member['status'] : '';
 				if ( $status && ! in_array( $status, array( 'administrator', 'creator' ), true ) ) {
 					/* translators: %s channel */
-					$out[] = array( 'error', sprintf( __( 'ربات در کانال %s ادمین نیست؛ برای انتشار پست باید ادمین با اجازه ارسال پیام باشد.', 'yadam-biar' ), $n['channel'] ) );
+					$out[] = array( 'error', sprintf( __( 'ربات در کانال %s ادمین نیست؛ برای انتشار پست باید ادمین با اجازه ارسال پیام باشد.', 'yadambiar' ), $n['channel'] ) );
 				} else {
 					/* translators: 1: channel 2: title */
-					$out[] = array( 'ok', sprintf( __( 'کانال %1$s («%2$s») در دسترس ربات است.', 'yadam-biar' ), $n['channel'], isset( $chat['title'] ) ? $chat['title'] : '' ) );
+					$out[] = array( 'ok', sprintf( __( 'کانال %1$s («%2$s») در دسترس ربات است.', 'yadambiar' ), $n['channel'], isset( $chat['title'] ) ? $chat['title'] : '' ) );
 				}
 			}
 		}
@@ -388,7 +389,7 @@ class MessengerChannel {
 	 */
 	public static function routes() {
 		register_rest_route(
-			'yadam-biar/v1',
+			'yadambiar/v1',
 			'/bot/(?P<network>telegram|bale)',
 			array(
 				'methods'             => 'POST',
@@ -397,7 +398,7 @@ class MessengerChannel {
 			)
 		);
 		register_rest_route(
-			'yadam-biar/v1',
+			'yadambiar/v1',
 			'/messenger/link',
 			array(
 				'methods'             => 'POST',
@@ -406,7 +407,7 @@ class MessengerChannel {
 			)
 		);
 		register_rest_route(
-			'yadam-biar/v1',
+			'yadambiar/v1',
 			'/messenger/status',
 			array(
 				'methods'             => 'GET',
@@ -427,7 +428,7 @@ class MessengerChannel {
 	public static function api( $network, $method, $params ) {
 		$n = self::network( $network );
 		if ( ! $n || ! $n['token'] ) {
-			return new \WP_Error( 'yadambiar_msg', __( 'توکن ربات تنظیم نشده است.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_msg', __( 'توکن ربات تنظیم نشده است.', 'yadambiar' ) );
 		}
 		$res = wp_remote_post(
 			sprintf( $n['api'], $n['token'], $method ),
@@ -581,13 +582,13 @@ class MessengerChannel {
 				$username = isset( $message['from']['username'] ) ? $message['from']['username'] : '';
 				self::link( $owner, $network, $chat_id, $username );
 				/* translators: %s site name */
-				self::send( $network, $chat_id, sprintf( __( '✅ حساب شما به «یادم بیار» %s متصل شد. از این پس اعلان‌ها را همین‌جا دریافت می‌کنید.', 'yadam-biar' ), $site ) );
+				self::send( $network, $chat_id, sprintf( __( '✅ حساب شما به «یادم بیار» %s متصل شد. از این پس اعلان‌ها را همین‌جا دریافت می‌کنید.', 'yadambiar' ), $site ) );
 			} else {
-				self::send( $network, $chat_id, __( 'این لینک منقضی شده است. لطفاً از سایت دوباره روی «اتصال» بزنید.', 'yadam-biar' ) );
+				self::send( $network, $chat_id, __( 'این لینک منقضی شده است. لطفاً از سایت دوباره روی «اتصال» بزنید.', 'yadambiar' ) );
 			}
 		} elseif ( preg_match( '#^/stop#i', $text ) ) {
 			self::unlink_chat( $network, $chat_id );
-			self::send( $network, $chat_id, __( 'اتصال قطع شد و دیگر پیامی دریافت نمی‌کنید.', 'yadam-biar' ) );
+			self::send( $network, $chat_id, __( 'اتصال قطع شد و دیگر پیامی دریافت نمی‌کنید.', 'yadambiar' ) );
 		} elseif ( preg_match( '#^/(list|start)#i', $text ) ) {
 			self::send( $network, $chat_id, self::list_text( $network, $chat_id ) );
 		}
@@ -606,7 +607,7 @@ class MessengerChannel {
 		$table = Installer::table( 'messenger' );
 		$owner = $wpdb->get_var( $wpdb->prepare( "SELECT owner_key FROM {$table} WHERE network = %s AND chat_id = %s", $network, $chat_id ) ); // phpcs:ignore
 		if ( ! $owner ) {
-			return __( 'برای دریافت اعلان‌ها، در صفحه محصول روی «یادم بیار» بزنید و گزینه اتصال را انتخاب کنید.', 'yadam-biar' );
+			return __( 'برای دریافت اعلان‌ها، در صفحه محصول روی «یادم بیار» بزنید و گزینه اتصال را انتخاب کنید.', 'yadambiar' );
 		}
 		$query = 0 === strpos( $owner, 'u:' ) ? array( 'user_id' => (int) substr( $owner, 2 ) ) : array( 'owner_key' => $owner );
 		$lines = array();
@@ -617,7 +618,7 @@ class MessengerChannel {
 			$p       = wc_get_product( $sub->variation_id ? $sub->variation_id : $sub->product_id );
 			$lines[] = '• ' . ( $p ? $p->get_name() : '#' . $sub->product_id ) . ' — ' . SubscriptionRepository::conditions_label( $sub );
 		}
-		return $lines ? __( 'درخواست‌های فعال شما:', 'yadam-biar' ) . "\n" . implode( "\n", array_slice( $lines, 0, 20 ) ) : __( 'درخواست فعالی ندارید.', 'yadam-biar' );
+		return $lines ? __( 'درخواست‌های فعال شما:', 'yadambiar' ) . "\n" . implode( "\n", array_slice( $lines, 0, 20 ) ) : __( 'درخواست فعالی ندارید.', 'yadambiar' );
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -636,7 +637,7 @@ class MessengerChannel {
 	 */
 	public static function send( $network, $chat_id, $text, $url = '', $button = '' ) {
 		if ( ! $chat_id ) {
-			return new \WP_Error( 'yadambiar_msg', __( 'حساب پیام‌رسان متصل نیست.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_msg', __( 'حساب پیام‌رسان متصل نیست.', 'yadambiar' ) );
 		}
 		$params = array(
 			'chat_id'                  => $chat_id,
@@ -648,7 +649,7 @@ class MessengerChannel {
 				'inline_keyboard' => array(
 					array(
 						array(
-							'text' => $button ? $button : __( '🛒 مشاهده و خرید', 'yadam-biar' ),
+							'text' => $button ? $button : __( '🛒 مشاهده و خرید', 'yadambiar' ),
 							'url'  => $url,
 						),
 					),
@@ -706,7 +707,7 @@ class MessengerChannel {
 
 		$parent = $target->is_type( 'variation' ) ? wc_get_product( $target->get_parent_id() ) : $target;
 		$link   = $target->is_type( 'variation' ) ? add_query_arg( $target->get_variation_attributes(), get_permalink( $target->get_parent_id() ) ) : get_permalink( $target->get_id() );
-		$link   = add_query_arg( array( 'utm_source' => 'yadam-biar', 'utm_medium' => 'channel' ), $link );
+		$link   = add_query_arg( array( 'utm_source' => 'yadambiar', 'utm_medium' => 'channel' ), $link );
 		$vars   = array(
 			'product_name' => $parent ? $parent->get_name() : $target->get_name(),
 			'variation'    => $target->is_type( 'variation' ) ? '(' . wc_get_formatted_variation( $target, true, false, false ) . ')' : '',
@@ -767,7 +768,7 @@ class MessengerChannel {
 	public static function rest_link( \WP_REST_Request $req ) {
 		$network = sanitize_key( (string) $req->get_param( 'network' ) );
 		if ( ! self::personal_ready( $network ) || ! RestController::rate_ok( 'msglink', 20 ) ) {
-			return new \WP_Error( 'yadambiar_error', __( 'این پیام‌رسان فعال نیست.', 'yadam-biar' ), array( 'status' => 400 ) );
+			return new \WP_Error( 'yadambiar_error', __( 'این پیام‌رسان فعال نیست.', 'yadambiar' ), array( 'status' => 400 ) );
 		}
 		$owner = Account::current_owner( (string) $req->get_param( 'token' ) );
 		$key   = isset( $owner['user_id'] ) ? 'u:' . $owner['user_id'] : ( isset( $owner['owner_key'] ) ? $owner['owner_key'] : Visitor::owner_key( true ) );

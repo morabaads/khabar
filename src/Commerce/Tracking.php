@@ -9,18 +9,19 @@ namespace YadamBiar\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Phone;
 
-class Tracking {
+class Tracking implements Module {
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'template_redirect', array( __CLASS__, 'handle_click' ), 1 );
 		add_action( 'woocommerce_order_status_processing', array( __CLASS__, 'track_order' ) );
 		add_action( 'woocommerce_order_status_completed', array( __CLASS__, 'track_order' ) );
@@ -80,7 +81,7 @@ class Tracking {
 		}
 		$url = add_query_arg(
 			array(
-				'utm_source'   => 'yadam-biar',
+				'utm_source'   => 'yadambiar',
 				'utm_medium'   => 'notification',
 				'utm_campaign' => ( isset( $_GET['k'] ) && 'alt' === $_GET['k'] ) ? 'alternatives' : $sub->type, // phpcs:ignore
 			),

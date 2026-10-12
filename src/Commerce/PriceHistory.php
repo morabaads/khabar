@@ -10,12 +10,13 @@ namespace YadamBiar\Commerce;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
 use YadamBiar\Frontend\ProductWidget;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 
-class PriceHistory {
+class PriceHistory implements Module {
 
 	const LAST_META = '_yadambiar_last_price';
 
@@ -29,7 +30,7 @@ class PriceHistory {
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		if ( ! Settings::get( 'price_history_enabled', 1 ) ) {
 			return;
 		}
@@ -161,7 +162,7 @@ class PriceHistory {
 		global $product;
 		if ( 'tab' === Settings::get( 'price_history_display', 'tab' ) && $product instanceof \WC_Product && '' !== $product->get_price() ) {
 			$tabs['yadambiar_price_history'] = array(
-				'title'    => __( 'تاریخچه قیمت', 'yadam-biar' ),
+				'title'    => __( 'تاریخچه قیمت', 'yadambiar' ),
 				'priority' => 35,
 				'callback' => function () use ( $product ) {
 					echo self::render( $product ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -250,7 +251,7 @@ class PriceHistory {
 				<h3 class="yadambiar-ph-title">
 					<?php
 					/* translators: %s days */
-					printf( esc_html__( 'تاریخچه قیمت %s روز اخیر', 'yadam-biar' ), esc_html( number_format_i18n( $days ) ) );
+					printf( esc_html__( 'تاریخچه قیمت %s روز اخیر', 'yadambiar' ), esc_html( number_format_i18n( $days ) ) );
 					?>
 					<span class="yadambiar-ph-variation"></span>
 				</h3>
@@ -259,8 +260,8 @@ class PriceHistory {
 			<div class="yadambiar-ph-stats"></div>
 			<div class="yadambiar-ph-plot" dir="ltr"></div>
 			<details class="yadambiar-ph-table-wrap">
-				<summary><?php esc_html_e( 'جدول تغییرات قیمت', 'yadam-biar' ); ?></summary>
-				<table class="yadambiar-ph-table"><thead><tr><th><?php esc_html_e( 'تاریخ', 'yadam-biar' ); ?></th><th><?php esc_html_e( 'قیمت', 'yadam-biar' ); ?></th></tr></thead><tbody></tbody></table>
+				<summary><?php esc_html_e( 'جدول تغییرات قیمت', 'yadambiar' ); ?></summary>
+				<table class="yadambiar-ph-table"><thead><tr><th><?php esc_html_e( 'تاریخ', 'yadambiar' ); ?></th><th><?php esc_html_e( 'قیمت', 'yadambiar' ); ?></th></tr></thead><tbody></tbody></table>
 			</details>
 		</div>
 		<?php

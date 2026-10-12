@@ -24,12 +24,12 @@ class SubscriptionRepository {
 	 */
 	public static function statuses() {
 		return array(
-			'pending'   => __( 'در انتظار تایید', 'yadam-biar' ),
-			'active'    => __( 'در انتظار', 'yadam-biar' ),
-			'notified'  => __( 'اطلاع داده شد', 'yadam-biar' ),
-			'purchased' => __( 'خرید شد', 'yadam-biar' ),
-			'cancelled' => __( 'لغو شده', 'yadam-biar' ),
-			'expired'   => __( 'منقضی', 'yadam-biar' ),
+			'pending'   => __( 'در انتظار تایید', 'yadambiar' ),
+			'active'    => __( 'در انتظار', 'yadambiar' ),
+			'notified'  => __( 'اطلاع داده شد', 'yadambiar' ),
+			'purchased' => __( 'خرید شد', 'yadambiar' ),
+			'cancelled' => __( 'لغو شده', 'yadambiar' ),
+			'expired'   => __( 'منقضی', 'yadambiar' ),
 		);
 	}
 
@@ -40,11 +40,11 @@ class SubscriptionRepository {
 	 */
 	public static function types() {
 		return array(
-			'stock'        => __( 'موجود شدن', 'yadam-biar' ),
-			'price_drop'   => __( 'کاهش قیمت', 'yadam-biar' ),
-			'price_rise'   => __( 'افزایش قیمت', 'yadam-biar' ),
-			'price_change' => __( 'تغییر قیمت', 'yadam-biar' ),
-			'combo'        => __( 'قانون ترکیبی', 'yadam-biar' ),
+			'stock'        => __( 'موجود شدن', 'yadambiar' ),
+			'price_drop'   => __( 'کاهش قیمت', 'yadambiar' ),
+			'price_rise'   => __( 'افزایش قیمت', 'yadambiar' ),
+			'price_change' => __( 'تغییر قیمت', 'yadambiar' ),
+			'combo'        => __( 'قانون ترکیبی', 'yadambiar' ),
 		);
 	}
 
@@ -80,22 +80,22 @@ class SubscriptionRepository {
 	public static function conditions_label( $sub ) {
 		$parts = array();
 		if ( $sub->in_stock ) {
-			$parts[] = __( 'موجود شدن', 'yadam-biar' );
+			$parts[] = __( 'موجود شدن', 'yadambiar' );
 		}
 		if ( null !== $sub->price_below ) {
 			/* translators: %s price */
-			$parts[] = sprintf( __( 'قیمت ≤ %s', 'yadam-biar' ), Money::price_text( $sub->price_below ) );
+			$parts[] = sprintf( __( 'قیمت ≤ %s', 'yadambiar' ), Money::price_text( $sub->price_below ) );
 		}
 		if ( null !== $sub->price_above ) {
 			/* translators: %s price */
-			$parts[] = sprintf( __( 'قیمت ≥ %s', 'yadam-biar' ), Money::price_text( $sub->price_above ) );
+			$parts[] = sprintf( __( 'قیمت ≥ %s', 'yadambiar' ), Money::price_text( $sub->price_above ) );
 		}
 		if ( $sub->price_change ) {
-			$parts[] = __( 'هر تغییر قیمت', 'yadam-biar' );
+			$parts[] = __( 'هر تغییر قیمت', 'yadambiar' );
 		}
 		if ( $sub->min_qty ) {
 			/* translators: %d qty */
-			$parts[] = sprintf( __( 'موجودی ≥ %d عدد', 'yadam-biar' ), $sub->min_qty );
+			$parts[] = sprintf( __( 'موجودی ≥ %d عدد', 'yadambiar' ), $sub->min_qty );
 		}
 		return implode( ' + ', $parts );
 	}
@@ -237,11 +237,11 @@ class SubscriptionRepository {
 		$row['created_at'] = Clock::now();
 
 		if ( false === $wpdb->insert( $table, $row ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-			return new \WP_Error( 'yadambiar_db', __( 'خطا در ذخیره درخواست.', 'yadam-biar' ) );
+			return new \WP_Error( 'yadambiar_db', __( 'خطا در ذخیره درخواست.', 'yadambiar' ) );
 		}
 		$id = (int) $wpdb->insert_id;
-		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_0', 'yadam-biar' );
-		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_' . (int) $data['variation_id'], 'yadam-biar' );
+		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_0', 'yadambiar' );
+		wp_cache_delete( 'yadambiar_wc_' . (int) $data['product_id'] . '_' . (int) $data['variation_id'], 'yadambiar' );
 		do_action( 'yadambiar_subscription_created', $id, $row );
 		return $id;
 	}
@@ -406,7 +406,7 @@ class SubscriptionRepository {
 		global $wpdb;
 		$table = Installer::table( 'subscriptions' );
 		$key   = 'yadambiar_wc_' . $product_id . '_' . (int) $variation_id;
-		$count = $fresh ? false : wp_cache_get( $key, 'yadam-biar' );
+		$count = $fresh ? false : wp_cache_get( $key, 'yadambiar' );
 		if ( false !== $count ) {
 			return (int) $count;
 		}
@@ -415,7 +415,7 @@ class SubscriptionRepository {
 			$sql .= $wpdb->prepare( ' AND variation_id = %d', $variation_id );
 		}
 		$count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $product_id ) ); // phpcs:ignore
-		wp_cache_set( $key, $count, 'yadam-biar', 300 );
+		wp_cache_set( $key, $count, 'yadambiar', 300 );
 		return $count;
 	}
 

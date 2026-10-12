@@ -11,20 +11,22 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\Messenger\MessengerChannel;
 use YadamBiar\Channels\OnsiteChannel;
+use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
+use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Subscriptions\SubscriptionRepository;
 use YadamBiar\Support\View;
 use YadamBiar\Support\Visitor;
 
-class Account {
+class Account implements Module {
 
 	const ENDPOINT = 'yadambiar-alerts';
 
 	/**
 	 * Hooks.
 	 */
-	public static function init() {
+	public function register() {
 		add_action( 'init', array( __CLASS__, 'add_endpoint' ) );
 		add_filter( 'woocommerce_get_query_vars', array( __CLASS__, 'query_vars' ) );
 		add_filter( 'woocommerce_account_menu_items', array( __CLASS__, 'menu' ) );
@@ -66,12 +68,12 @@ class Account {
 		$new = array();
 		foreach ( $items as $key => $label ) {
 			if ( 'customer-logout' === $key ) {
-				$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadam-biar' );
+				$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadambiar' );
 			}
 			$new[ $key ] = $label;
 		}
 		if ( ! isset( $new[ self::ENDPOINT ] ) ) {
-			$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadam-biar' );
+			$new[ self::ENDPOINT ] = __( 'یادآوری‌های من', 'yadambiar' );
 		}
 		return $new;
 	}
@@ -82,7 +84,7 @@ class Account {
 	 * @return string
 	 */
 	public static function title() {
-		return __( 'یادآوری‌های من', 'yadam-biar' );
+		return __( 'یادآوری‌های من', 'yadambiar' );
 	}
 
 	/**
@@ -163,12 +165,12 @@ class Account {
 
 		ob_start();
 		if ( ! $owner ) {
-			echo '<div class="yadambiar-panel"><p>' . esc_html__( 'برای مشاهده درخواست‌ها وارد حساب کاربری شوید یا از لینک ارسال‌شده در پیام استفاده کنید.', 'yadam-biar' ) . '</p></div>';
+			echo '<div class="yadambiar-panel"><p>' . esc_html__( 'برای مشاهده درخواست‌ها وارد حساب کاربری شوید یا از لینک ارسال‌شده در پیام استفاده کنید.', 'yadambiar' ) . '</p></div>';
 			return ob_get_clean();
 		}
 		$subs     = SubscriptionRepository::for_owner( $owner );
 		$notes    = OnsiteChannel::latest( isset( $owner['owner_key'] ) ? $owner['owner_key'] : '', 10 );
-		$channels = array_intersect_key( Settings::channels(), array_flip( (array) Settings::get( 'channels_enabled' ) ) );
+		$channels = array_intersect_key( Catalog::channels(), array_flip( (array) Settings::get( 'channels_enabled' ) ) );
 		$messengers = array();
 		foreach ( array( 'telegram', 'bale' ) as $network ) {
 			if ( ! MessengerChannel::available( $network ) ) {

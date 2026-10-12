@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Core\Installer;
-use YadamBiar\Settings\Settings;
+use YadamBiar\Settings\Catalog;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -39,13 +39,13 @@ class LogTable extends \WP_List_Table {
 	 */
 	public function get_columns() {
 		return array(
-			'created_at' => __( 'زمان', 'yadam-biar' ),
-			'event'      => __( 'رویداد', 'yadam-biar' ),
-			'product'    => __( 'محصول', 'yadam-biar' ),
-			'channel'    => __( 'کانال', 'yadam-biar' ),
-			'recipient'  => __( 'گیرنده', 'yadam-biar' ),
-			'status'     => __( 'وضعیت', 'yadam-biar' ),
-			'message'    => __( 'پیام', 'yadam-biar' ),
+			'created_at' => __( 'زمان', 'yadambiar' ),
+			'event'      => __( 'رویداد', 'yadambiar' ),
+			'product'    => __( 'محصول', 'yadambiar' ),
+			'channel'    => __( 'کانال', 'yadambiar' ),
+			'recipient'  => __( 'گیرنده', 'yadambiar' ),
+			'status'     => __( 'وضعیت', 'yadambiar' ),
+			'message'    => __( 'پیام', 'yadambiar' ),
 		);
 	}
 
@@ -58,9 +58,9 @@ class LogTable extends \WP_List_Table {
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
 		$base    = admin_url( 'admin.php?page=yadambiar&view=logs' );
 		return array(
-			'all'    => '<a href="' . esc_url( $base ) . '" class="' . ( $current ? '' : 'current' ) . '">' . esc_html__( 'همه', 'yadam-biar' ) . '</a>',
-			'sent'   => '<a href="' . esc_url( add_query_arg( 'status', 'sent', $base ) ) . '" class="' . ( 'sent' === $current ? 'current' : '' ) . '">' . esc_html__( 'موفق', 'yadam-biar' ) . '</a>',
-			'failed' => '<a href="' . esc_url( add_query_arg( 'status', 'failed', $base ) ) . '" class="' . ( 'failed' === $current ? 'current' : '' ) . '">' . esc_html__( 'ناموفق', 'yadam-biar' ) . '</a>',
+			'all'    => '<a href="' . esc_url( $base ) . '" class="' . ( $current ? '' : 'current' ) . '">' . esc_html__( 'همه', 'yadambiar' ) . '</a>',
+			'sent'   => '<a href="' . esc_url( add_query_arg( 'status', 'sent', $base ) ) . '" class="' . ( 'sent' === $current ? 'current' : '' ) . '">' . esc_html__( 'موفق', 'yadambiar' ) . '</a>',
+			'failed' => '<a href="' . esc_url( add_query_arg( 'status', 'failed', $base ) ) . '" class="' . ( 'failed' === $current ? 'current' : '' ) . '">' . esc_html__( 'ناموفق', 'yadambiar' ) . '</a>',
 		);
 	}
 
@@ -105,7 +105,7 @@ class LogTable extends \WP_List_Table {
 			case 'created_at':
 				return esc_html( AdminApp::date( $item->created_at ) );
 			case 'event':
-				$events = Settings::events();
+				$events = Catalog::events();
 				return esc_html( $events[ $item->event ] ?? $item->event );
 			case 'product':
 				$p = wc_get_product( $item->variation_id ? $item->variation_id : $item->product_id );
@@ -114,21 +114,21 @@ class LogTable extends \WP_List_Table {
 				if ( 'all' === $item->channel ) {
 					return '—';
 				}
-				$ch = Settings::channels();
+				$ch = Catalog::channels();
 				return esc_html( $ch[ $item->channel ] ?? $item->channel );
 			case 'recipient':
 				// Request number: shows which request each message came from.
-				$req = $item->subscription_id ? '<br><a class="yadambiar-muted" href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&s=' . rawurlencode( $item->recipient ) ) ) . '">' . esc_html__( 'درخواست', 'yadam-biar' ) . ' #' . (int) $item->subscription_id . '</a>' : '';
+				$req = $item->subscription_id ? '<br><a class="yadambiar-muted" href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&s=' . rawurlencode( $item->recipient ) ) ) . '">' . esc_html__( 'درخواست', 'yadambiar' ) . ' #' . (int) $item->subscription_id . '</a>' : '';
 				return '<span dir="ltr">' . esc_html( $item->recipient ) . '</span>' . $req;
 			case 'status':
 				if ( 'sent' === $item->status ) {
-					return '<span class="yadambiar-status yadambiar-status-notified">' . esc_html__( 'ارسال شد', 'yadam-biar' ) . '</span>';
+					return '<span class="yadambiar-status yadambiar-status-notified">' . esc_html__( 'ارسال شد', 'yadambiar' ) . '</span>';
 				}
 				if ( 'skipped' === $item->status ) {
-					return '<span class="yadambiar-status yadambiar-status-active">' . esc_html__( 'ارسال نشد (تکراری)', 'yadam-biar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small>';
+					return '<span class="yadambiar-status yadambiar-status-active">' . esc_html__( 'ارسال نشد (تکراری)', 'yadambiar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small>';
 				}
 				$retry = wp_nonce_url( admin_url( 'admin-post.php?action=yadambiar_retry&log=' . $item->id ), 'yadambiar_retry' );
-				return '<span class="yadambiar-status yadambiar-status-cancelled">' . esc_html__( 'ناموفق', 'yadam-biar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small><br><a href="' . esc_url( $retry ) . '">' . esc_html__( 'ارسال مجدد', 'yadam-biar' ) . '</a>';
+				return '<span class="yadambiar-status yadambiar-status-cancelled">' . esc_html__( 'ناموفق', 'yadambiar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small><br><a href="' . esc_url( $retry ) . '">' . esc_html__( 'ارسال مجدد', 'yadambiar' ) . '</a>';
 			case 'message':
 				return '<div class="yadambiar-log-msg">' . nl2br( esc_html( $item->message ) ) . '</div>';
 		}
@@ -139,6 +139,6 @@ class LogTable extends \WP_List_Table {
 	 * Empty message.
 	 */
 	public function no_items() {
-		esc_html_e( 'هنوز اعلانی ارسال نشده است.', 'yadam-biar' );
+		esc_html_e( 'هنوز اعلانی ارسال نشده است.', 'yadambiar' );
 	}
 }

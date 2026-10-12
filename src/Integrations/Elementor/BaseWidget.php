@@ -19,7 +19,7 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 	 * @return string[]
 	 */
 	public function get_categories() {
-		return array( 'yadam-biar', 'woocommerce-elements' );
+		return array( 'yadambiar', 'woocommerce-elements' );
 	}
 
 	/**
@@ -28,7 +28,7 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 	 * @return string[]
 	 */
 	public function get_script_depends() {
-		return array( 'yadam-biar' );
+		return array( 'yadambiar' );
 	}
 
 	/**
@@ -37,7 +37,7 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 	 * @return string[]
 	 */
 	public function get_style_depends() {
-		return array( 'yadam-biar' );
+		return array( 'yadambiar' );
 	}
 
 	/**
@@ -46,7 +46,7 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 	 * @return string[]
 	 */
 	public function get_keywords() {
-		return array( 'yadam-biar', 'یادم بیار', 'stock', 'notify', 'woocommerce', 'price' );
+		return array( 'yadambiar', 'یادم بیار', 'stock', 'notify', 'woocommerce', 'price' );
 	}
 
 	/**
@@ -56,19 +56,19 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 		$this->add_control(
 			'source',
 			array(
-				'label'   => __( 'محصول', 'yadam-biar' ),
+				'label'   => __( 'محصول', 'yadambiar' ),
 				'type'    => Controls_Manager::SELECT,
 				'default' => 'current',
 				'options' => array(
-					'current' => __( 'محصول همین صفحه', 'yadam-biar' ),
-					'custom'  => __( 'انتخاب با شناسه', 'yadam-biar' ),
+					'current' => __( 'محصول همین صفحه', 'yadambiar' ),
+					'custom'  => __( 'انتخاب با شناسه', 'yadambiar' ),
 				),
 			)
 		);
 		$this->add_control(
 			'product_id',
 			array(
-				'label'     => __( 'شناسه محصول', 'yadam-biar' ),
+				'label'     => __( 'شناسه محصول', 'yadambiar' ),
 				'type'      => Controls_Manager::NUMBER,
 				'min'       => 1,
 				'condition' => array( 'source' => 'custom' ),
@@ -100,13 +100,13 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 	 */
 	protected function color_var_controls( $prefix = 'v_' ) {
 		$fields = array(
-			'accent'    => __( 'رنگ اصلی', 'yadam-biar' ),
-			'on_accent' => __( 'رنگ متن روی دکمه', 'yadam-biar' ),
-			'ink'       => __( 'رنگ متن اصلی', 'yadam-biar' ),
-			'muted'     => __( 'رنگ متن کم‌رنگ', 'yadam-biar' ),
-			'bg'        => __( 'پس‌زمینه', 'yadam-biar' ),
-			'soft'      => __( 'پس‌زمینه ملایم', 'yadam-biar' ),
-			'line'      => __( 'رنگ حاشیه‌ها', 'yadam-biar' ),
+			'accent'    => __( 'رنگ اصلی', 'yadambiar' ),
+			'on_accent' => __( 'رنگ متن روی دکمه', 'yadambiar' ),
+			'ink'       => __( 'رنگ متن اصلی', 'yadambiar' ),
+			'muted'     => __( 'رنگ متن کم‌رنگ', 'yadambiar' ),
+			'bg'        => __( 'پس‌زمینه', 'yadambiar' ),
+			'soft'      => __( 'پس‌زمینه ملایم', 'yadambiar' ),
+			'line'      => __( 'رنگ حاشیه‌ها', 'yadambiar' ),
 		);
 		foreach ( $fields as $key => $label ) {
 			$this->add_control( $prefix . $key, array( 'label' => $label, 'type' => Controls_Manager::COLOR ) );
@@ -114,7 +114,7 @@ abstract class BaseWidget extends \Elementor\Widget_Base {
 		$this->add_control(
 			$prefix . 'radius',
 			array(
-				'label'      => __( 'گردی گوشه‌ها', 'yadam-biar' ),
+				'label'      => __( 'گردی گوشه‌ها', 'yadambiar' ),
 				'type'       => Controls_Manager::SLIDER,
 				'size_units' => array( 'px' ),
 				'range'      => array( 'px' => array( 'min' => 0, 'max' => 30 ) ),

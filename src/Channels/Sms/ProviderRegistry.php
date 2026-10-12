@@ -40,48 +40,48 @@ class ProviderRegistry {
 	 */
 	public static function all() {
 		$native = array(
-			'kavenegar'   => array( __( 'کاوه‌نگار', 'yadam-biar' ), 'kavenegar' ),
-			'smsir'       => array( __( 'SMS.ir', 'yadam-biar' ), 'smsir' ),
-			'melipayamak' => array( __( 'ملی پیامک', 'yadam-biar' ), 'payamak_panel' ),
-			'ippanel'     => array( __( 'IPPanel', 'yadam-biar' ), 'ippanel' ),
-			'farazsms'    => array( __( 'فراز اس‌ام‌اس', 'yadam-biar' ), 'ippanel' ),
-			'iranpayamak' => array( __( 'ایران پیامک', 'yadam-biar' ), 'iranpayamak' ),
-			'ghasedak'    => array( __( 'قاصدک', 'yadam-biar' ), 'ghasedak' ),
-			'asanak'      => array( __( 'آسانک', 'yadam-biar' ), 'asanak' ),
-			'raygansms'   => array( __( 'رایگان اس‌ام‌اس', 'yadam-biar' ), 'raygansms' ),
-			'sabanovin'   => array( __( 'صبا نوین', 'yadam-biar' ), 'sabanovin' ),
-			'payamresan'  => array( __( 'پیام رسان', 'yadam-biar' ), 'payamresan' ),
-			'farapayamak' => array( __( 'فراپیامک', 'yadam-biar' ), 'payamak_panel' ),
-			'rayansms'    => array( __( 'رایان اس‌ام‌اس', 'yadam-biar' ), 'payamak_panel' ),
+			'kavenegar'   => array( __( 'کاوه‌نگار', 'yadambiar' ), 'kavenegar' ),
+			'smsir'       => array( __( 'SMS.ir', 'yadambiar' ), 'smsir' ),
+			'melipayamak' => array( __( 'ملی پیامک', 'yadambiar' ), 'payamak_panel' ),
+			'ippanel'     => array( __( 'IPPanel', 'yadambiar' ), 'ippanel' ),
+			'farazsms'    => array( __( 'فراز اس‌ام‌اس', 'yadambiar' ), 'ippanel' ),
+			'iranpayamak' => array( __( 'ایران پیامک', 'yadambiar' ), 'iranpayamak' ),
+			'ghasedak'    => array( __( 'قاصدک', 'yadambiar' ), 'ghasedak' ),
+			'asanak'      => array( __( 'آسانک', 'yadambiar' ), 'asanak' ),
+			'raygansms'   => array( __( 'رایگان اس‌ام‌اس', 'yadambiar' ), 'raygansms' ),
+			'sabanovin'   => array( __( 'صبا نوین', 'yadambiar' ), 'sabanovin' ),
+			'payamresan'  => array( __( 'پیام رسان', 'yadambiar' ), 'payamresan' ),
+			'farapayamak' => array( __( 'فراپیامک', 'yadambiar' ), 'payamak_panel' ),
+			'rayansms'    => array( __( 'رایان اس‌ام‌اس', 'yadambiar' ), 'payamak_panel' ),
 		);
 		$compat = array(
-			'modirpayamak'  => __( 'مدیر پیامک', 'yadam-biar' ),
-			'maxsms'        => __( 'مکس اس‌ام‌اس', 'yadam-biar' ),
-			'najva'         => __( 'نجوا', 'yadam-biar' ),
-			'atiyeh'        => __( 'آتیه داده‌پرداز', 'yadam-biar' ),
-			'sepidsms'      => __( 'سپید اس‌ام‌اس', 'yadam-biar' ),
-			'iransms'       => __( 'ایران اس‌ام‌اس', 'yadam-biar' ),
-			'afzanpayamak'  => __( 'افزان پیامک نوین', 'yadam-biar' ),
-			'bartarpayamak' => __( 'برتر پیامک', 'yadam-biar' ),
-			'parsgreen'     => __( 'پارس گرین', 'yadam-biar' ),
-			'novinsms'      => __( 'سامانه پیام کوتاه نوین', 'yadam-biar' ),
-			'karapayamak'   => __( 'کارا پیامک', 'yadam-biar' ),
-			'parssms'       => __( 'پارس اس‌ام‌اس', 'yadam-biar' ),
-			'novinpayamak'  => __( 'نوین پیامک', 'yadam-biar' ),
-			'behinpayam'    => __( 'بهین پیام', 'yadam-biar' ),
-			'payamgostar'   => __( 'پیام گستر', 'yadam-biar' ),
-			'soheilpayamak' => __( 'سهیل پیامک', 'yadam-biar' ),
-			'payamakfori'   => __( 'پیامک فوری', 'yadam-biar' ),
-			'hamyarpayamak' => __( 'همیار پیامک', 'yadam-biar' ),
-			'toseepayamak'  => __( 'توسعه پیامک', 'yadam-biar' ),
-			'radpayamak'    => __( 'راد پیامک', 'yadam-biar' ),
-			'asanpayam'     => __( 'آسان پیام', 'yadam-biar' ),
+			'modirpayamak'  => __( 'مدیر پیامک', 'yadambiar' ),
+			'maxsms'        => __( 'مکس اس‌ام‌اس', 'yadambiar' ),
+			'najva'         => __( 'نجوا', 'yadambiar' ),
+			'atiyeh'        => __( 'آتیه داده‌پرداز', 'yadambiar' ),
+			'sepidsms'      => __( 'سپید اس‌ام‌اس', 'yadambiar' ),
+			'iransms'       => __( 'ایران اس‌ام‌اس', 'yadambiar' ),
+			'afzanpayamak'  => __( 'افزان پیامک نوین', 'yadambiar' ),
+			'bartarpayamak' => __( 'برتر پیامک', 'yadambiar' ),
+			'parsgreen'     => __( 'پارس گرین', 'yadambiar' ),
+			'novinsms'      => __( 'سامانه پیام کوتاه نوین', 'yadambiar' ),
+			'karapayamak'   => __( 'کارا پیامک', 'yadambiar' ),
+			'parssms'       => __( 'پارس اس‌ام‌اس', 'yadambiar' ),
+			'novinpayamak'  => __( 'نوین پیامک', 'yadambiar' ),
+			'behinpayam'    => __( 'بهین پیام', 'yadambiar' ),
+			'payamgostar'   => __( 'پیام گستر', 'yadambiar' ),
+			'soheilpayamak' => __( 'سهیل پیامک', 'yadambiar' ),
+			'payamakfori'   => __( 'پیامک فوری', 'yadambiar' ),
+			'hamyarpayamak' => __( 'همیار پیامک', 'yadambiar' ),
+			'toseepayamak'  => __( 'توسعه پیامک', 'yadambiar' ),
+			'radpayamak'    => __( 'راد پیامک', 'yadambiar' ),
+			'asanpayam'     => __( 'آسان پیام', 'yadambiar' ),
 		);
 		$out = $native;
 		foreach ( $compat as $key => $label ) {
 			$out[ $key ] = array( $label, 'compat' );
 		}
-		$out['webhook'] = array( __( 'وب‌سرویس سفارشی (HTTP)', 'yadam-biar' ), 'webhook' );
+		$out['webhook'] = array( __( 'وب‌سرویس سفارشی (HTTP)', 'yadambiar' ), 'webhook' );
 		return apply_filters( 'yadambiar_sms_providers', $out );
 	}
 
@@ -93,7 +93,7 @@ class ProviderRegistry {
 	public static function options() {
 		$out = array();
 		foreach ( self::all() as $key => $p ) {
-			$out[ $key ] = 'compat' === $p[1] ? $p[0] . ' ' . __( '(سازگار)', 'yadam-biar' ) : $p[0];
+			$out[ $key ] = 'compat' === $p[1] ? $p[0] . ' ' . __( '(سازگار)', 'yadambiar' ) : $p[0];
 		}
 		return $out;
 	}
