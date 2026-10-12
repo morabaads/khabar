@@ -144,9 +144,9 @@ class Khabar_Channels {
 				'event'           => $event,
 				'channel'         => $channel,
 				'recipient'       => (string) $recipient,
-				'status'          => true === $result ? 'sent' : 'failed',
+				'status'          => true === $result ? 'sent' : ( 'skipped' === $result ? 'skipped' : 'failed' ),
 				'message'         => $text,
-				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : 'failed' ),
+				'error'           => is_wp_error( $result ) ? $result->get_error_message() : ( true === $result ? '' : ( 'skipped' === $result ? __( 'تکراری: همین اعلان اخیراً برای این شخص ارسال شده بود', 'khabar' ) : 'failed' ) ),
 				'created_at'      => Khabar_Utils::now(),
 			)
 		);

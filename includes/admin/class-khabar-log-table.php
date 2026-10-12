@@ -105,13 +105,21 @@ class Khabar_Log_Table extends WP_List_Table {
 				$p = wc_get_product( $item->variation_id ? $item->variation_id : $item->product_id );
 				return $p ? '<a href="' . esc_url( get_edit_post_link( $item->product_id ) ) . '">' . esc_html( $p->get_name() ) . '</a>' : '—';
 			case 'channel':
+				if ( 'all' === $item->channel ) {
+					return '—';
+				}
 				$ch = Khabar_Settings::channels();
 				return esc_html( $ch[ $item->channel ] ?? $item->channel );
 			case 'recipient':
-				return '<span dir="ltr">' . esc_html( $item->recipient ) . '</span>';
+				// Request number: shows which request each message came from.
+				$req = $item->subscription_id ? '<br><a class="khabar-muted" href="' . esc_url( admin_url( 'admin.php?page=khabar&view=requests&s=' . rawurlencode( $item->recipient ) ) ) . '">' . esc_html__( 'درخواست', 'khabar' ) . ' #' . (int) $item->subscription_id . '</a>' : '';
+				return '<span dir="ltr">' . esc_html( $item->recipient ) . '</span>' . $req;
 			case 'status':
 				if ( 'sent' === $item->status ) {
 					return '<span class="khabar-status khabar-status-notified">' . esc_html__( 'ارسال شد', 'khabar' ) . '</span>';
+				}
+				if ( 'skipped' === $item->status ) {
+					return '<span class="khabar-status khabar-status-active">' . esc_html__( 'ارسال نشد (تکراری)', 'khabar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small>';
 				}
 				$retry = wp_nonce_url( admin_url( 'admin-post.php?action=khabar_retry&log=' . $item->id ), 'khabar_retry' );
 				return '<span class="khabar-status khabar-status-cancelled">' . esc_html__( 'ناموفق', 'khabar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small><br><a href="' . esc_url( $retry ) . '">' . esc_html__( 'ارسال مجدد', 'khabar' ) . '</a>';

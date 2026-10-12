@@ -127,7 +127,10 @@ class Khabar_Reports {
 			if ( ! isset( $out[ $r->channel ] ) ) {
 				$out[ $r->channel ] = array( 'sent' => 0, 'failed' => 0 );
 			}
-			$out[ $r->channel ][ 'sent' === $r->status ? 'sent' : 'failed' ] += (int) $r->c;
+			if ( ! in_array( $r->status, array( 'sent', 'failed' ), true ) ) {
+				continue; // Skipped duplicates are neither.
+			}
+			$out[ $r->channel ][ $r->status ] += (int) $r->c;
 		}
 		return $out;
 	}

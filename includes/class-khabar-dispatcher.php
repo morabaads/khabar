@@ -88,6 +88,46 @@ class Khabar_Dispatcher {
 	}
 
 	/**
+	 * Has this person (by user, email or phone, on any of their requests) already received this alert
+	 * for this item within the duplicate window?
+	 *
+	 * @param object $sub       Subscription.
+	 * @param string $event     Event.
+	 * @param int    $target_id Product / variation id.
+	 * @return bool
+	 */
+	public static function recently_notified( $sub, $event, $target_id ) {
+		global $wpdb;
+		$hours = (int) Khabar_Settings::get( 'duplicate_window', 72 );
+		if ( $hours <= 0 ) {
+			return false;
+		}
+		// back_in_stock / low_stock are the same news ("it's available").
+		$events = in_array( $event, array( 'back_in_stock', 'low_stock' ), true ) ? array( 'back_in_stock', 'low_stock' ) : array( $event );
+		$who    = array();
+		$args   = array();
+		if ( $sub->user_id ) {
+			$who[]  = 's.user_id = %d';
+			$args[] = (int) $sub->user_id;
+		}
+		if ( $sub->email ) {
+			$who[]  = 's.email = %s';
+			$args[] = $sub->email;
+		}
+		if ( $sub->phone ) {
+			$who[]  = 's.phone = %s';
+			$args[] = $sub->phone;
+		}
+		if ( ! $who ) {
+			return false;
+		}
+		$log  = Khabar_Install::table( 'log' );
+		$subs = Khabar_Install::table( 'subscriptions' );
+		$sql  = "SELECT l.id FROM {$log} l INNER JOIN {$subs} s ON s.id = l.subscription_id WHERE l.status = 'sent' AND l.subscription_id <> %d AND l.variation_id = %d AND l.created_at >= %s AND l.event IN (" . implode( ',', array_fill( 0, count( $events ), '%s' ) ) . ') AND (' . implode( ' OR ', $who ) . ') LIMIT 1';
+		return (bool) $wpdb->get_var( $wpdb->prepare( $sql, array_merge( array( (int) $sub->id, (int) $target_id, Khabar_Utils::now( -$hours * HOUR_IN_SECONDS ) ), $events, $args ) ) ); // phpcs:ignore
+	}
+
+	/**
 	 * Identities of a subscriber (user, email, phone) used to send one message per person.
 	 *
 	 * @param object $sub Subscription.
@@ -186,7 +226,15 @@ class Khabar_Dispatcher {
 			foreach ( self::contact_keys( $sub ) as $contact ) {
 				$keys[] = $event . '|' . $match->get_id() . '|' . $contact;
 			}
-			if ( $keys && array_intersect_key( $reached, array_flip( $keys ) ) ) {
+			$dup_run = $keys && array_intersect_key( $reached, array_flip( $keys ) );
+			// Across runs too: the same person (another request of theirs, a re-subscription, a re-activated
+			// request) does not get the same alert for the same item again within the duplicate window.
+			$dup_old = ! $dup_run && ! Khabar_Rules::is_recurring( $sub ) && self::recently_notified( $sub, $event, $match->get_id() );
+			if ( $dup_old ) {
+				$sub->notified_target = $match->get_id();
+				Khabar_Channels::log( $sub, $event, 'all', $sub->email ? $sub->email : $sub->phone, '', 'skipped' );
+			}
+			if ( $dup_run || $dup_old ) {
 				if ( ! Khabar_Rules::is_recurring( $sub ) ) {
 					Khabar_Subscriptions::update(
 						$sub->id,

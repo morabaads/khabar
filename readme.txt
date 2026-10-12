@@ -4,7 +4,7 @@ Tags: woocommerce, back in stock, price alert, waitlist, sms
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 License: GPLv2 or later
 
 Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooCommerce via SMS (Kavenegar, Melipayamak, IPPanel, SMS.ir, custom), email, on-site, web push, Telegram and Bale.
@@ -14,6 +14,9 @@ Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooC
 See README.md for full documentation (Persian).
 
 == Changelog ==
+
+= 1.7.4 =
+* The same alert for the same item is not sent to the same person again within 72 hours (setting in Advanced; 0 = off), even across different requests or days. Skipped duplicates appear in the send log; each log row shows its request number.
 
 = 1.7.3 =
 * Fix: in-stock products/variations without a price were never notified (WooCommerce treats them as not purchasable). Empty price shows as 'استعلام در سایت' in messages.

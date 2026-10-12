@@ -739,6 +739,29 @@ t( 'notified' === sub_status( $np_sub ), 'in-stock variation without price is no
 $np_sms = end( $GLOBALS['khabar_sms'] );
 t( $np_sms && false !== strpos( $np_sms['text'], 'استعلام در سایت' ), 'empty price shown as «استعلام در سایت»' );
 
+echo "\n== Same alert to the same person on another day ==\n";
+settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'waves_enabled' => 0, 'exclusive_enabled' => 0, 'coupon_enabled' => 0, 'duplicate_window' => 72 ) );
+$dd_pid = simple_product( 'لپ تاپ UX433FLC - B', 1000, 0 );
+$dd_a   = Khabar_Subscriptions::create( array( 'product_id' => $dd_pid, 'in_stock' => 1, 'email' => 'reza@example.com', 'name' => 'علی' ) );
+wc_update_product_stock( wc_get_product( $dd_pid ), 2, 'set' );
+reset_capture();
+Khabar_Dispatcher::check_product( $dd_pid );
+t( 1 === count( $GLOBALS['khabar_mail'] ) && 'notified' === sub_status( $dd_a ), 'day 1: one email' );
+// Day 2: the same person has another request for the same item (new request / re-activated one).
+$dd_b = Khabar_Subscriptions::create( array( 'product_id' => $dd_pid, 'in_stock' => 1, 'email' => 'reza@example.com', 'name' => 'Reza' ) );
+reset_capture();
+Khabar_Dispatcher::check_product( $dd_pid );
+t( 0 === count( $GLOBALS['khabar_mail'] ), 'day 2: no second email for the same item' );
+t( 'notified' === sub_status( $dd_b ), 'second request closed as notified' );
+$dd_log = $GLOBALS['wpdb']->get_row( $GLOBALS['wpdb']->prepare( 'SELECT status, error FROM ' . Khabar_Install::table( 'log' ) . ' WHERE subscription_id = %d ORDER BY id DESC LIMIT 1', $dd_b ) );
+t( $dd_log && 'skipped' === $dd_log->status && false !== strpos( $dd_log->error, 'تکراری' ), 'skipped duplicate recorded in the send log' );
+settings( array( 'duplicate_window' => 0 ) );
+$dd_c = Khabar_Subscriptions::create( array( 'product_id' => $dd_pid, 'in_stock' => 1, 'email' => 'reza@example.com' ) );
+reset_capture();
+Khabar_Dispatcher::check_product( $dd_pid );
+t( 1 === count( $GLOBALS['khabar_mail'] ), 'window 0 = guard off (sent again)' );
+settings( array( 'duplicate_window' => 72 ) );
+
 echo "\n== No duplicate sends ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'coupon_enabled' => 0, 'waves_enabled' => 0, 'exclusive_enabled' => 0 ) );
 $dup_pid = simple_product( 'دسته بازی MR-55', 500000, 0 );
