@@ -10,7 +10,8 @@ namespace YadamBiar\Notifications;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\ChannelBroadcaster;
+use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\Sms\ProviderRegistry;
 use YadamBiar\Commerce\Coupons;
 use YadamBiar\Commerce\Reservation;
@@ -280,7 +281,7 @@ class Dispatcher implements Module {
 
 		// Announce restocks of high-demand items in the store's messenger channels.
 		foreach ( $restocked as $tid => $info ) {
-			MessengerChannel::broadcast_restock( $info[0], $info[1], $waiting_before );
+			ChannelBroadcaster::broadcast_restock( $info[0], $info[1], $waiting_before );
 		}
 
 		if ( $more ) {
@@ -474,7 +475,7 @@ class Dispatcher implements Module {
 					$row['warnings'][] = __( 'پیامک انتخاب شده ولی شماره موبایل ثبت نشده', 'yadambiar' );
 				} elseif ( 'email' === $ch && ! $sub->email ) {
 					$row['warnings'][] = __( 'ایمیل انتخاب شده ولی آدرس ایمیل ثبت نشده', 'yadambiar' );
-				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) && MessengerChannel::phone_ready( $ch ) && ! $sub->phone ) {
+				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) && MessengerConfig::phone_ready( $ch ) && ! $sub->phone ) {
 					$row['warnings'][] = __( 'بله انتخاب شده ولی شماره موبایل ثبت نشده (سفیر به شماره موبایل ارسال می‌کند)', 'yadambiar' );
 				} elseif ( in_array( $ch, array( 'telegram', 'bale' ), true ) ) {
 					/* translators: %s network */

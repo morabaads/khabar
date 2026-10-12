@@ -10,7 +10,7 @@ namespace YadamBiar\Http;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\ChannelManager;
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Channels\PushChannel;
 use YadamBiar\Contracts\Module;
@@ -196,7 +196,7 @@ class RestController implements Module {
 		$enabled  = (array) $s['channels_enabled'];
 		$channels = $s['user_selects_channel'] ? array_values( array_intersect( array_map( 'sanitize_key', (array) $req->get_param( 'channels' ) ), $enabled ) ) : array();
 		// Bale through Safir is sent to the phone number, like SMS.
-		$need_ph  = (bool) array_intersect( $channels, MessengerChannel::phone_ready( 'bale' ) ? array( 'sms', 'bale' ) : array( 'sms' ) );
+		$need_ph  = (bool) array_intersect( $channels, MessengerConfig::phone_ready( 'bale' ) ? array( 'sms', 'bale' ) : array( 'sms' ) );
 		$need_em  = in_array( 'email', $channels, true );
 		if ( $channels && ( $need_ph || $need_em ) ) {
 			// The ticked channels decide which contact is required.

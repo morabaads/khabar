@@ -9,7 +9,7 @@ namespace YadamBiar\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Channels\PushChannel;
 use YadamBiar\Commerce\Alternatives;
@@ -274,12 +274,12 @@ class ProductWidget implements Module {
 			unset( $channels['push'] );
 		}
 		foreach ( array( 'telegram', 'bale' ) as $network ) {
-			if ( isset( $channels[ $network ] ) && ! MessengerChannel::available( $network ) ) {
+			if ( isset( $channels[ $network ] ) && ! MessengerConfig::available( $network ) ) {
 				unset( $channels[ $network ] );
 			}
 		}
 		// "Connect" buttons only where the customer must start the bot (not for Bale via Safir).
-		$messengers = array_values( array_filter( array_intersect( array( 'telegram', 'bale' ), array_keys( $channels ) ), array( MessengerChannel::class, 'needs_link' ) ) );
+		$messengers = array_values( array_filter( array_intersect( array( 'telegram', 'bale' ), array_keys( $channels ) ), array( MessengerConfig::class, 'needs_link' ) ) );
 		$attributes = $variable ? self::attribute_options( $product ) : array();
 		$price      = '' === $product->get_price() ? '' : (float) $product->get_price();
 

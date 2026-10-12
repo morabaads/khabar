@@ -9,7 +9,8 @@ namespace YadamBiar\Frontend;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\LinkRepository;
+use YadamBiar\Channels\Messenger\MessengerConfig;
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
@@ -143,7 +144,7 @@ class Account implements Module {
 		$wpdb->update( Installer::table( 'subscriptions' ), array( 'user_id' => $user->ID ), array( 'owner_key' => $key, 'user_id' => 0 ) ); // phpcs:ignore
 		$wpdb->update( Installer::table( 'notifications' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
 		$wpdb->update( Installer::table( 'push' ), array( 'owner_key' => 'u:' . $user->ID ), array( 'owner_key' => $key ) ); // phpcs:ignore
-		MessengerChannel::move_owner( $key, 'u:' . $user->ID );
+		LinkRepository::move_owner( $key, 'u:' . $user->ID );
 	}
 
 	/**
@@ -173,9 +174,9 @@ class Account implements Module {
 		$channels = array_intersect_key( Catalog::channels(), array_flip( (array) Settings::get( 'channels_enabled' ) ) );
 		$messengers = array();
 		foreach ( array( 'telegram', 'bale' ) as $network ) {
-			if ( ! MessengerChannel::available( $network ) ) {
+			if ( ! MessengerConfig::available( $network ) ) {
 				unset( $channels[ $network ] );
-			} elseif ( MessengerChannel::needs_link( $network ) ) {
+			} elseif ( MessengerConfig::needs_link( $network ) ) {
 				$messengers[] = $network;
 			}
 		}

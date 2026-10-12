@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Admin\UserState;
 use YadamBiar\Channels\EmailChannel;
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\BotApi;
+use YadamBiar\Channels\Messenger\BotHealthCheck;
+use YadamBiar\Channels\Messenger\MessengerConfig;
+use YadamBiar\Channels\Messenger\SafirClient;
 use YadamBiar\Channels\Sms\PatternRepository;
 use YadamBiar\Channels\Sms\SmsChannel;
 use YadamBiar\Settings\Catalog;
@@ -67,11 +70,11 @@ final class ChannelActions extends ActionGroup {
 				$result = is_email( $to ) ? EmailChannel::send( $to, $text, '<p>' . esc_html( $text ) . '</p>' ) : new \WP_Error( 'yadambiar_email', __( 'ایمیل معتبر نیست.', 'yadambiar' ) );
 				break;
 			case 'bale_safir':
-				$result = MessengerChannel::send_safir( $to, array( 'subject' => '', 'text' => $text, 'url' => home_url( '/' ) ) );
+				$result = SafirClient::send( $to, array( 'subject' => '', 'text' => $text, 'url' => home_url( '/' ) ) );
 				break;
 			case 'telegram':
 			case 'bale':
-				$result = MessengerChannel::send( $channel, MessengerChannel::normalize_chat( $to ), $text );
+				$result = BotApi::send( $channel, MessengerConfig::normalize_chat( $to ), $text );
 				break;
 			default:
 				$result = $this->test_sms( $to, $text );
@@ -153,7 +156,7 @@ final class ChannelActions extends ActionGroup {
 		$out = array();
 		foreach ( self::NETWORKS as $network ) {
 			if ( Settings::get( $network . '_token' ) || Settings::has( 'channels_enabled', $network ) ) {
-				$out[ $network ] = MessengerChannel::check( $network );
+				$out[ $network ] = BotHealthCheck::check( $network );
 			}
 		}
 		UserState::set( UserState::BOT_CHECK, $out, 10 * MINUTE_IN_SECONDS );
@@ -167,7 +170,7 @@ final class ChannelActions extends ActionGroup {
 	 * Register the Telegram / Bale webhooks.
 	 */
 	public function set_webhooks() {
-		$results = MessengerChannel::register_webhooks();
+		$results = BotApi::register_webhooks();
 		if ( ! $results ) {
 			$this->done( $this->back_url(), __( 'هیچ توکن رباتی وارد نشده است.', 'yadambiar' ), 'error' );
 		}

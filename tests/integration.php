@@ -479,7 +479,7 @@ settings( array(
 	'bale_channel'     => '@shopbale', 'telegram_channel' => '@tgshop',
 	'broadcast_networks' => array(), 'coupon_enabled' => 0, 'alt_enabled' => 0,
 ) );
-t( \YadamBiar\Channels\Messenger\MessengerChannel::personal_ready( 'telegram' ) && \YadamBiar\Channels\Messenger\MessengerChannel::personal_ready( 'bale' ), 'telegram and bale personal messaging ready' );
+t( \YadamBiar\Channels\Messenger\MessengerConfig::personal_ready( 'telegram' ) && \YadamBiar\Channels\Messenger\MessengerConfig::personal_ready( 'bale' ), 'telegram and bale personal messaging ready' );
 unset( $_COOKIE[ \YadamBiar\Support\Visitor::GUEST_COOKIE ] );
 list( $code, $d ) = rest( 'POST', 'messenger/link', array( 'network' => 'telegram' ) );
 t( 200 === $code && 0 === strpos( $d['url'], 'https://t.me/yadambiar_bot?start=' ), 'deep link: ' . ( $d['url'] ?? '' ) );
@@ -495,12 +495,12 @@ $wh = function ( $network, $text, $secret, $chat = 555 ) {
 };
 t( 403 === $wh( 'telegram', '/start ' . $start_code, 'wrong' )->get_status(), 'webhook with wrong secret refused' );
 $GLOBALS['yadambiar_http'] = array();
-t( 200 === $wh( 'telegram', '/start ' . $start_code, \YadamBiar\Channels\Messenger\MessengerChannel::secret( 'telegram' ) )->get_status(), 'webhook accepted' );
-t( '555' === \YadamBiar\Channels\Messenger\MessengerChannel::chat_id( $guest_owner, 'telegram' ), 'chat 555 linked to the guest owner' );
+t( 200 === $wh( 'telegram', '/start ' . $start_code, \YadamBiar\Channels\Messenger\BotApi::secret( 'telegram' ) )->get_status(), 'webhook accepted' );
+t( '555' === \YadamBiar\Channels\Messenger\LinkRepository::chat_id( $guest_owner, 'telegram' ), 'chat 555 linked to the guest owner' );
 $confirm = http_to( 'api.telegram.org/botTGTOKEN/sendMessage' );
 t( $confirm && false !== strpos( json_decode( $confirm[0]['body'], true )['text'], 'متصل شد' ), 'bot confirms the connection' );
-$wh( 'telegram', '/start ' . $start_code, \YadamBiar\Channels\Messenger\MessengerChannel::secret( 'telegram' ), 777 );
-t( '555' === \YadamBiar\Channels\Messenger\MessengerChannel::chat_id( $guest_owner, 'telegram' ), 'one-time code cannot be reused by another chat' );
+$wh( 'telegram', '/start ' . $start_code, \YadamBiar\Channels\Messenger\BotApi::secret( 'telegram' ), 777 );
+t( '555' === \YadamBiar\Channels\Messenger\LinkRepository::chat_id( $guest_owner, 'telegram' ), 'one-time code cannot be reused by another chat' );
 
 $tg_pid = simple_product( 'کتاب تلگرامی', 300000, 0 );
 list( $code, $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $tg_pid, 'in_stock' => 1, 'phone' => '09131112222', 'channels' => array( 'telegram' ) ) );
@@ -515,15 +515,15 @@ t( 'notified' === sub_status( $tg_sub ) && '555' === (string) ( $body['chat_id']
 t( false !== strpos( $body['text'] ?? '', 'کتاب تلگرامی' ), 'telegram text: ' . str_replace( "\n", ' | ', mb_substr( $body['text'] ?? '', 0, 90 ) ) );
 t( 0 === count( $GLOBALS['yadambiar_sms'] ), 'customer chose Telegram only → no SMS' );
 
-$wh( 'telegram', '/stop', \YadamBiar\Channels\Messenger\MessengerChannel::secret( 'telegram' ) );
-t( '' === \YadamBiar\Channels\Messenger\MessengerChannel::chat_id( $guest_owner, 'telegram' ), '/stop unlinks' );
+$wh( 'telegram', '/stop', \YadamBiar\Channels\Messenger\BotApi::secret( 'telegram' ) );
+t( '' === \YadamBiar\Channels\Messenger\LinkRepository::chat_id( $guest_owner, 'telegram' ), '/stop unlinks' );
 
 list( , $d ) = rest( 'POST', 'messenger/link', array( 'network' => 'bale' ) );
 $bcode = substr( $d['url'], strpos( $d['url'], 'start=' ) + 6 );
 t( 0 === strpos( $d['url'], 'https://ble.ir/kbot?start=' ), 'bale deep link' );
 $GLOBALS['yadambiar_http'] = array();
-$wh( 'bale', '/start ' . $bcode, \YadamBiar\Channels\Messenger\MessengerChannel::secret( 'bale' ), 999 );
-t( '999' === \YadamBiar\Channels\Messenger\MessengerChannel::chat_id( $guest_owner, 'bale' ) && http_to( 'tapi.bale.ai/botBLTOKEN/sendMessage' ), 'bale linked via tapi.bale.ai' );
+$wh( 'bale', '/start ' . $bcode, \YadamBiar\Channels\Messenger\BotApi::secret( 'bale' ), 999 );
+t( '999' === \YadamBiar\Channels\Messenger\LinkRepository::chat_id( $guest_owner, 'bale' ) && http_to( 'tapi.bale.ai/botBLTOKEN/sendMessage' ), 'bale linked via tapi.bale.ai' );
 
 echo "\n== Channel broadcast (Telegram + Bale) ==\n";
 // 'eitaa' left over from an older version must be ignored.
@@ -696,10 +696,10 @@ settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
 echo "\n== Messenger channel ids & bot check ==\n";
 foreach ( array( 'yadambiaramkon' => '@yadambiaramkon', '@yadambiaramkon' => '@yadambiaramkon', 'https://ble.ir/yadambiaramkon' => '@yadambiaramkon', 't.me/shop/' => '@shop', '-1001234' => '-1001234', '5551234' => '5551234', '' => '' ) as $in => $want ) {
-	t( $want === \YadamBiar\Channels\Messenger\MessengerChannel::normalize_chat( $in ), "chat id '{$in}' → '{$want}'" );
+	t( $want === \YadamBiar\Channels\Messenger\MessengerConfig::normalize_chat( $in ), "chat id '{$in}' → '{$want}'" );
 }
 settings( array( 'bale_token' => 'BLTOKEN', 'bale_bot' => 'kbot', 'bale_channel' => 'yadambiaramkon', 'channels_enabled' => array( 'sms', 'email', 'onsite', 'bale' ) ) );
-t( '@yadambiaramkon' === \YadamBiar\Channels\Messenger\MessengerChannel::network( 'bale' )['channel'], 'bale channel without @ is posted to @yadambiaramkon' );
+t( '@yadambiaramkon' === \YadamBiar\Channels\Messenger\MessengerConfig::network( 'bale' )['channel'], 'bale channel without @ is posted to @yadambiaramkon' );
 $GLOBALS['bot_hook'] = '';
 $bot_reply = function ( $pre, $args, $url ) {
 	$ok = function ( $result ) { return array( 'response' => array( 'code' => 200, 'message' => 'OK' ), 'body' => wp_json_encode( array( 'ok' => true, 'result' => $result ) ), 'headers' => array(), 'cookies' => array() ); };
@@ -712,22 +712,22 @@ $bot_reply = function ( $pre, $args, $url ) {
 };
 add_filter( 'pre_http_request', $bot_reply, 20, 3 );
 $levels = function ( $rows, $needle ) { foreach ( $rows as $r ) { if ( false !== strpos( $r[1], $needle ) ) { return $r[0]; } } return ''; };
-$rows = \YadamBiar\Channels\Messenger\MessengerChannel::check( 'bale' );
+$rows = \YadamBiar\Channels\Messenger\BotHealthCheck::check( 'bale' );
 t( 'ok' === $levels( $rows, 'KBot' ), 'check: token ok, bot username compared case-insensitively' );
 t( 'error' === $levels( $rows, 'وب‌هوک ثبت نشده' ), 'check: missing webhook reported' );
 t( 'error' === $levels( $rows, 'ادمین نیست' ), 'check: bot not admin of channel reported' );
-$GLOBALS['bot_hook'] = \YadamBiar\Channels\Messenger\MessengerChannel::webhook_url( 'bale' );
-$rows = \YadamBiar\Channels\Messenger\MessengerChannel::check( 'bale' );
+$GLOBALS['bot_hook'] = \YadamBiar\Channels\Messenger\BotApi::webhook_url( 'bale' );
+$rows = \YadamBiar\Channels\Messenger\BotHealthCheck::check( 'bale' );
 t( 'ok' === $levels( $rows, 'درست ثبت شده' ) && 'error' === $levels( $rows, '403 Forbidden' ), 'check: registered webhook ok + last delivery error shown' );
 settings( array( 'bale_bot' => 'otherbot' ) );
-t( 'error' === $levels( \YadamBiar\Channels\Messenger\MessengerChannel::check( 'bale' ), 'یکی نیست' ), 'check: wrong bot username reported' );
+t( 'error' === $levels( \YadamBiar\Channels\Messenger\BotHealthCheck::check( 'bale' ), 'یکی نیست' ), 'check: wrong bot username reported' );
 remove_filter( 'pre_http_request', $bot_reply, 20 );
 settings( array( 'bale_bot' => 'kbot', 'bale_channel' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
 
 echo "\n== Bale Safir (message to phone number, no Start) ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite', 'bale' ), 'bale_token' => '123456:abcdef', 'bale_bot' => 'kbot', 'bale_safir_key' => 'SAFIRKEY', 'bale_safir_bot_id' => '', 'user_selects_channel' => 1, 'verify_contact' => 'none' ) );
-t( \YadamBiar\Channels\Messenger\MessengerChannel::phone_ready( 'bale' ) && 123456 === \YadamBiar\Channels\Messenger\MessengerChannel::safir_bot_id(), 'safir ready; bot id taken from token prefix' );
-t( ! \YadamBiar\Channels\Messenger\MessengerChannel::needs_link( 'bale' ), 'no Start/connect needed for bale' );
+t( \YadamBiar\Channels\Messenger\MessengerConfig::phone_ready( 'bale' ) && 123456 === \YadamBiar\Channels\Messenger\MessengerConfig::safir_bot_id(), 'safir ready; bot id taken from token prefix' );
+t( ! \YadamBiar\Channels\Messenger\MessengerConfig::needs_link( 'bale' ), 'no Start/connect needed for bale' );
 $sf_pid = simple_product( 'دسته بازی MR-55 سفیر', 500000, 0 );
 list( $code, $d ) = rest( 'POST', 'subscribe', array( 'product_id' => $sf_pid, 'in_stock' => 1, 'email' => 'nophone@example.com', 'channels' => array( 'bale' ) ) );
 t( 400 === $code, 'bale ticked without phone → asks for mobile number' );
@@ -744,11 +744,11 @@ t( $sb && 123456 === $sb['bot_id'] && '989121230000' === $sb['phone_number'] && 
 t( 'notified' === sub_status( $d['ids'][0] ), 'subscription marked notified after Safir send' );
 $safir_err = function ( $pre, $args, $url ) { return false !== strpos( $url, 'safir.bale.ai' ) ? array( 'response' => array( 'code' => 400, 'message' => 'Bad' ), 'body' => '{"error_data":[{"code":17,"description":"not bale user"}]}', 'headers' => array(), 'cookies' => array() ) : $pre; };
 add_filter( 'pre_http_request', $safir_err, 20, 3 );
-$r = \YadamBiar\Channels\Messenger\MessengerChannel::send_safir( '09120000000', array( 'subject' => '', 'text' => 'x', 'url' => '' ) );
+$r = \YadamBiar\Channels\Messenger\SafirClient::send( '09120000000', array( 'subject' => '', 'text' => 'x', 'url' => '' ) );
 t( is_wp_error( $r ) && false !== strpos( $r->get_error_message(), 'حساب کاربری ندارد' ), 'Safir error 17 explained: ' . ( is_wp_error( $r ) ? $r->get_error_message() : '' ) );
 remove_filter( 'pre_http_request', $safir_err, 20 );
 settings( array( 'bale_safir_key' => '', 'channels_enabled' => array( 'sms', 'email', 'onsite' ) ) );
-t( ! \YadamBiar\Channels\Messenger\MessengerChannel::phone_ready( 'bale' ), 'without key Safir is off (bot linking used instead)' );
+t( ! \YadamBiar\Channels\Messenger\MessengerConfig::phone_ready( 'bale' ), 'without key Safir is off (bot linking used instead)' );
 
 echo "\n== In stock but no price ==\n";
 settings( array( 'channels_enabled' => array( 'sms', 'email', 'onsite' ), 'waves_enabled' => 0, 'exclusive_enabled' => 0, 'coupon_enabled' => 0 ) );

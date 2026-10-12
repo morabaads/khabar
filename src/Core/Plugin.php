@@ -16,7 +16,7 @@ use YadamBiar\Admin\Actions\SettingsActions;
 use YadamBiar\Admin\AdminApp;
 use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Admin\ProductMetabox;
-use YadamBiar\Channels\Messenger\MessengerChannel;
+use YadamBiar\Channels\Messenger\MessengerRestController;
 use YadamBiar\Channels\PushChannel;
 use YadamBiar\Commerce\Alternatives;
 use YadamBiar\Commerce\Coupons;
@@ -81,7 +81,7 @@ final class Plugin {
 			PushChannel::class,
 			Privacy::class,
 			Cron::class,
-			MessengerChannel::class,
+			MessengerRestController::class,
 			Coupons::class,
 			Alternatives::class,
 			PriceHistory::class,
