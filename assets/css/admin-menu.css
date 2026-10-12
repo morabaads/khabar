@@ -41,12 +41,13 @@
 	font-family: dashicons !important; font-size: 16px; line-height: 1; flex: 0 0 30px; height: 30px; display: grid; place-items: center;
 	border-radius: 9px; background: rgba(255, 255, 255, .06); color: #e5e7ef;
 }
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(2) a::before { content: "\f226"; } /* dashboard */
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(3) a::before { content: "\f163"; } /* requests */
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(4) a::before { content: "\f185"; } /* reports */
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(5) a::before { content: "\f466"; } /* logs */
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(6) a::before { content: "\f238"; } /* forecast */
-#adminmenu #toplevel_page_yadambiar .wp-submenu li:nth-child(7) a::before { content: "\f111"; } /* settings */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href$="page=yadambiar"]::before { content: "\f226"; } /* dashboard */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=requests"]::before { content: "\f163"; } /* requests */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=reports"]::before { content: "\f185"; } /* reports */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=logs"]::before { content: "\f466"; } /* logs */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=forecast"]::before { content: "\f238"; } /* forecast */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=settings"]::before { content: "\f111"; } /* settings */
+#adminmenu #toplevel_page_yadambiar .wp-submenu a[href*="view=help"]::before { content: "\f223"; } /* help */
 #adminmenu #toplevel_page_yadambiar .wp-submenu a:hover,
 #adminmenu #toplevel_page_yadambiar .wp-submenu a:focus { background: rgba(255, 255, 255, .06); color: #fff; box-shadow: none; }
 #adminmenu #toplevel_page_yadambiar .wp-submenu li.current a,

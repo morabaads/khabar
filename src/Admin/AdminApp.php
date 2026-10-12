@@ -46,7 +46,7 @@ final class AdminApp implements Module {
 	public function register() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_filter( 'submenu_file', array( $this, 'submenu_file' ) );
-		add_action( 'admin_init', array( $this, 'legacy_redirect' ), 1 );
+		add_action( 'admin_menu', array( $this, 'legacy_redirect' ), 0 ); // Before WordPress refuses the unknown page slug.
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'menu_assets' ) );
 		add_action( 'admin_notices', array( $this, 'notices' ) );

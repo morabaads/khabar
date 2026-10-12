@@ -47,6 +47,15 @@ final class DiagnosePage extends Page {
 	}
 
 	/**
+	 * Reached from the dashboard and product screens, not from the navigation.
+	 *
+	 * @return bool
+	 */
+	public function in_menu() {
+		return false;
+	}
+
+	/**
 	 * Render.
 	 */
 	public function render() {
