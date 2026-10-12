@@ -9,7 +9,7 @@ namespace YadamBiar\Integrations\Elementor;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Commerce\PriceHistory;
+use YadamBiar\Commerce\PriceHistoryChart;
 use YadamBiar\Settings\Settings;
 
 use Elementor\Controls_Manager;
@@ -103,7 +103,7 @@ class PriceHistoryWidget extends BaseWidget {
 			return;
 		}
 		$s    = $this->get_settings_for_display();
-		$html = PriceHistory::render( $product, isset( $s['days'] ) ? (int) $s['days'] : 0 );
+		$html = PriceHistoryChart::render( $product, isset( $s['days'] ) ? (int) $s['days'] : 0 );
 		if ( ! empty( $s['dark'] ) ) {
 			$html = preg_replace( '/class="yadambiar-ph"/', 'class="yadambiar-ph yadambiar-dark"', $html, 1 );
 		}

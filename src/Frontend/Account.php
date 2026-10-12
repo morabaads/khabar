@@ -162,7 +162,7 @@ class Account implements Module {
 	public static function shortcode() {
 		$token = isset( $_GET['yadambiar_token'] ) ? sanitize_text_field( wp_unslash( $_GET['yadambiar_token'] ) ) : ''; // phpcs:ignore
 		$owner = self::current_owner( $token );
-		ProductWidget::enqueue();
+		Assets::enqueue();
 
 		ob_start();
 		if ( ! $owner ) {

@@ -10,7 +10,7 @@ namespace YadamBiar\Integrations\Elementor;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Contracts\Module;
-use YadamBiar\Frontend\ProductWidget;
+use YadamBiar\Frontend\Assets;
 
 class ElementorIntegration implements Module {
 
@@ -72,7 +72,7 @@ class ElementorIntegration implements Module {
 	 * Assets inside the editor preview iframe.
 	 */
 	public static function preview_assets() {
-		ProductWidget::enqueue();
+		Assets::enqueue();
 	}
 
 	/**
@@ -80,7 +80,7 @@ class ElementorIntegration implements Module {
 	 */
 	public static function editor_hooks() {
 		if ( ! wp_script_is( 'yadambiar', 'registered' ) ) {
-			ProductWidget::register_assets();
+			Assets::register_assets();
 		}
 		$names = array( 'yadambiar-notify', 'yadambiar-price-history', 'yadambiar-my-alerts', 'yadambiar-bell' );
 		$js    = 'jQuery(window).on("elementor/frontend/init",function(){' . implode(

@@ -9,7 +9,7 @@ namespace YadamBiar\Integrations\Elementor;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Frontend\ProductWidget;
+use YadamBiar\Frontend\Bell;
 
 class BellWidget extends BaseWidget {
 
@@ -60,7 +60,7 @@ class BellWidget extends BaseWidget {
 	 * Render.
 	 */
 	protected function render() {
-		$html = ProductWidget::bell_shortcode();
+		$html = Bell::bell_shortcode();
 		if ( ! $html ) {
 			$this->placeholder( __( 'کانال «اعلان داخل سایت» در تنظیمات غیرفعال است.', 'yadambiar' ) );
 		}

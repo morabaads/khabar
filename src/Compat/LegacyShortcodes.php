@@ -9,9 +9,10 @@ namespace YadamBiar\Compat;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Commerce\PriceHistory;
+use YadamBiar\Commerce\PriceHistoryChart;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\Account;
+use YadamBiar\Frontend\Bell;
 use YadamBiar\Frontend\ProductWidget;
 
 /**
@@ -32,9 +33,9 @@ final class LegacyShortcodes implements Module {
 	public function add() {
 		$aliases = array(
 			'khabar'               => array( ProductWidget::class, 'shortcode' ),
-			'khabar_bell'          => array( ProductWidget::class, 'bell_shortcode' ),
+			'khabar_bell'          => array( Bell::class, 'bell_shortcode' ),
 			'khabar_my_alerts'     => array( Account::class, 'shortcode' ),
-			'khabar_price_history' => array( PriceHistory::class, 'shortcode' ),
+			'khabar_price_history' => array( PriceHistoryChart::class, 'shortcode' ),
 		);
 		foreach ( $aliases as $tag => $callback ) {
 			if ( ! shortcode_exists( $tag ) ) {

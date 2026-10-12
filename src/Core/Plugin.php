@@ -25,6 +25,8 @@ use YadamBiar\Commerce\Tracking;
 use YadamBiar\Compat\LegacyShortcodes;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Frontend\Account;
+use YadamBiar\Frontend\Assets;
+use YadamBiar\Frontend\Bell;
 use YadamBiar\Frontend\ProductWidget;
 use YadamBiar\Http\RestRouter;
 use YadamBiar\Integrations\Elementor\ElementorIntegration;
@@ -74,7 +76,9 @@ final class Plugin {
 			Dispatcher::class,
 			Reservation::class,
 			RestRouter::class,
+			Assets::class,
 			ProductWidget::class,
+			Bell::class,
 			Account::class,
 			Tracking::class,
 			ServiceWorker::class,

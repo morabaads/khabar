@@ -473,6 +473,20 @@ class SubscriptionRepository {
 	}
 
 	/**
+	 * Long-waiting stock requests that have not received alternatives yet (least recently touched first).
+	 *
+	 * @param string $created_before GMT date.
+	 * @param int    $limit          Max rows.
+	 * @return object[]
+	 */
+	public static function awaiting_alternatives( $created_before, $limit ) {
+		global $wpdb;
+		$table = Installer::table( 'subscriptions' );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE status = 'active' AND in_stock = 1 AND alt_sent_at IS NULL AND created_at <= %s ORDER BY updated_at ASC LIMIT %d", $created_before, $limit ) ); // phpcs:ignore WordPress.DB
+		return array_map( array( __CLASS__, 'hydrate' ), (array) $rows );
+	}
+
+	/**
 	 * Number of active requests in the whole store (admin menu bubble, header).
 	 *
 	 * @return int

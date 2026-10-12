@@ -10,19 +10,15 @@ namespace YadamBiar\Frontend;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\Messenger\MessengerConfig;
-use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Channels\PushChannel;
-use YadamBiar\Channels\Push\VapidKeys;
 use YadamBiar\Commerce\Alternatives;
-use YadamBiar\Commerce\PriceHistory;
+use YadamBiar\Commerce\PriceHistoryChart;
 use YadamBiar\Commerce\Reservation;
 use YadamBiar\Contracts\Module;
 use YadamBiar\Core\Installer;
-use YadamBiar\Settings\Appearance;
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\View;
-use YadamBiar\Support\Visitor;
 
 class ProductWidget implements Module {
 
@@ -49,59 +45,6 @@ class ProductWidget implements Module {
 		// Block themes do not run the classic summary hooks: attach to the equivalent blocks.
 		add_filter( 'render_block', array( __CLASS__, 'render_block' ), 10, 3 );
 		add_shortcode( 'yadambiar', array( __CLASS__, 'shortcode' ) );
-		add_shortcode( 'yadambiar_bell', array( __CLASS__, 'bell_shortcode' ) );
-		add_action( 'wp_footer', array( __CLASS__, 'floating_bell' ) );
-		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
-	}
-
-	/**
-	 * Register assets.
-	 */
-	public static function register_assets() {
-		wp_register_style( 'yadambiar', YADAMBIAR_URL . 'assets/css/frontend.css', array(), YADAMBIAR_VERSION );
-		wp_add_inline_style( 'yadambiar', ':root{' . Appearance::css_vars() . '}' );
-		wp_register_script( 'yadambiar', YADAMBIAR_URL . 'assets/js/frontend.js', array( 'jquery' ), YADAMBIAR_VERSION, true );
-		$keys = PushChannel::enabled() ? VapidKeys::keys() : null;
-		wp_localize_script(
-			'yadambiar',
-			'YadamBiarData',
-			array(
-				'rest'      => esc_url_raw( rest_url( 'yadambiar/v1/' ) ),
-				'nonce'     => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
-				'annotate'  => (bool) Settings::get( 'annotate_variations' ),
-				'pushKey'   => $keys ? $keys['public'] : '',
-				'sw'        => add_query_arg( 'yadambiar_sw', 1, home_url( '/' ) ),
-				'decimals'  => wc_get_price_decimals(),
-				'i18n'      => array(
-					'outOfStock' => __( 'ناموجود 🔔', 'yadambiar' ),
-					'error'      => __( 'خطایی رخ داد. دوباره تلاش کنید.', 'yadambiar' ),
-					'confirmDel' => __( 'این درخواست حذف شود؟', 'yadambiar' ),
-					'saved'      => __( 'ذخیره شد.', 'yadambiar' ),
-					'pushDenied' => __( 'اجازه نمایش اعلان داده نشد.', 'yadambiar' ),
-					'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadambiar' ),
-					'any'        => __( 'هر کدام', 'yadambiar' ),
-					'noNotes'    => __( 'اعلانی ندارید.', 'yadambiar' ),
-					'connect'    => __( 'دریافت در %s', 'yadambiar' ),
-					'connected'  => __( '%s متصل است ✓', 'yadambiar' ),
-					'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadambiar' ),
-					'networks'   => array(
-						'telegram' => __( 'تلگرام', 'yadambiar' ),
-						'bale'     => __( 'بله', 'yadambiar' ),
-					),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Enqueue assets (called when a widget renders).
-	 */
-	public static function enqueue() {
-		if ( ! wp_script_is( 'yadambiar', 'registered' ) ) {
-			self::register_assets();
-		}
-		wp_enqueue_style( 'yadambiar' );
-		wp_enqueue_script( 'yadambiar' );
 	}
 
 	/**
@@ -243,7 +186,7 @@ class ProductWidget implements Module {
 			return '';
 		}
 		self::$rendered[ $product->get_id() ] = true;
-		self::enqueue();
+		Assets::enqueue();
 
 		$s        = array_merge( Settings::all(), array_filter( (array) $args, function ( $v ) { return null !== $v && '' !== $v; } ) );
 		$types    = (array) $s['enabled_types'];
@@ -292,45 +235,10 @@ class ProductWidget implements Module {
 		if ( empty( $args['hide_extras'] ) ) {
 			$html .= Alternatives::render_block( $product );
 			if ( Settings::get( 'price_history_enabled', 1 ) && 'widget' === Settings::get( 'price_history_display' ) ) {
-				$html .= PriceHistory::render( $product );
+				$html .= PriceHistoryChart::render( $product );
 			}
 		}
 		return $html;
 	}
 
-	/**
-	 * [yadambiar_bell]
-	 *
-	 * @return string
-	 */
-	public static function bell_shortcode() {
-		if ( ! Settings::has( 'channels_enabled', 'onsite' ) ) {
-			return '';
-		}
-		self::enqueue();
-		$owner  = Visitor::owner_key();
-		$unread = OnsiteChannel::unread( $owner );
-		ob_start();
-		?>
-		<div class="yadambiar-bell" data-yadambiar-bell>
-			<button type="button" class="yadambiar-bell-btn" aria-label="<?php esc_attr_e( 'اعلان‌ها', 'yadambiar' ); ?>">🔔<?php if ( $unread ) : ?><span class="yadambiar-bell-count"><?php echo esc_html( number_format_i18n( $unread ) ); ?></span><?php endif; ?></button>
-			<div class="yadambiar-bell-list" hidden></div>
-		</div>
-		<?php
-		return ob_get_clean();
-	}
-
-	/**
-	 * Floating bell for visitors who have notifications.
-	 */
-	public static function floating_bell() {
-		if ( ! Settings::get( 'floating_bell' ) || ! Settings::has( 'channels_enabled', 'onsite' ) ) {
-			return;
-		}
-		$owner = Visitor::owner_key();
-		if ( ! $owner || ! OnsiteChannel::latest( $owner, 1 ) ) {
-			return;
-		}
-		echo '<div class="yadambiar-floating">' . self::bell_shortcode() . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput
-	}
 }

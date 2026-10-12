@@ -10,7 +10,7 @@ namespace YadamBiar\Integrations\Elementor;
 defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Commerce\Alternatives;
-use YadamBiar\Frontend\ProductWidget;
+use YadamBiar\Frontend\Assets;
 use YadamBiar\Settings\Settings;
 
 use Elementor\Controls_Manager;
@@ -141,7 +141,7 @@ class AlternativesWidget extends BaseWidget {
 			$this->placeholder( __( 'محصول مشابهی برای نمایش پیدا نشد (یا محصول موجود است).', 'yadambiar' ) );
 			return;
 		}
-		ProductWidget::enqueue();
+		Assets::enqueue();
 		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput
 	}
 }
