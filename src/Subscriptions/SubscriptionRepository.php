@@ -13,6 +13,7 @@ use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Settings;
 use YadamBiar\Support\Clock;
 use YadamBiar\Support\Money;
+use YadamBiar\Support\Phone;
 use YadamBiar\Support\Visitor;
 
 class SubscriptionRepository {
@@ -417,6 +418,47 @@ class SubscriptionRepository {
 		$count = (int) $wpdb->get_var( $wpdb->prepare( $sql, $product_id ) ); // phpcs:ignore
 		wp_cache_set( $key, $count, 'yadambiar', 300 );
 		return $count;
+	}
+
+	/**
+	 * SQL WHERE clause (prepared) for the admin list filters.
+	 *
+	 * @param array $filters status, type, product_id, s (search: phone, email, name or product id).
+	 * @return string
+	 */
+	public static function filter_where( array $filters ) {
+		global $wpdb;
+		$where = array( '1=1' );
+		if ( ! empty( $filters['status'] ) ) {
+			$where[] = $wpdb->prepare( 'status = %s', $filters['status'] );
+		}
+		if ( ! empty( $filters['type'] ) ) {
+			$where[] = $wpdb->prepare( 'type = %s', $filters['type'] );
+		}
+		if ( ! empty( $filters['product_id'] ) ) {
+			$where[] = $wpdb->prepare( 'product_id = %d', $filters['product_id'] );
+		}
+		if ( isset( $filters['s'] ) && '' !== $filters['s'] ) {
+			$s       = (string) $filters['s'];
+			$like    = '%' . $wpdb->esc_like( $s ) . '%';
+			$where[] = $wpdb->prepare( '(email LIKE %s OR phone LIKE %s OR phone = %s OR name LIKE %s OR product_id = %d)', $like, $like, Phone::normalize_phone( $s ), $like, absint( $s ) );
+		}
+		return implode( ' AND ', $where );
+	}
+
+	/**
+	 * Number of active requests in the whole store (admin menu bubble, header).
+	 *
+	 * @return int
+	 */
+	public static function active_count() {
+		global $wpdb;
+		$count = wp_cache_get( 'active_count', 'yadambiar' );
+		if ( false === $count ) {
+			$count = (int) $wpdb->get_var( 'SELECT COUNT(*) FROM ' . Installer::table( 'subscriptions' ) . " WHERE status = 'active'" ); // phpcs:ignore WordPress.DB
+			wp_cache_set( 'active_count', $count, 'yadambiar', MINUTE_IN_SECONDS );
+		}
+		return (int) $count;
 	}
 
 	/**

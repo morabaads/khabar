@@ -9,9 +9,10 @@ namespace YadamBiar\Admin\Tables;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Admin\AdminApp;
+use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Catalog;
+use YadamBiar\Support\Clock;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
@@ -56,7 +57,7 @@ class LogTable extends \WP_List_Table {
 	 */
 	protected function get_views() {
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
-		$base    = admin_url( 'admin.php?page=yadambiar&view=logs' );
+		$base    = AdminUrl::view( 'logs' );
 		return array(
 			'all'    => '<a href="' . esc_url( $base ) . '" class="' . ( $current ? '' : 'current' ) . '">' . esc_html__( 'همه', 'yadambiar' ) . '</a>',
 			'sent'   => '<a href="' . esc_url( add_query_arg( 'status', 'sent', $base ) ) . '" class="' . ( 'sent' === $current ? 'current' : '' ) . '">' . esc_html__( 'موفق', 'yadambiar' ) . '</a>',
@@ -103,7 +104,7 @@ class LogTable extends \WP_List_Table {
 	protected function column_default( $item, $column ) {
 		switch ( $column ) {
 			case 'created_at':
-				return esc_html( AdminApp::date( $item->created_at ) );
+				return esc_html( Clock::local( $item->created_at ) );
 			case 'event':
 				$events = Catalog::events();
 				return esc_html( $events[ $item->event ] ?? $item->event );
@@ -118,7 +119,7 @@ class LogTable extends \WP_List_Table {
 				return esc_html( $ch[ $item->channel ] ?? $item->channel );
 			case 'recipient':
 				// Request number: shows which request each message came from.
-				$req = $item->subscription_id ? '<br><a class="yadambiar-muted" href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&s=' . rawurlencode( $item->recipient ) ) ) . '">' . esc_html__( 'درخواست', 'yadambiar' ) . ' #' . (int) $item->subscription_id . '</a>' : '';
+				$req = $item->subscription_id ? '<br><a class="yadambiar-muted" href="' . esc_url( AdminUrl::view( 'requests', array( 's' => $item->recipient ) ) ) . '">' . esc_html__( 'درخواست', 'yadambiar' ) . ' #' . (int) $item->subscription_id . '</a>' : '';
 				return '<span dir="ltr">' . esc_html( $item->recipient ) . '</span>' . $req;
 			case 'status':
 				if ( 'sent' === $item->status ) {
@@ -127,7 +128,7 @@ class LogTable extends \WP_List_Table {
 				if ( 'skipped' === $item->status ) {
 					return '<span class="yadambiar-status yadambiar-status-active">' . esc_html__( 'ارسال نشد (تکراری)', 'yadambiar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small>';
 				}
-				$retry = wp_nonce_url( admin_url( 'admin-post.php?action=yadambiar_retry&log=' . $item->id ), 'yadambiar_retry' );
+				$retry = AdminUrl::action( 'retry', array( 'log' => $item->id ) );
 				return '<span class="yadambiar-status yadambiar-status-cancelled">' . esc_html__( 'ناموفق', 'yadambiar' ) . '</span><br><small>' . esc_html( $item->error ) . '</small><br><a href="' . esc_url( $retry ) . '">' . esc_html__( 'ارسال مجدد', 'yadambiar' ) . '</a>';
 			case 'message':
 				return '<div class="yadambiar-log-msg">' . nl2br( esc_html( $item->message ) ) . '</div>';

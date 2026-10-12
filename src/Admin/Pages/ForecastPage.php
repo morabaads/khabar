@@ -9,18 +9,41 @@ namespace YadamBiar\Admin\Pages;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Admin\AdminApp;
+use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Commerce\Forecast;
-use YadamBiar\Contracts\Module;
 use YadamBiar\Support\Money;
+use YadamBiar\Support\ProductAttributes;
 
-class ForecastPage implements Module {
+/**
+ * Demand forecast & purchase-order suggestions.
+ */
+final class ForecastPage extends Page {
 
 	/**
-	 * Hooks.
+	 * Slug.
+	 *
+	 * @return string
 	 */
-	public function register() {
-		add_action( 'admin_post_yadambiar_forecast_csv', array( __CLASS__, 'csv' ) );
+	public function slug() {
+		return 'forecast';
+	}
+
+	/**
+	 * Label.
+	 *
+	 * @return string
+	 */
+	public function title() {
+		return __( 'پیش‌بینی تقاضا', 'yadambiar' );
+	}
+
+	/**
+	 * Icon.
+	 *
+	 * @return string
+	 */
+	public function icon() {
+		return 'trend';
 	}
 
 	/**
@@ -28,7 +51,7 @@ class ForecastPage implements Module {
 	 *
 	 * @return array
 	 */
-	private static function params() {
+	public static function request_params() {
 		$p = array();
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['lead'] ) && '' !== $_GET['lead'] ) {
@@ -45,24 +68,10 @@ class ForecastPage implements Module {
 	}
 
 	/**
-	 * Product label.
-	 *
-	 * @param WC_Product $product Product.
-	 * @return string
+	 * Render.
 	 */
-	private static function label( $product ) {
-		if ( $product->is_type( 'variation' ) ) {
-			$parent = wc_get_product( $product->get_parent_id() );
-			return ( $parent ? $parent->get_name() : '' ) . ' — ' . wc_get_formatted_variation( $product, true, false, false );
-		}
-		return $product->get_name();
-	}
-
-	/**
-	 * Page.
-	 */
-	public static function page() {
-		$data   = Forecast::build( self::params() );
+	public function render() {
+		$data   = Forecast::build( self::request_params() );
 		$p      = $data['params'];
 		$rows   = $data['rows'];
 		$units  = array_sum( wp_list_pluck( wp_list_pluck( $rows, 'calc' ), 'order' ) );
@@ -73,12 +82,12 @@ class ForecastPage implements Module {
 			'medium' => __( 'متوسط', 'yadambiar' ),
 			'low'    => __( 'پایین', 'yadambiar' ),
 		);
-		$csv    = wp_nonce_url( add_query_arg( array_merge( array( 'action' => 'yadambiar_forecast_csv' ), self::params() ), admin_url( 'admin-post.php' ) ), 'yadambiar_forecast_csv' );
+		$csv    = AdminUrl::action( 'forecast_csv', self::request_params() );
 		?>
 		<div class="yadambiar-view">
 
 			<form method="get" class="yadambiar-report-filter yadambiar-fc-filter">
-				<input type="hidden" name="page" value="yadambiar"><input type="hidden" name="view" value="forecast">
+				<?php $this->view_fields(); ?>
 				<label><?php esc_html_e( 'زمان تحویل (روز)', 'yadambiar' ); ?> <input type="number" min="0" class="small-text" name="lead" value="<?php echo esc_attr( $p['lead'] ); ?>"></label>
 				<label><?php esc_html_e( 'پوشش موجودی (روز)', 'yadambiar' ); ?> <input type="number" min="0" class="small-text" name="cover" value="<?php echo esc_attr( $p['cover'] ); ?>"></label>
 				<label><?php esc_html_e( 'سطح اطمینان', 'yadambiar' ); ?>
@@ -122,7 +131,7 @@ class ForecastPage implements Module {
 								<?php $kf_img = $r['product']->get_image_id() ? $r['product']->get_image_id() : ( $r['product']->get_parent_id() ? get_post_thumbnail_id( $r['product']->get_parent_id() ) : 0 ); ?>
 								<span class="kf-thumb"><?php echo $kf_img ? wp_get_attachment_image( $kf_img, array( 44, 44 ) ) : ''; ?></span>
 								<span class="kf-name">
-									<a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( self::label( $r['product'] ) ); ?></a>
+									<a href="<?php echo esc_url( get_edit_post_link( $r['product']->get_parent_id() ? $r['product']->get_parent_id() : $r['product']->get_id() ) ); ?>"><?php echo esc_html( ProductAttributes::full_name( $r['product'] ) ); ?></a>
 									<small><?php /* translators: %s days */ printf( esc_html__( 'قدیمی‌ترین انتظار: %s روز', 'yadambiar' ), esc_html( number_format_i18n( $r['days_out'] ) ) ); ?></small>
 								</span>
 							</div></td>
@@ -156,44 +165,5 @@ class ForecastPage implements Module {
 			</div>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Purchase order CSV.
-	 */
-	public static function csv() {
-		if ( ! current_user_can( AdminApp::CAP ) ) {
-			wp_die( esc_html__( 'دسترسی ندارید.', 'yadambiar' ) );
-		}
-		check_admin_referer( 'yadambiar_forecast_csv' );
-		$data = Forecast::build( self::params() );
-		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename=yadambiar-purchase-order-' . gmdate( 'Y-m-d' ) . '.csv' );
-		$out = fopen( 'php://output', 'w' );
-		fwrite( $out, "\xEF\xBB\xBF" );
-		fputcsv( $out, array( 'SKU', 'Product', 'Suggested qty', 'Current stock', 'Waiting', 'Conversion %', 'Forecast demand', 'Safety stock', 'Unit price', 'Value' ) );
-		foreach ( $data['rows'] as $r ) {
-			if ( $r['calc']['order'] <= 0 ) {
-				continue;
-			}
-			fputcsv(
-				$out,
-				array(
-					$r['sku'],
-					self::label( $r['product'] ),
-					$r['calc']['order'],
-					null === $r['stock'] ? '' : $r['stock'],
-					$r['waiting'],
-					round( $r['conv'] * 100, 1 ),
-					$r['calc']['demand'],
-					$r['calc']['safety'],
-					$r['price'],
-					$r['revenue'],
-				)
-			);
-		}
-		fclose( $out ); // phpcs:ignore
-		exit;
 	}
 }

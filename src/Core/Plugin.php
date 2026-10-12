@@ -9,8 +9,12 @@ namespace YadamBiar\Core;
 
 defined( 'ABSPATH' ) || exit;
 
+use YadamBiar\Admin\Actions\ChannelActions;
+use YadamBiar\Admin\Actions\DeliveryActions;
+use YadamBiar\Admin\Actions\ExportActions;
+use YadamBiar\Admin\Actions\SettingsActions;
 use YadamBiar\Admin\AdminApp;
-use YadamBiar\Admin\Pages\ForecastPage;
+use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Admin\ProductMetabox;
 use YadamBiar\Channels\Messenger\MessengerChannel;
 use YadamBiar\Channels\PushChannel;
@@ -85,9 +89,7 @@ final class Plugin {
 			LegacyShortcodes::class,
 		);
 		if ( is_admin() ) {
-			$modules[] = AdminApp::class;
-			$modules[] = ProductMetabox::class;
-			$modules[] = ForecastPage::class;
+			array_push( $modules, AdminApp::class, ProductMetabox::class, SettingsActions::class, DeliveryActions::class, ExportActions::class, ChannelActions::class );
 		}
 		return (array) apply_filters( 'yadambiar_modules', $modules );
 	}
@@ -140,7 +142,7 @@ final class Plugin {
 	 * @return array
 	 */
 	public function action_links( $links ) {
-		array_unshift( $links, '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=settings' ) ) . '">' . esc_html__( 'تنظیمات', 'yadambiar' ) . '</a>' );
+		array_unshift( $links, '<a href="' . esc_url( AdminUrl::view( 'settings' ) ) . '">' . esc_html__( 'تنظیمات', 'yadambiar' ) . '</a>' );
 		return $links;
 	}
 }

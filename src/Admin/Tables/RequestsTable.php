@@ -9,12 +9,12 @@ namespace YadamBiar\Admin\Tables;
 
 defined( 'ABSPATH' ) || exit;
 
-use YadamBiar\Admin\AdminApp;
+use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Core\Installer;
 use YadamBiar\Settings\Catalog;
 use YadamBiar\Subscriptions\SubscriptionRepository;
+use YadamBiar\Support\Clock;
 use YadamBiar\Support\Money;
-use YadamBiar\Support\Phone;
 use YadamBiar\Support\ProductAttributes;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
@@ -37,31 +37,26 @@ class RequestsTable extends \WP_List_Table {
 	}
 
 	/**
-	 * Build WHERE from request filters.
+	 * List filters from the request (validated against the known statuses and types).
 	 *
-	 * @return string
+	 * @return array status, type, product_id, s — only the ones set.
 	 */
-	public static function where() {
-		global $wpdb;
-		$where = array( '1=1' );
-		// phpcs:disable WordPress.Security.NonceVerification
-		if ( ! empty( $_REQUEST['status'] ) ) {
-			$where[] = $wpdb->prepare( 'status = %s', sanitize_key( $_REQUEST['status'] ) );
-		}
-		if ( ! empty( $_REQUEST['type'] ) ) {
-			$where[] = $wpdb->prepare( 'type = %s', sanitize_key( $_REQUEST['type'] ) );
-		}
-		if ( ! empty( $_REQUEST['product_id'] ) ) {
-			$where[] = $wpdb->prepare( 'product_id = %d', absint( $_REQUEST['product_id'] ) );
-		}
-		if ( ! empty( $_REQUEST['s'] ) ) {
-			$s       = sanitize_text_field( wp_unslash( $_REQUEST['s'] ) );
-			$phone   = Phone::normalize_phone( $s );
-			$like    = '%' . $wpdb->esc_like( $s ) . '%';
-			$where[] = $wpdb->prepare( '(email LIKE %s OR phone LIKE %s OR phone = %s OR name LIKE %s OR product_id = %d)', $like, $like, $phone, $like, absint( $s ) );
-		}
+	public static function filters() {
+		// phpcs:disable WordPress.Security.NonceVerification -- read-only list filters.
+		$filters = array(
+			'status'     => isset( $_REQUEST['status'] ) ? sanitize_key( wp_unslash( $_REQUEST['status'] ) ) : '',
+			'type'       => isset( $_REQUEST['type'] ) ? sanitize_key( wp_unslash( $_REQUEST['type'] ) ) : '',
+			'product_id' => isset( $_REQUEST['product_id'] ) ? absint( $_REQUEST['product_id'] ) : 0,
+			's'          => isset( $_REQUEST['s'] ) && is_string( $_REQUEST['s'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) : '',
+		);
 		// phpcs:enable
-		return implode( ' AND ', $where );
+		if ( ! isset( SubscriptionRepository::statuses()[ $filters['status'] ] ) ) {
+			$filters['status'] = '';
+		}
+		if ( ! isset( SubscriptionRepository::types()[ $filters['type'] ] ) ) {
+			$filters['type'] = '';
+		}
+		return array_filter( $filters );
 	}
 
 	/**
@@ -118,7 +113,7 @@ class RequestsTable extends \WP_List_Table {
 		$table   = Installer::table( 'subscriptions' );
 		$counts  = $wpdb->get_results( "SELECT status, COUNT(*) AS c FROM {$table} GROUP BY status", OBJECT_K ); // phpcs:ignore
 		$current = isset( $_REQUEST['status'] ) ? sanitize_key( $_REQUEST['status'] ) : ''; // phpcs:ignore
-		$base    = admin_url( 'admin.php?page=yadambiar&view=requests' );
+		$base    = AdminUrl::view( 'requests' );
 		$total   = array_sum( wp_list_pluck( $counts, 'c' ) );
 		$views   = array( 'all' => sprintf( '<a href="%s" class="%s">%s <span class="count">(%s)</span></a>', esc_url( $base ), $current ? '' : 'current', esc_html__( 'همه', 'yadambiar' ), number_format_i18n( $total ) ) );
 		foreach ( SubscriptionRepository::statuses() as $key => $label ) {
@@ -146,7 +141,7 @@ class RequestsTable extends \WP_List_Table {
 		}
 		echo '</select>';
 		submit_button( __( 'فیلتر', 'yadambiar' ), '', 'filter_action', false );
-		$export = wp_nonce_url( add_query_arg( array( 'action' => 'yadambiar_export' ) + array_map( 'sanitize_text_field', wp_unslash( $_GET ) ), admin_url( 'admin-post.php' ) ), 'yadambiar_export' ); // phpcs:ignore
+		$export = AdminUrl::action( 'export', self::filters() );
 		echo ' <a class="button" href="' . esc_url( $export ) . '">' . esc_html__( 'خروجی CSV', 'yadambiar' ) . '</a></div>';
 	}
 
@@ -158,7 +153,7 @@ class RequestsTable extends \WP_List_Table {
 		$table    = Installer::table( 'subscriptions' );
 		$per_page = 30;
 		$paged    = $this->get_pagenum();
-		$where    = self::where();
+		$where    = SubscriptionRepository::filter_where( self::filters() );
 		// phpcs:disable WordPress.Security.NonceVerification
 		$orderby = isset( $_REQUEST['orderby'] ) && in_array( $_REQUEST['orderby'], array( 'id', 'status', 'product_id' ), true ) ? sanitize_key( $_REQUEST['orderby'] ) : 'id';
 		$order   = isset( $_REQUEST['order'] ) && 'asc' === strtolower( sanitize_key( $_REQUEST['order'] ) ) ? 'ASC' : 'DESC';
@@ -202,7 +197,7 @@ class RequestsTable extends \WP_List_Table {
 			$out .= '<br><small class="yadambiar-muted">' . esc_html( Money::price_text( $p->get_price() ) ) . ' — ' . ( $p->is_in_stock() ? esc_html__( 'موجود', 'yadambiar' ) : esc_html__( 'ناموجود', 'yadambiar' ) ) . '</small>';
 		}
 		$actions = array(
-			'filter' => '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $item->product_id ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'yadambiar' ) . '</a>',
+			'filter' => '<a href="' . esc_url( AdminUrl::view( 'requests', array( 'product_id' => $item->product_id ) ) ) . '">' . esc_html__( 'درخواست‌های این محصول', 'yadambiar' ) . '</a>',
 		);
 		return $out . $this->row_actions( $actions );
 	}
@@ -239,9 +234,9 @@ class RequestsTable extends \WP_List_Table {
 				}
 				return $out;
 			case 'created_at':
-				return esc_html( AdminApp::date( $item->created_at ) );
+				return esc_html( Clock::local( $item->created_at ) );
 			case 'notified':
-				return $item->last_notified_at ? esc_html( AdminApp::date( $item->last_notified_at ) ) . ( $item->notified_count > 1 ? ' <small>(×' . (int) $item->notified_count . ')</small>' : '' ) : '—';
+				return $item->last_notified_at ? esc_html( Clock::local( $item->last_notified_at ) ) . ( $item->notified_count > 1 ? ' <small>(×' . (int) $item->notified_count . ')</small>' : '' ) : '—';
 		}
 		return '';
 	}

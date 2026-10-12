@@ -400,15 +400,17 @@ $html = \YadamBiar\Frontend\ProductWidget::render( wc_get_product( $oid ) );
 t( false !== strpos( $html, 'یادم بیار وقتی موجود شد' ), 'simple OOS widget renders stock button' );
 wp_set_current_user( 1 );
 $_SERVER['HTTP_HOST'] = 'localhost';
-foreach ( array( 'page_dashboard', 'page_requests', 'page_reports', 'page_logs', 'page_settings' ) as $page ) {
-	ob_start();
-	if ( 'page_reports' === $page ) {
-		$_GET['product_id'] = $pid;
+foreach ( ( new \YadamBiar\Admin\AdminApp() )->pages() as $slug => $page ) {
+	$_GET['product_id'] = in_array( $slug, array( 'reports', 'diagnose' ), true ) ? $pid : 0;
+	foreach ( 'settings' === $slug ? array_keys( \YadamBiar\Settings\Schema::all() ) : array( '' ) as $tab ) {
+		$_GET['tab'] = $tab;
+		ob_start();
+		$page->render();
+		$out = ob_get_clean();
+		t( strlen( $out ) > 200, "admin {$slug}{$tab} renders (" . strlen( $out ) . ' bytes)' );
 	}
-	\YadamBiar\Admin\AdminApp::$page();
-	$out = ob_get_clean();
-	t( strlen( $out ) > 200, "admin {$page} renders (" . strlen( $out ) . ' bytes)' );
 }
+unset( $_GET['product_id'], $_GET['tab'] );
 $demand = \YadamBiar\Reports\ReportRepository::attribute_demand( $pid );
 t( ! empty( $demand ), 'attribute demand report: ' . wp_json_encode( $demand, JSON_UNESCAPED_UNICODE ) );
 $k = \YadamBiar\Reports\ReportRepository::kpis();

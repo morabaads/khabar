@@ -23,4 +23,14 @@ final class Clock {
 	public static function now( $offset = 0 ) {
 		return gmdate( 'Y-m-d H:i:s', time() + $offset );
 	}
+
+	/**
+	 * GMT mysql date shown in the site's date format and timezone.
+	 *
+	 * @param string $gmt GMT mysql date.
+	 * @return string
+	 */
+	public static function local( $gmt ) {
+		return $gmt ? wp_date( get_option( 'date_format' ) . ' H:i', strtotime( $gmt . ' UTC' ) ) : '';
+	}
 }

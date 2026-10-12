@@ -49,9 +49,9 @@ class ProductMetabox implements Module {
 				echo '<li><span>' . esc_html( $label ) . '</span><b>' . esc_html( number_format_i18n( $row->c ) ) . '</b></li>';
 			}
 			echo '</ul>';
-			$run = wp_nonce_url( admin_url( 'admin-post.php?action=yadambiar_run_product&product_id=' . $post->ID ), 'yadambiar_run_product' );
+			$run = AdminUrl::action( 'run_product', array( 'product_id' => $post->ID ) );
 			echo '<p><a class="button" href="' . esc_url( $run ) . '">' . esc_html__( 'بررسی و ارسال اعلان اکنون', 'yadambiar' ) . '</a></p>';
-			echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=reports&product_id=' . $post->ID ) ) . '">' . esc_html__( 'گزارش کامل', 'yadambiar' ) . '</a> | <a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $post->ID ) ) . '">' . esc_html__( 'درخواست‌ها', 'yadambiar' ) . '</a></p>';
+			echo '<p><a href="' . esc_url( AdminUrl::view( 'reports', array( 'product_id' => $post->ID ) ) ) . '">' . esc_html__( 'گزارش کامل', 'yadambiar' ) . '</a> | <a href="' . esc_url( AdminUrl::view( 'requests', array( 'product_id' => $post->ID ) ) ) . '">' . esc_html__( 'درخواست‌ها', 'yadambiar' ) . '</a></p>';
 		}
 		echo '<p class="description">' . esc_html__( 'با افزایش موجودی یا تغییر قیمت، اعلان‌ها به‌صورت خودکار ارسال می‌شوند.', 'yadambiar' ) . '</p>';
 	}
@@ -78,6 +78,6 @@ class ProductMetabox implements Module {
 			return;
 		}
 		$count = SubscriptionRepository::waiting_count( $post_id );
-		echo $count ? '<a href="' . esc_url( admin_url( 'admin.php?page=yadambiar&view=requests&product_id=' . $post_id ) ) . '" title="' . esc_attr__( 'منتظران', 'yadambiar' ) . '">' . esc_html( number_format_i18n( $count ) ) . '</a>' : '<span class="yadambiar-muted">–</span>';
+		echo $count ? '<a href="' . esc_url( AdminUrl::view( 'requests', array( 'product_id' => $post_id ) ) ) . '" title="' . esc_attr__( 'منتظران', 'yadambiar' ) . '">' . esc_html( number_format_i18n( $count ) ) . '</a>' : '<span class="yadambiar-muted">–</span>';
 	}
 }

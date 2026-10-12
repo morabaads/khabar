@@ -44,7 +44,7 @@ $yadambiar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 
 	<?php if ( $yadambiar_has_price && $s['show_price_alert'] ) : ?>
 	<div class="yadambiar-cta yadambiar-cta-price" <?php echo $in_stock ? '' : 'hidden'; ?>>
-		<button type="button" class="yadambiar-price-btn yadambiar-open" data-mode="price"><span class="yadambiar-price-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $s['button_text_price'] ); ?></span></button>
+		<button type="button" class="yadambiar-price-btn yadambiar-open" data-mode="price"><span class="yadambiar-price-ic"><?php echo \YadamBiar\Support\Icon::svg( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $s['button_text_price'] ); ?></span></button>
 	</div>
 	<?php endif; ?>
 
@@ -57,7 +57,7 @@ $yadambiar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 					<h3 id="<?php echo esc_attr( $yadambiar_uid ); ?>-title"><?php esc_html_e( 'یادم بیار', 'yadambiar' ); ?></h3>
 					<p class="yadambiar-product-name"><strong><?php echo esc_html( $product->get_name() ); ?></strong> <span class="yadambiar-variation-label"></span></p>
 				</div>
-				<button type="button" class="yadambiar-close" aria-label="<?php esc_attr_e( 'بستن', 'yadambiar' ); ?>"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
+				<button type="button" class="yadambiar-close" aria-label="<?php esc_attr_e( 'بستن', 'yadambiar' ); ?>"><?php echo \YadamBiar\Support\Icon::svg( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
 			</header>
 
 			<form class="yadambiar-form" novalidate autocomplete="off">
@@ -83,29 +83,29 @@ $yadambiar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 				<?php endif; ?>
 
 				<fieldset class="yadambiar-conditions">
-					<legend><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'yadambiar' ); ?></span></legend>
+					<legend><?php echo \YadamBiar\Support\Icon::svg( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'چه زمانی خبرتان کنیم؟', 'yadambiar' ); ?></span></legend>
 					<?php if ( $yadambiar_stock_opt ) : ?>
-						<label class="yadambiar-cond"><input type="checkbox" name="in_stock" value="1"><span class="yadambiar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'yadambiar' ); ?></span><span class="yadambiar-cond-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'box' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+						<label class="yadambiar-cond"><input type="checkbox" name="in_stock" value="1"><span class="yadambiar-cond-text"><?php esc_html_e( 'وقتی موجود شد', 'yadambiar' ); ?></span><span class="yadambiar-cond-ic"><?php echo \YadamBiar\Support\Icon::svg( 'box' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_drop', $types, true ) ) : ?>
 						<label class="yadambiar-cond"><input type="checkbox" data-toggle="price_below"><span class="yadambiar-cond-text"><?php esc_html_e( 'وقتی قیمت رسید به کمتر از', 'yadambiar' ); ?></span>
 							<input type="text" inputmode="numeric" name="price_below" class="yadambiar-num" placeholder="<?php echo esc_attr( $price ? wc_format_localized_price( round( $price * 0.9, wc_get_price_decimals() ) ) : '' ); ?>" disabled><span class="yadambiar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span>
-						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Support\Icon::svg( 'down' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_rise', $types, true ) ) : ?>
 						<label class="yadambiar-cond"><input type="checkbox" data-toggle="price_above"><span class="yadambiar-cond-text"><?php esc_html_e( 'وقتی قیمت بیشتر شد از', 'yadambiar' ); ?></span>
 							<span class="yadambiar-cur"><?php echo esc_html( get_woocommerce_currency_symbol() ); ?></span><input type="text" inputmode="numeric" name="price_above" class="yadambiar-num" disabled>
-						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'up' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Support\Icon::svg( 'up' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<?php if ( in_array( 'price_change', $types, true ) ) : ?>
-						<label class="yadambiar-cond"><input type="checkbox" name="price_change" value="1"><span class="yadambiar-cond-text"><?php esc_html_e( 'هر بار قیمت تغییر کرد', 'yadambiar' ); ?></span><span class="yadambiar-cond-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'chart' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+						<label class="yadambiar-cond"><input type="checkbox" name="price_change" value="1"><span class="yadambiar-cond-text"><?php esc_html_e( 'هر بار قیمت تغییر کرد', 'yadambiar' ); ?></span><span class="yadambiar-cond-ic"><?php echo \YadamBiar\Support\Icon::svg( 'chart' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( in_array( 'min_qty', $types, true ) ) : ?>
 						<label class="yadambiar-cond"><input type="checkbox" data-toggle="min_qty"><span class="yadambiar-cond-text"><?php esc_html_e( 'موجودی حداقل', 'yadambiar' ); ?></span>
 							<span class="yadambiar-cur"><?php esc_html_e( 'عدد شد', 'yadambiar' ); ?></span><input type="text" inputmode="numeric" name="min_qty" class="yadambiar-num yadambiar-num-sm" disabled>
-						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'cube' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+						<span class="yadambiar-cond-ic"><?php echo \YadamBiar\Support\Icon::svg( 'cube' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
 						</label>
 					<?php endif; ?>
 					<div class="yadambiar-mode" hidden>
@@ -116,25 +116,25 @@ $yadambiar_sel        = $s['user_selects_channel'] && count( $channels ) > 1;
 
 				<?php if ( $yadambiar_sel ) : ?>
 				<fieldset class="yadambiar-channels">
-					<legend><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'send' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'yadambiar' ); ?></span></legend>
+					<legend><?php echo \YadamBiar\Support\Icon::svg( 'send' ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php esc_html_e( 'از چه راهی خبرتان کنیم؟', 'yadambiar' ); ?></span></legend>
 					<?php foreach ( $channels as $yadambiar_ch => $yadambiar_label ) : ?>
-						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $yadambiar_ch ); ?>" <?php checked( in_array( $yadambiar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>><?php echo \YadamBiar\Frontend\ProductWidget::icon( \YadamBiar\Frontend\ProductWidget::channel_icon( $yadambiar_ch ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $yadambiar_label ); ?></span></label>
+						<label><input type="checkbox" name="channels[]" value="<?php echo esc_attr( $yadambiar_ch ); ?>" <?php checked( in_array( $yadambiar_ch, array( 'sms', 'email', 'onsite', 'telegram', 'bale' ), true ) ); ?>><?php echo \YadamBiar\Support\Icon::svg( \YadamBiar\Frontend\ProductWidget::channel_icon( $yadambiar_ch ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?><span><?php echo esc_html( $yadambiar_label ); ?></span></label>
 					<?php endforeach; ?>
 				</fieldset>
 				<?php endif; ?>
 				<fieldset class="yadambiar-contact">
-					<label><span class="yadambiar-lbl"><?php esc_html_e( 'نام (اختیاری)', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+					<label><span class="yadambiar-lbl"><?php esc_html_e( 'نام (اختیاری)', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="text" name="name" value="<?php echo esc_attr( $prefill['name'] ); ?>" autocomplete="name"><?php echo \YadamBiar\Support\Icon::svg( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php if ( $yadambiar_sel || 'email' !== $yadambiar_contact ) : ?>
-						<label class="yadambiar-f-phone" data-for="sms<?php echo \YadamBiar\Channels\Messenger\MessengerChannel::phone_ready( 'bale' ) ? ' bale' : ''; ?>"><span class="yadambiar-lbl"><?php esc_html_e( 'شماره موبایل', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $yadambiar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+						<label class="yadambiar-f-phone" data-for="sms<?php echo \YadamBiar\Channels\Messenger\MessengerChannel::phone_ready( 'bale' ) ? ' bale' : ''; ?>"><span class="yadambiar-lbl"><?php esc_html_e( 'شماره موبایل', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="tel" name="phone" dir="ltr" value="<?php echo esc_attr( $prefill['phone'] ); ?>" placeholder="09xxxxxxxxx" autocomplete="tel" <?php echo in_array( $yadambiar_contact, array( 'phone', 'both' ), true ) ? 'required' : ''; ?>><?php echo \YadamBiar\Support\Icon::svg( 'phone' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 					<?php if ( $yadambiar_sel || 'phone' !== $yadambiar_contact ) : ?>
-						<label class="yadambiar-f-email" data-for="email"><span class="yadambiar-lbl"><?php esc_html_e( 'ایمیل', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $yadambiar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'mail' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
+						<label class="yadambiar-f-email" data-for="email"><span class="yadambiar-lbl"><?php esc_html_e( 'ایمیل', 'yadambiar' ); ?></span><span class="yadambiar-field"><input type="email" name="email" dir="ltr" value="<?php echo esc_attr( $prefill['email'] ); ?>" autocomplete="email" <?php echo in_array( $yadambiar_contact, array( 'email', 'both' ), true ) ? 'required' : ''; ?>><?php echo \YadamBiar\Support\Icon::svg( 'mail' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span></label>
 					<?php endif; ?>
 				</fieldset>
 
 
 				<p class="yadambiar-msg" role="alert" hidden></p>
-				<button type="submit" class="button alt yadambiar-submit"><span><?php esc_html_e( 'ثبت درخواست', 'yadambiar' ); ?></span><?php echo \YadamBiar\Frontend\ProductWidget::icon( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
+				<button type="submit" class="button alt yadambiar-submit"><span><?php esc_html_e( 'ثبت درخواست', 'yadambiar' ); ?></span><?php echo \YadamBiar\Support\Icon::svg( 'arrow' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></button>
 			</form>
 
 			<form class="yadambiar-otp" hidden novalidate>

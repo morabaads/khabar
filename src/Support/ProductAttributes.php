@@ -36,4 +36,18 @@ final class ProductAttributes {
 		}
 		return implode( '، ', $parts );
 	}
+
+	/**
+	 * Product name; for a variation "Parent — attributes".
+	 *
+	 * @param \WC_Product $product Product.
+	 * @return string
+	 */
+	public static function full_name( $product ) {
+		if ( $product->is_type( 'variation' ) ) {
+			$parent = wc_get_product( $product->get_parent_id() );
+			return ( $parent ? $parent->get_name() : '' ) . ' — ' . wc_get_formatted_variation( $product, true, false, false );
+		}
+		return $product->get_name();
+	}
 }
