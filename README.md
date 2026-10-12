@@ -9,11 +9,13 @@
 
 ## نصب
 
+> ارتقا از «خبرم کن» (khabar): کافی است «یادم بیار» را فعال کنید؛ افزونه قبلی غیرفعال و تنظیمات، جداول، درخواست‌ها، متادیتا و برگه «خبرم کن‌های من» خودکار منتقل می‌شوند. شورت‌کدهای قدیمی `[khabar…]` همچنان کار می‌کنند. ویجت‌های المنتور قدیمی را یک بار دوباره اضافه کنید و در تنظیمات ← کانال‌ها «ثبت وب‌هوک ربات‌ها» را بزنید.
+
 1. پوشه افزونه را در `wp-content/plugins/yadambiar` قرار دهید و فعال کنید.
 2. از منوی **یادم بیار ← تنظیمات** کانال‌ها (مثلاً سامانه پیامک) را تنظیم کنید و از بخش «ارسال آزمایشی» تست بگیرید.
 3. دکمه به‌صورت خودکار در صفحه محصول ظاهر می‌شود (یا از شورت‌کد `[yadambiar]` استفاده کنید).
 
-با فعال‌سازی، ۴ جدول (`yadambiar_subscriptions`، `yadambiar_log`، `yadambiar_notifications`، `yadambiar_push`)، برگه «یادآوری‌های من» و آیتم «یادآوری‌های من» در حساب کاربری ووکامرس ساخته می‌شود.
+با فعال‌سازی، ۶ جدول (`yadambiar_subscriptions`، `yadambiar_log`، `yadambiar_notifications`، `yadambiar_push`، `yadambiar_price_history`، `yadambiar_messenger`)، برگه «یادآوری‌های من» و آیتم «یادآوری‌های من» در حساب کاربری ووکامرس ساخته می‌شود.
 
 ## پوشش PRD
 
@@ -128,43 +130,61 @@ Flowهای ۱ تا ۶ PRD هم دقیقاً به همین ترتیب پیاده 
 | `yadambiar_clicked` / `yadambiar_converted` | action | کلیک روی لینک / ثبت خرید |
 | `yadambiar_message_vars` | filter | تغییر/افزودن متغیرهای پیام |
 | `yadambiar_pre_send_sms` | filter | جایگزینی کامل ارسال پیامک (مقدار غیر null برگردانید) |
-| `yadambiar_send_channel_{name}` | filter | افزودن کانال سفارشی (مثلاً تلگرام/بله) |
+| `yadambiar_send_channel_{name}` | filter | ارسال کانال سفارشی ساده (بدون کلاس) |
 | `yadambiar_settings_schema` | filter | افزودن فیلد تنظیمات |
 | `yadambiar_supports_product` | filter | فعال‌سازی برای انواع دیگر محصول |
 | `yadambiar_alternative_candidate_ids` | filter | تغییر کاندیداهای محصول جایگزین |
 | `yadambiar_alternatives_sent` | action | `( $sub, $alts, $results )` |
 | `yadambiar_forecast_sales` | filter | جایگزینی داده فروش در پیش‌بینی (مثلاً از ERP) |
 | `yadambiar_template` | filter | مسیر قالب‌ها |
+| `yadambiar_modules` | filter | افزودن/حذف ماژول‌ها (کلاس‌هایی که `Contracts\Module` را پیاده می‌کنند) |
+| `yadambiar_notification_channels` | filter | افزودن کانال ارسال (`Contracts\NotificationChannel`) |
+| `yadambiar_sms_gateways` | filter | افزودن سامانه پیامک (`Contracts\SmsGateway`) |
+| `yadambiar_rest_controllers` | filter | افزودن مسیر REST (`Contracts\RestRoutes`) |
+| `yadambiar_admin_pages` | filter | افزودن بخش به پنل مدیریت (`Contracts\AdminPage`) |
 
 REST API: `yadambiar/v1/subscribe`، `verify`، `subscriptions`، `subscriptions/{id}`، `notifications`، `push/subscribe`، `push/latest`، `messenger/link`، `messenger/status`، `bot/{telegram|bale}` (وب‌هوک).
 
 ## معماری
 
+کد بر اساس PSR-4 در فضای نام `YadamBiar\` زیر پوشه `src/` چیده شده و هر کلاس یک مسئولیت دارد.
+`Core\Plugin` ریشه ترکیب (composition root) است: ماژول‌هایی را که قرارداد `Contracts\Module` را پیاده می‌کنند می‌سازد و `register()` هرکدام هوک‌هایش را ثبت می‌کند (فیلتر `yadambiar_modules`).
+
 ```
-yadambiar.php                        بوت‌استرپ، سازگاری HPOS
-includes/
-  class-yadambiar-watcher.php        تشخیص تغییر موجودی/قیمت ← صف
-  class-yadambiar-dispatcher.php     ارزیابی منتظران هر محصول و ارسال
-  class-yadambiar-rules.php          موتور قوانین (AND شرایط، تطبیق ویژگی‌ها)
-  class-yadambiar-waves.php          ارسال موجی
-  class-yadambiar-reservation.php    پنجره خرید اختصاصی
-  class-yadambiar-channels.php       رجیستری کانال‌ها، ساخت پیام، لاگ
-  channels/                       ایمیل، پیامک، داخل سایت، تلگرام/بله
-  class-yadambiar-coupons.php        کد تخفیف خودکار
-  class-yadambiar-alternatives.php   پیشنهاد جایگزین
-  class-yadambiar-price-history.php  تاریخچه قیمت
-  class-yadambiar-forecast.php       مدل پیش‌بینی تقاضا
-  elementor/                      ویجت‌های المنتور
-  class-yadambiar-push.php           Web Push (VAPID، بدون payload)
-  class-yadambiar-rest.php           REST API فرانت
-  class-yadambiar-frontend.php       دکمه/فرم صفحه محصول (کلاسیک + بلوکی)
-  class-yadambiar-account.php        یادآوری‌های من
-  class-yadambiar-tracking.php       کلیک و خرید
-  admin/                          داشبورد، درخواست‌ها، گزارش‌ها، لاگ، تنظیمات
-templates/                        قالب‌های قابل بازنویسی
+yadambiar.php                     بوت‌استرپ، اتولودر، فعال‌سازی، سازگاری HPOS
+uninstall.php                     پاک‌سازی کامل (فقط با اجازه مدیر؛ چندسایته)
+src/
+  Contracts/                      Module، AdminPage، RestRoutes، NotificationChannel، SmsGateway، SmsDiagnostics
+  Core/                           Plugin، Autoloader، Installer (جداول)، Cron، Privacy، Migration/ (انتقال داده «خبرم کن»)
+  Settings/                       Settings (خواندن/ذخیره)، Schema، FieldSanitizer، Catalog، MessageTemplates، Appearance
+  Subscriptions/                  SubscriptionRepository، SubscribeService، SubscriptionUpdater، OtpService، SubscriptionPresenter
+  Notifications/                  StockWatcher ← Dispatcher ← EvaluationContext + RuleEngine ← Notifier
+                                  DuplicateGuard، ProductLock، WaveLimiter، DeliveryLog، DeliveryDiagnostics
+  Channels/                       ChannelManager (مسیریابی) + Delivery/ (آداپتور هر کانال)
+    Sms/                          SmsChannel، GatewayFactory، ProviderRegistry، PatternRepository، Gateways/ (هر سامانه یک کلاس)
+    Messenger/                    BotApi، SafirClient، LinkRepository، BotWebhook، BotHealthCheck، ChannelBroadcaster
+    Push/                         VapidKeys، PushSubscriptionRepository، ServiceWorker
+  Commerce/                       Reservation، Coupons، Tracking، AlternativeFinder/Mailer، PriceHistory (+Repository/Chart)، Forecast
+  Http/                           RestRouter، RateLimiter، Controllers/ (subscribe، subscriptions، notifications، push)
+  Frontend/                       ProductWidget، Bell، Account، Assets
+  Admin/                          AdminApp (مسیریاب SPA)، Pages/، Actions/ (admin-post با نگهبان دسترسی + nonce)،
+                                  SettingsForm/، Tables/، Export/CsvWriter، Ui/، Access، AdminUrl، Flash
+  Reports/                        ReportRepository
+  Integrations/Elementor/         ویجت‌های المنتور
+  Compat/                         شورت‌کدهای قدیمی [khabar…]
+  Support/                        Text، Phone، Money، Clock، Visitor، Icon، Media، View، Queue، Failure، Http/JsonClient
+templates/                        قالب‌های قابل بازنویسی در پوسته (yadambiar/…)
 assets/                           JS/CSS و Service Worker
 tests/integration.php             تست یکپارچه سراسری
 ```
+
+### امنیت
+
+- همه مسیرهای REST با `args` تایپ‌دار اعتبارسنجی می‌شوند؛ مالکیت درخواست‌ها در `permission_callback` بررسی می‌شود.
+- اکشن‌های مدیریت فقط از `Admin\Actions\ActionGroup` ثبت می‌شوند که دسترسی `manage_woocommerce` و nonce را یک‌جا بررسی می‌کند.
+- محدودیت نرخ (IP) + محدودیت هر مخاطب برای کد تایید، هانی‌پات فرم، کدهای هش‌شده و یک‌بارمصرف.
+- آدرس‌هایی که مدیر وارد می‌کند (وب‌سرویس پیامک، آدرس پنل) با HTTP امن وردپرس فراخوانی می‌شوند (بدون دسترسی به شبکه داخلی)؛ پوش فقط به سرویس‌های پوش شناخته‌شده.
+- خروجی CSV در برابر تزریق فرمول اکسل ایمن است.
 
 ## اجرای تست
 
@@ -174,7 +194,7 @@ tests/integration.php             تست یکپارچه سراسری
 wp eval-file wp-content/plugins/yadambiar/tests/integration.php
 ```
 
-این تست ۱۳۳ سناریو را بررسی می‌کند: همه Flowها و قابلیت‌های ۱ تا ۱۵، OTP، پنل کاربر، امضای VAPID، ارسال موجی، رزرو اختصاصی، ردیابی خرید، رندر صفحات مدیریت، و همه قابلیت‌های نسخه ۱.۱ (اتصال و ارسال تلگرام/بله، اعلام در کانال، کوپن، جایگزین‌ها، تاریخچه قیمت، مدل پیش‌بینی و ویجت‌های المنتور در صورت فعال بودن المنتور).
+این تست حدود ۲۰۰ سناریو را بررسی می‌کند: همه Flowها و قابلیت‌های ۱ تا ۱۵، OTP، پنل کاربر، امضای VAPID، ارسال موجی، رزرو اختصاصی، ردیابی خرید، رندر صفحات مدیریت، و همه قابلیت‌های نسخه ۱.۱ (اتصال و ارسال تلگرام/بله، اعلام در کانال، کوپن، جایگزین‌ها، تاریخچه قیمت، مدل پیش‌بینی و ویجت‌های المنتور در صورت فعال بودن المنتور).
 
 ## پیشنهادهای نسخه‌های بعدی
 

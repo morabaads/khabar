@@ -4,7 +4,7 @@ Tags: woocommerce, back in stock, price alert, waitlist, sms
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.7.4
+Stable tag: 2.0.0
 License: GPLv2 or later
 
 Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooCommerce via SMS (Kavenegar, Melipayamak, IPPanel, SMS.ir, custom), email, on-site, web push, Telegram and Bale.
@@ -14,6 +14,14 @@ Variation-exact back-in-stock, price-drop/rise and combined-rule alerts for WooC
 See README.md for full documentation (Persian).
 
 == Changelog ==
+
+= 2.0.0 =
+* Renamed to «یادم بیار» (Yadam Biar): slug, text domain, options, tables, hooks, REST namespace (yadambiar/v1), shortcodes ([yadambiar…]; old [khabar…] still work).
+* One-time automatic migration from Khabar: settings, tables, request data, product/order meta and the "my alerts" page; the old plugin is deactivated.
+* Modular PSR-4 architecture (src/): composition root with Module contract; split admin (pages, guarded actions, settings renderers), REST (router, controllers, services), SMS (one gateway class per provider), messengers, push, dispatcher, alternatives and price history.
+* Security: typed REST args, ownership in permission callbacks, central capability + nonce guard for admin actions, safe HTTP for admin-typed URLs, CSV formula-injection protection, webhook secret checked before the handler.
+* Performance: storefront settings computed only where widgets render, cached request counts with write invalidation, variation caches primed, CSV export streamed in batches.
+* Uninstall also removes transients, queued actions and the migration flag (and runs on every site of a network).
 
 = 1.7.4 =
 * The same alert for the same item is not sent to the same person again within 72 hours (setting in Advanced; 0 = off), even across different requests or days. Skipped duplicates appear in the send log; each log row shows its request number.
