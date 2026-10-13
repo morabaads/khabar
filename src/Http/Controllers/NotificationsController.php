@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Channels\OnsiteChannel;
 use YadamBiar\Contracts\RestRoutes;
+use YadamBiar\Frontend\NotificationPresenter;
 use YadamBiar\Support\Visitor;
 
 /**
@@ -54,7 +55,7 @@ final class NotificationsController implements RestRoutes {
 		return rest_ensure_response(
 			array(
 				'unread' => $owner ? OnsiteChannel::unread( $owner ) : 0,
-				'items'  => $owner ? OnsiteChannel::latest( $owner ) : array(),
+				'items'  => $owner ? array_map( array( NotificationPresenter::class, 'present' ), OnsiteChannel::latest( $owner ) ) : array(),
 			)
 		);
 	}

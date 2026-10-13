@@ -59,7 +59,7 @@ final class OnsiteChannel {
 			return array();
 		}
 		$table = Installer::table( 'notifications' );
-		return (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, title, message, url, is_read, created_at FROM {$table} WHERE owner_key = %s ORDER BY id DESC LIMIT %d", $owner_key, $limit ) ); // phpcs:ignore
+		return (array) $wpdb->get_results( $wpdb->prepare( "SELECT id, subscription_id, title, message, url, is_read, created_at FROM {$table} WHERE owner_key = %s ORDER BY id DESC LIMIT %d", $owner_key, $limit ) ); // phpcs:ignore
 	}
 
 	/**

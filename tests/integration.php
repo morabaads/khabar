@@ -832,6 +832,27 @@ t( 500 > $code, 'array where a string is expected does not break the endpoint ('
 list( $code ) = rest( 'POST', 'bot/telegram', array( 'secret' => '' ) );
 t( 403 === $code, 'bot webhook without secret refused before the handler runs' );
 
+echo "\n== Bell ==\n";
+$bell_saved = \YadamBiar\Settings\Settings::all();
+settings( array( 'floating_bell' => 1, 'channels_enabled' => array_values( array_unique( array_merge( (array) $bell_saved['channels_enabled'], array( 'onsite' ) ) ) ) ) );
+$bell_cookies = $_COOKIE;
+wp_set_current_user( 0 );
+$_COOKIE[ \YadamBiar\Support\Visitor::GUEST_COOKIE ] = str_repeat( 'b', 32 );
+$bell_owner = \YadamBiar\Support\Visitor::owner_key();
+ob_start(); \YadamBiar\Frontend\Bell::floating_bell(); $out = ob_get_clean();
+t( '' === $out, 'no floating bell without unread notifications' );
+\YadamBiar\Channels\OnsiteChannel::create( $bell_owner, 0, 'موجود شد!', "متن اعلان\nhttps://example.test/?kgo=x", 'https://example.test/?kgo=x' );
+ob_start(); \YadamBiar\Frontend\Bell::floating_bell(); $out = ob_get_clean();
+t( false !== strpos( $out, 'yadambiar-floating' ) && false !== strpos( $out, 'has-unread' ) && false !== strpos( $out, 'data-floating' ), 'floating bell shown with an unread notification' );
+list( $code, $data ) = rest( 'GET', 'notifications' );
+t( 200 === $code && 1 === $data['unread'] && 'متن اعلان' === $data['items'][0]['message'] && $data['items'][0]['unread'] && 'https://example.test/?kgo=x' === $data['items'][0]['url'], 'popup data: link removed from the text, kept as the button' );
+rest( 'POST', 'notifications/read' );
+ob_start(); \YadamBiar\Frontend\Bell::floating_bell(); $out = ob_get_clean();
+t( '' === $out, 'floating bell hidden once the notifications are viewed' );
+$_COOKIE = $bell_cookies;
+update_option( \YadamBiar\Settings\Settings::OPTION, $bell_saved );
+\YadamBiar\Settings\Settings::flush();
+
 echo "\n== Outgoing webhook ==\n";
 $hook_saved = \YadamBiar\Settings\Settings::all();
 settings( array( 'webhook_url' => 'https://93.184.216.34/in', 'webhook_secret' => 's3cret' ) );

@@ -80,6 +80,13 @@ final class Assets implements Module {
 				'chooseOne'  => __( 'حداقل یک شرط را انتخاب کنید.', 'yadambiar' ),
 				'any'        => __( 'هر کدام', 'yadambiar' ),
 				'noNotes'    => __( 'اعلانی ندارید.', 'yadambiar' ),
+				'notesTitle'  => __( 'اعلان‌های شما', 'yadambiar' ),
+				/* translators: %s number of new notifications */
+				'notesNew'    => __( '%s اعلان جدید', 'yadambiar' ),
+				'notesAll'    => __( 'همه اعلان‌ها را دیده‌اید', 'yadambiar' ),
+				'new'         => __( 'جدید', 'yadambiar' ),
+				'viewProduct' => __( 'مشاهده محصول', 'yadambiar' ),
+				'close'       => __( 'بستن', 'yadambiar' ),
 				'connect'    => __( 'دریافت در %s', 'yadambiar' ),
 				'connected'  => __( '%s متصل است ✓', 'yadambiar' ),
 				'connectTip' => __( 'روی دکمه بزنید و در ربات «Start» را بزنید تا اعلان‌ها را آنجا هم بگیرید.', 'yadambiar' ),

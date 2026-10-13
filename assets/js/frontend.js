@@ -554,25 +554,61 @@
 
 	/* ---------- Bell (on-site notifications) ---------- */
 
-	function initBell($bell) {
-		var $list = $bell.find('.yadambiar-bell-list');
-		$bell.on('click', '.yadambiar-bell-btn', function () {
-			if (!$list.prop('hidden')) { $list.prop('hidden', true); return; }
-			api('notifications').then(function (res) {
-				$list.empty();
-				if (!res.items.length) { $list.append($('<p>').text(D.i18n.noNotes)); }
-				res.items.forEach(function (n) {
-					var $a = $('<a class="yadambiar-bell-item">').attr('href', n.url || '#').toggleClass('yadambiar-unread', n.is_read === '0' || n.is_read === 0);
-					$a.append($('<strong>').text(n.title)).append($('<span>').text(n.message));
-					$list.append($a);
-				});
-				$list.prop('hidden', false);
-				if (res.unread) {
-					api('notifications/read', 'POST', {}).then(function () { $bell.find('.yadambiar-bell-count').remove(); });
-				}
+	var notesModal = null;
+
+	// Centered popup listing the visitor's notifications (built once, shared by every bell on the page).
+	function openNotes($bell) {
+		if (!notesModal) {
+			notesModal = $('<div class="yadambiar-nmodal" role="dialog" aria-modal="true" hidden>' +
+				'<div class="yadambiar-nmodal-box">' +
+				'<header class="yadambiar-nmodal-head"><span class="yadambiar-nmodal-icon"></span><div><strong></strong><small></small></div>' +
+				'<button type="button" class="yadambiar-nmodal-close">&times;</button></header>' +
+				'<div class="yadambiar-nmodal-list" aria-live="polite"></div></div></div>');
+			notesModal.find('.yadambiar-nmodal-icon').html($bell.find('.yadambiar-bell-btn svg').first().clone());
+			notesModal.find('.yadambiar-nmodal-head strong').text(D.i18n.notesTitle);
+			notesModal.find('.yadambiar-nmodal-close').attr('aria-label', D.i18n.close);
+			notesModal.attr('aria-label', D.i18n.notesTitle);
+			$('body').append(notesModal);
+			notesModal.on('click', function (e) { if (e.target === this || $(e.target).closest('.yadambiar-nmodal-close').length) { closeNotes(); } });
+			$(document).on('keydown', function (e) { if (e.key === 'Escape' && !notesModal.prop('hidden')) { closeNotes(); } });
+		}
+		var $list = notesModal.find('.yadambiar-nmodal-list').empty().append($('<p class="yadambiar-nmodal-empty">').text('…'));
+		notesModal.data('bell', $bell).prop('hidden', false);
+		$('html').addClass('yadambiar-noscroll');
+		notesModal.find('.yadambiar-nmodal-close').trigger('focus');
+
+		api('notifications').then(function (res) {
+			$list.empty();
+			var unread = res.items.filter(function (n) { return n.unread; }).length;
+			notesModal.find('.yadambiar-nmodal-head small').text(unread ? D.i18n.notesNew.replace('%s', unread) : D.i18n.notesAll);
+			if (!res.items.length) { $list.append($('<p class="yadambiar-nmodal-empty">').text(D.i18n.noNotes)); return; }
+			res.items.forEach(function (n) {
+				var $card = $('<article class="yadambiar-note">').toggleClass('is-unread', !!n.unread);
+				if (n.image) { $card.append($('<img class="yadambiar-note-img" alt="" loading="lazy">').attr('src', n.image)); }
+				var $body = $('<div class="yadambiar-note-body">');
+				$body.append($('<div class="yadambiar-note-top">').append($('<strong>').text(n.title)).append(n.unread ? $('<span class="yadambiar-note-dot">').text(D.i18n.new) : null));
+				if (n.message) { $body.append($('<p>').text(n.message)); }
+				var $foot = $('<div class="yadambiar-note-foot">').append($('<time>').text(n.time));
+				if (n.url && /^https?:\/\//.test(n.url)) { $foot.append($('<a class="yadambiar-note-cta">').attr('href', n.url).text(D.i18n.viewProduct)); }
+				$body.append($foot);
+				$list.append($card.append($body));
 			});
-		});
-		$(document).on('click', function (e) { if (!$(e.target).closest($bell).length) { $list.prop('hidden', true); } });
+			if (res.unread) { api('notifications/read', 'POST', {}); }
+		}).catch(function () { $list.empty().append($('<p class="yadambiar-nmodal-empty">').text(D.i18n.error)); });
+	}
+
+	// Closing marks everything seen: counters go away and the floating bell leaves the page.
+	function closeNotes() {
+		var $bell = notesModal.data('bell');
+		notesModal.prop('hidden', true);
+		$('html').removeClass('yadambiar-noscroll');
+		$('[data-yadambiar-bell]').removeClass('has-unread').find('.yadambiar-bell-count, .yadambiar-bell-teaser').remove();
+		$('[data-yadambiar-bell][data-floating]').closest('.yadambiar-floating').addClass('is-leaving').delay(250).queue(function () { $(this).remove(); });
+		if ($bell && $bell.closest('body').length) { $bell.find('.yadambiar-bell-btn').trigger('focus'); }
+	}
+
+	function initBell($bell) {
+		$bell.on('click', '.yadambiar-bell-btn, .yadambiar-bell-teaser', function (e) { e.preventDefault(); openNotes($bell); });
 	}
 
 	// Initialise every Yadam Biar component inside a scope once (also used by the Elementor editor).
