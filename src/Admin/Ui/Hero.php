@@ -11,7 +11,6 @@ defined( 'ABSPATH' ) || exit;
 
 use YadamBiar\Admin\AdminUrl;
 use YadamBiar\Subscriptions\SubscriptionRepository;
-use YadamBiar\Support\Icon;
 
 /**
  * Admin hero banner.
@@ -29,7 +28,7 @@ final class Hero {
 		?>
 		<header class="yadambiar-hero">
 			<div class="yadambiar-hero-brand">
-				<span class="yadambiar-hero-logo"><?php echo Icon::svg( 'bell' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+				<span class="yadambiar-hero-logo"><img src="<?php echo esc_url( YADAMBIAR_URL . 'assets/img/yadambiar-icon.svg' ); ?>" width="26" height="26" alt=""></span>
 				<div>
 					<h1><?php esc_html_e( 'یادم بیار', 'yadambiar' ); ?></h1>
 					<p><?php echo esc_html( $subtitle ); ?></p>

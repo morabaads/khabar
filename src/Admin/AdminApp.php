@@ -99,8 +99,8 @@ final class AdminApp implements Module {
 	public function menu() {
 		$active = SubscriptionRepository::active_count();
 		$bubble = $active ? ' <span class="awaiting-mod">' . esc_html( number_format_i18n( $active ) ) . '</span>' : '';
-		$label  = '<span class="yadambiar-mn"><b>' . esc_html__( 'یادم بیار', 'yadambiar' ) . $bubble . '</b><small>' . esc_html__( 'اعلان موجودی و قیمت', 'yadambiar' ) . '</small></span>';
-		$hook   = add_menu_page( __( 'یادم بیار', 'yadambiar' ), $label, Access::CAP, AdminUrl::PAGE, array( $this, 'render' ), 'dashicons-bell', 56 );
+		$label  = '<span class="yadambiar-mn"><b>' . esc_html__( 'یادم بیار', 'yadambiar' ) . '</b>' . $bubble . '</span>';
+		$hook   = add_menu_page( __( 'یادم بیار', 'yadambiar' ), $label, Access::CAP, AdminUrl::PAGE, array( $this, 'render' ), 'none', 56 ); // Icon drawn by admin-menu.css (assets/img/yadambiar-icon.svg).
 		add_action( 'load-' . $hook, array( $this, 'load' ) );
 
 		foreach ( $this->pages() as $slug => $page ) {

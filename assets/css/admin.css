@@ -50,7 +50,7 @@
 .yadambiar-hero { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 16px 0 18px; padding: 18px 22px; border-radius: 18px; background: linear-gradient(135deg, #14162b 0%, #23254e 100%); color: #fff; box-shadow: 0 10px 30px rgba(20, 22, 43, .18); }
 .yadambiar-hero-brand { display: flex; align-items: center; gap: 14px; }
 .yadambiar-hero-logo { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, #ff7a45, var(--ka)); color: #fff; box-shadow: 0 6px 16px rgba(244, 81, 30, .4); }
-.yadambiar-hero-logo .yadambiar-ic { width: 24px; height: 24px; }
+.yadambiar-hero-logo img { width: 26px; height: 26px; display: block; }
 .yadambiar-hero h1 { margin: 0; padding: 0; color: #fff; font-size: 18px; font-weight: 800; line-height: 1.5; }
 .yadambiar-hero p { margin: 0; color: #f6a98a; font-size: 12.5px; }
 .yadambiar-hero-pills { display: flex; gap: 8px; flex-wrap: wrap; }
