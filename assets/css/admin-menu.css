@@ -18,13 +18,17 @@
 #adminmenu #toplevel_page_yadambiar .wp-menu-arrow { display: none; }
 
 /* icon tile */
-#adminmenu #toplevel_page_yadambiar div.wp-menu-image { position: static; float: none; flex: 0 0 28px; width: 28px; height: 28px; margin: 0 7px; border-radius: 8px; background: url("../img/yadambiar-icon.svg") center / 19px 19px no-repeat, linear-gradient(135deg, var(--kb-o1), var(--kb-o2)); box-shadow: 0 3px 10px rgba(244, 81, 30, .4); }
+#adminmenu #toplevel_page_yadambiar div.wp-menu-image { position: static; float: none; flex: 0 0 28px; width: 28px; height: 28px; margin: 0 7px; border-radius: 8px; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23fff%22 stroke-width=%221.9%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M10.6 3.4v1.4%22/%3E%3Cpath d=%22M4.9 16.2V10.6a5.7 5.7 0 0 1 10.4-3.3%22/%3E%3Cpath d=%22M3.4 16.2h7.4%22/%3E%3Cpath d=%22M8.6 19.3a2.1 2.1 0 0 0 3.8 0%22/%3E%3Ccircle cx=%2217.2%22 cy=%2215.6%22 r=%225.1%22 fill=%22%23fff%22 stroke=%22none%22/%3E%3Cpath d=%22M17.2 12.9v2.8l1.9 1.3%22 stroke=%22%23f4511e%22 stroke-width=%221.7%22/%3E%3C/svg%3E") center / 19px 19px no-repeat, linear-gradient(135deg, var(--kb-o1), var(--kb-o2)); box-shadow: 0 3px 10px rgba(244, 81, 30, .4); }
 #adminmenu #toplevel_page_yadambiar div.wp-menu-image::before { content: none; }
 
-/* title + unread bubble */
-#adminmenu #toplevel_page_yadambiar div.wp-menu-name { padding: 0 6px 0 8px; flex: 1; min-width: 0; }
-#adminmenu .yadambiar-mn { display: flex; align-items: center; justify-content: space-between; gap: 6px; line-height: 1.4; }
+/* title, subtitle + unread bubble */
+#adminmenu #toplevel_page_yadambiar div.wp-menu-name { padding: 0 2px 0 6px; flex: 1; min-width: 0; overflow: visible; }
+#adminmenu .yadambiar-mn { display: flex; flex-direction: column; line-height: 1.35; }
 #adminmenu .yadambiar-mn b { color: #fff; font-weight: 800; font-size: 13.5px; white-space: nowrap; }
+#adminmenu .yadambiar-mn small { color: #ff9b6a; font-size: 10.5px; font-weight: 500; white-space: nowrap; letter-spacing: -.1px; }
+#adminmenu #toplevel_page_yadambiar > a.menu-top { position: relative; }
+#adminmenu .yadambiar-mn .awaiting-mod { position: absolute; top: -5px; inset-inline-start: 0; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 9px; line-height: 16px; font-size: 9.5px; font-weight: 700; border: 2px solid #17181f; box-sizing: content-box; text-align: center; }
+.folded #adminmenu .yadambiar-mn .awaiting-mod { display: none; }
 #adminmenu #toplevel_page_yadambiar .awaiting-mod { background: var(--kb-o2); color: #fff; margin: 0; }
 
 /* submenu: dark rounded panel (flyout and expanded) */
